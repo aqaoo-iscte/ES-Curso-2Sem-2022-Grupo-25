@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>ChartRenderingInfoTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (25 Mar 2022 23:00:41)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart</a> &gt; <span class="el_source">ChartRenderingInfoTest.java</span></div><h1>ChartRenderingInfoTest.java</h1><pre class="source lang-java linenums">/* ===========================================================
+ * JFreeChart : a free chart library for the Java(tm) platform
+ * ===========================================================
+ *
+ * (C) Copyright 2000-2022, by David Gilbert and Contributors.
+ *
+ * Project Info:  http://www.jfree.org/jfreechart/index.html
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ *
+ * [Oracle and Java are registered trademarks of Oracle and/or its affiliates. 
+ * Other names may be trademarks of their respective owners.]
+ *
+ * ---------------------------
+ * ChartRenderingInfoTest.java
+ * ---------------------------
+ * (C) Copyright 2004-2022, by David Gilbert and Contributors.
+ *
+ * Original Author:  David Gilbert;
+ * Contributor(s):   -;
+ *
+ */
+
+package org.jfree.chart;
+
+import java.awt.Rectangle;
+import java.awt.geom.Rectangle2D;
+
+import org.jfree.chart.entity.ChartEntity;
+import org.jfree.chart.entity.StandardEntityCollection;
+import org.jfree.chart.internal.CloneUtils;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Tests for the {@link ChartRenderingInfo} class.
+ */
+<span class="fc" id="L52">public class ChartRenderingInfoTest  {</span>
+
+    /**
+     * Confirm that the equals method can distinguish all the required fields.
+     */
+    @Test
+    public void testEquals() {
+<span class="fc" id="L59">        ChartRenderingInfo i1 = new ChartRenderingInfo();</span>
+<span class="fc" id="L60">        ChartRenderingInfo i2 = new ChartRenderingInfo();</span>
+<span class="fc" id="L61">        assertEquals(i1, i2);</span>
+
+<span class="fc" id="L63">        i1.setChartArea(new Rectangle2D.Double(1.0, 2.0, 3.0, 4.0));</span>
+<span class="fc" id="L64">        assertNotEquals(i1, i2);</span>
+<span class="fc" id="L65">        i2.setChartArea(new Rectangle2D.Double(1.0, 2.0, 3.0, 4.0));</span>
+<span class="fc" id="L66">        assertEquals(i1, i2);</span>
+
+<span class="fc" id="L68">        i1.getPlotInfo().setDataArea(new Rectangle(1, 2, 3, 4));</span>
+<span class="fc" id="L69">        assertNotEquals(i1, i2);</span>
+<span class="fc" id="L70">        i2.getPlotInfo().setDataArea(new Rectangle(1, 2, 3, 4));</span>
+<span class="fc" id="L71">        assertEquals(i1, i2);</span>
+
+<span class="fc" id="L73">        StandardEntityCollection e1 = new StandardEntityCollection();</span>
+<span class="fc" id="L74">        e1.add(new ChartEntity(new Rectangle(1, 2, 3, 4)));</span>
+<span class="fc" id="L75">        i1.setEntityCollection(e1);</span>
+<span class="fc" id="L76">        assertNotEquals(i1, i2);</span>
+<span class="fc" id="L77">        StandardEntityCollection e2 = new StandardEntityCollection();</span>
+<span class="fc" id="L78">        e2.add(new ChartEntity(new Rectangle(1, 2, 3, 4)));</span>
+<span class="fc" id="L79">        i2.setEntityCollection(e2);</span>
+<span class="fc" id="L80">    }</span>
+
+    /**
+     * Confirm that cloning works.
+     * @throws java.lang.CloneNotSupportedException
+     */
+    @Test
+    public void testCloning() throws CloneNotSupportedException {
+<span class="fc" id="L88">        ChartRenderingInfo i1 = new ChartRenderingInfo();</span>
+<span class="fc" id="L89">        ChartRenderingInfo i2 = CloneUtils.clone(i1);</span>
+
+<span class="fc" id="L91">        assertNotSame(i1, i2);</span>
+<span class="fc" id="L92">        assertSame(i1.getClass(), i2.getClass());</span>
+<span class="fc" id="L93">        assertEquals(i1, i2);</span>
+
+        // check independence
+<span class="fc" id="L96">        i1.getChartArea().setRect(4.0, 3.0, 2.0, 1.0);</span>
+<span class="fc" id="L97">        assertNotEquals(i1, i2);</span>
+<span class="fc" id="L98">        i2.getChartArea().setRect(4.0, 3.0, 2.0, 1.0);</span>
+<span class="fc" id="L99">        assertEquals(i1, i2);</span>
+
+<span class="fc" id="L101">        i1.getEntityCollection().add(new ChartEntity(new Rectangle(1, 2, 2,</span>
+<span class="fc" id="L102">                1)));</span>
+<span class="fc" id="L103">        assertNotEquals(i1, i2);</span>
+<span class="fc" id="L104">        i2.getEntityCollection().add(new ChartEntity(new Rectangle(1, 2, 2,</span>
+<span class="fc" id="L105">                1)));</span>
+<span class="fc" id="L106">        assertEquals(i1, i2);</span>
+
+<span class="fc" id="L108">    }</span>
+
+    /**
+     * Serialize an instance, restore it, and check for equality.
+     */
+    @Test
+    public void testSerialization() {
+<span class="fc" id="L115">        ChartRenderingInfo i1 = new ChartRenderingInfo();</span>
+<span class="fc" id="L116">        i1.setChartArea(new Rectangle2D.Double(1.0, 2.0, 3.0, 4.0));</span>
+<span class="fc" id="L117">        ChartRenderingInfo i2 = TestUtils.serialised(i1);</span>
+<span class="fc" id="L118">        assertEquals(i1, i2);</span>
+<span class="fc" id="L119">    }</span>
+
+    /**
+     * Serialize an instance, restore it, and check for equality.
+     */
+    @Test
+    public void testSerialization2() {
+<span class="fc" id="L126">        ChartRenderingInfo i1 = new ChartRenderingInfo();</span>
+<span class="fc" id="L127">        i1.getPlotInfo().setDataArea(new Rectangle2D.Double(1.0, 2.0, 3.0,</span>
+<span class="fc" id="L128">                4.0));</span>
+<span class="fc" id="L129">        ChartRenderingInfo i2 = TestUtils.serialised(i1);</span>
+<span class="fc" id="L130">        assertEquals(i1, i2);</span>
+<span class="fc" id="L131">        assertEquals(i2, i2.getPlotInfo().getOwner());</span>
+<span class="fc" id="L132">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (25 Mar 2022 23:00:41)</div></body></html>

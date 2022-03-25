@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>BarChartTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (25 Mar 2022 23:00:41)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart</a> &gt; <span class="el_source">BarChartTest.java</span></div><h1>BarChartTest.java</h1><pre class="source lang-java linenums">/* ===========================================================
+ * JFreeChart : a free chart library for the Java(tm) platform
+ * ===========================================================
+ *
+ * (C) Copyright 2000-2022, by David Gilbert and Contributors.
+ *
+ * Project Info:  http://www.jfree.org/jfreechart/index.html
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ *
+ * [Oracle and Java are registered trademarks of Oracle and/or its affiliates. 
+ * Other names may be trademarks of their respective owners.]
+ *
+ * -----------------
+ * BarChartTest.java
+ * -----------------
+ * (C) Copyright 2002-2022, by David Gilbert.
+ *
+ * Original Author:  David Gilbert;
+ * Contributor(s):   -;
+ *
+ */
+
+package org.jfree.chart;
+
+import java.awt.Graphics2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+
+import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.event.ChartChangeEvent;
+import org.jfree.chart.event.ChartChangeListener;
+import org.jfree.chart.labels.CategoryToolTipGenerator;
+import org.jfree.chart.labels.StandardCategoryToolTipGenerator;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.renderer.category.CategoryItemRenderer;
+import org.jfree.chart.urls.CategoryURLGenerator;
+import org.jfree.chart.urls.StandardCategoryURLGenerator;
+import org.jfree.data.Range;
+import org.jfree.data.category.CategoryDataset;
+import org.jfree.data.general.DatasetUtils;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Tests for a bar chart.
+ */
+<span class="fc" id="L64">public class BarChartTest {</span>
+
+    /** A chart. */
+    private JFreeChart chart;
+
+    /**
+     * Common test setup.
+     */
+    @BeforeEach
+    public void setUp() {
+<span class="fc" id="L74">        this.chart = createBarChart();</span>
+<span class="fc" id="L75">    }</span>
+
+    /**
+     * Draws the chart with a null info object to make sure that no exceptions
+     * are thrown (a problem that was occurring at one point).
+     */
+    @Test
+    public void testDrawWithNullInfo() {
+        try {
+<span class="fc" id="L84">            BufferedImage image = new BufferedImage(200 , 100,</span>
+<span class="fc" id="L85">                    BufferedImage.TYPE_INT_RGB);</span>
+<span class="fc" id="L86">            Graphics2D g2 = image.createGraphics();</span>
+<span class="fc" id="L87">            this.chart.draw(g2, new Rectangle2D.Double(0, 0, 200, 100), null,</span>
+<span class="fc" id="L88">                    null);</span>
+<span class="fc" id="L89">            g2.dispose();</span>
+<span class="fc" id="L90">        }</span>
+<span class="nc" id="L91">        catch (Exception e) {</span>
+<span class="nc" id="L92">            fail(&quot;There should be no exception.&quot;);</span>
+        }
+<span class="fc" id="L94">    }</span>
+
+    /**
+     * Replaces the chart's dataset and then checks that the new dataset is OK.
+     */
+    @Test
+    public void testReplaceDataset() {
+
+        // create a dataset...
+<span class="fc" id="L103">        Number[][] data = new Integer[][] {{-30, -20}, {-10, 10}, {20, 30}};</span>
+
+<span class="fc" id="L105">        CategoryDataset&lt;String, String&gt; newData </span>
+<span class="fc" id="L106">                = DatasetUtils.createCategoryDataset(&quot;S&quot;, &quot;C&quot;, data);</span>
+
+<span class="fc" id="L108">        LocalListener l = new LocalListener();</span>
+<span class="fc" id="L109">        this.chart.addChangeListener(l);</span>
+        @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L111">        CategoryPlot&lt;String, String&gt; plot = (CategoryPlot) this.chart.getPlot();</span>
+<span class="fc" id="L112">        plot.setDataset(newData);</span>
+<span class="fc" id="L113">        assertTrue(l.flag);</span>
+<span class="fc" id="L114">        ValueAxis axis = plot.getRangeAxis();</span>
+<span class="fc" id="L115">        Range range = axis.getRange();</span>
+<span class="pc bpc" id="L116" title="1 of 2 branches missed.">        assertTrue(range.getLowerBound() &lt;= -30,</span>
+<span class="fc" id="L117">                &quot;Expecting the lower bound of the range to be around -30: &quot; + range.getLowerBound());</span>
+<span class="pc bpc" id="L118" title="1 of 2 branches missed.">        assertTrue(range.getUpperBound() &gt;= 30, </span>
+<span class="fc" id="L119">                &quot;Expecting the upper bound of the range to be around 30: &quot; + range.getUpperBound());</span>
+<span class="fc" id="L120">    }</span>
+
+    /**
+     * Check that setting a tool tip generator for a series does override the
+     * default generator.
+     */
+    @Test
+    public void testSetSeriesToolTipGenerator() {
+<span class="fc" id="L128">        CategoryPlot&lt;?, ?&gt; plot = (CategoryPlot) this.chart.getPlot();</span>
+<span class="fc" id="L129">        CategoryItemRenderer renderer = plot.getRenderer();</span>
+<span class="fc" id="L130">        StandardCategoryToolTipGenerator tt</span>
+<span class="fc" id="L131">                = new StandardCategoryToolTipGenerator();</span>
+<span class="fc" id="L132">        renderer.setSeriesToolTipGenerator(0, tt);</span>
+<span class="fc" id="L133">        CategoryToolTipGenerator tt2 = renderer.getToolTipGenerator(0, 0);</span>
+<span class="fc" id="L134">        assertSame(tt2, tt);</span>
+<span class="fc" id="L135">    }</span>
+
+    /**
+     * Check that setting a URL generator for a series does override the
+     * default generator.
+     */
+    @Test
+    public void testSetSeriesURLGenerator() {
+<span class="fc" id="L143">        CategoryPlot&lt;?, ?&gt; plot = (CategoryPlot) this.chart.getPlot();</span>
+<span class="fc" id="L144">        CategoryItemRenderer renderer = plot.getRenderer();</span>
+<span class="fc" id="L145">        StandardCategoryURLGenerator url1</span>
+<span class="fc" id="L146">                = new StandardCategoryURLGenerator();</span>
+<span class="fc" id="L147">        renderer.setSeriesItemURLGenerator(0, url1);</span>
+<span class="fc" id="L148">        CategoryURLGenerator url2 = renderer.getItemURLGenerator(0, 0);</span>
+<span class="fc" id="L149">        assertSame(url2, url1);</span>
+<span class="fc" id="L150">    }</span>
+
+    /**
+     * Create a bar chart with sample data in the range -3 to +3.
+     *
+     * @return The chart.
+     */
+    private static JFreeChart createBarChart() {
+<span class="fc" id="L158">        Number[][] data = new Integer[][] {{-3, -2}, {-1, 1}, {2, 3}};</span>
+<span class="fc" id="L159">        CategoryDataset&lt;String, String&gt; dataset </span>
+<span class="fc" id="L160">                = DatasetUtils.createCategoryDataset(&quot;S&quot;, &quot;C&quot;, data);</span>
+<span class="fc" id="L161">        return ChartFactory.createBarChart(&quot;Bar Chart&quot;, &quot;Domain&quot;, &quot;Range&quot;, </span>
+<span class="fc" id="L162">                dataset, PlotOrientation.HORIZONTAL, true, true, true);</span>
+    }
+
+    /**
+     * A chart change listener.
+     */
+<span class="fc" id="L168">    static class LocalListener implements ChartChangeListener {</span>
+
+        /** Set to true after the listener is triggered. */
+<span class="fc" id="L171">        private boolean flag = false;</span>
+
+        /**
+         * Event handler.
+         *
+         * @param event  the event.
+         */
+        @Override
+        public void chartChanged(ChartChangeEvent event) {
+<span class="fc" id="L180">            this.flag = true;</span>
+<span class="fc" id="L181">        }</span>
+
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (25 Mar 2022 23:00:41)</div></body></html>

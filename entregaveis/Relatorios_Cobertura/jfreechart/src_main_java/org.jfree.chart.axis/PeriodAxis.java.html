@@ -1,0 +1,1187 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>PeriodAxis.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (25 Mar 2022 23:00:41)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart.axis</a> &gt; <span class="el_source">PeriodAxis.java</span></div><h1>PeriodAxis.java</h1><pre class="source lang-java linenums">/* ===========================================================
+ * JFreeChart : a free chart library for the Java(tm) platform
+ * ===========================================================
+ *
+ * (C) Copyright 2000-2022, by David Gilbert and Contributors.
+ *
+ * Project Info:  http://www.jfree.org/jfreechart/index.html
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ *
+ * [Oracle and Java are registered trademarks of Oracle and/or its affiliates. 
+ * Other names may be trademarks of their respective owners.]
+ *
+ * ---------------
+ * PeriodAxis.java
+ * ---------------
+ * (C) Copyright 2004-2022, by David Gilbert and Contributors.
+ *
+ * Original Author:  David Gilbert;
+ * Contributor(s):   -;
+ *
+ */
+
+package org.jfree.chart.axis;
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
+import java.awt.Paint;
+import java.awt.Stroke;
+import java.awt.geom.Line2D;
+import java.awt.geom.Rectangle2D;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.lang.reflect.Constructor;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
+
+import org.jfree.chart.event.AxisChangeEvent;
+import org.jfree.chart.plot.Plot;
+import org.jfree.chart.plot.PlotRenderingInfo;
+import org.jfree.chart.plot.ValueAxisPlot;
+import org.jfree.chart.text.TextUtils;
+import org.jfree.chart.api.RectangleEdge;
+import org.jfree.chart.text.TextAnchor;
+import org.jfree.chart.internal.Args;
+import org.jfree.chart.api.PublicCloneable;
+import org.jfree.chart.internal.SerialUtils;
+import org.jfree.data.Range;
+import org.jfree.data.time.Day;
+import org.jfree.data.time.Month;
+import org.jfree.data.time.RegularTimePeriod;
+import org.jfree.data.time.Year;
+
+/**
+ * An axis that displays a date scale based on a
+ * {@link org.jfree.data.time.RegularTimePeriod}.  This axis works when
+ * displayed across the bottom or top of a plot, but is broken for display at
+ * the left or right of charts.
+ */
+public class PeriodAxis extends ValueAxis
+        implements Cloneable, PublicCloneable, Serializable {
+
+    /** For serialization. */
+    private static final long serialVersionUID = 8353295532075872069L;
+
+    /** The first time period in the overall range. */
+    private RegularTimePeriod first;
+
+    /** The last time period in the overall range. */
+    private RegularTimePeriod last;
+
+    /**
+     * The time zone used to convert 'first' and 'last' to absolute
+     * milliseconds.
+     */
+    private TimeZone timeZone;
+
+    /**
+     * The locale (never {@code null}).
+     */
+    private Locale locale;
+
+    /**
+     * A calendar used for date manipulations in the current time zone and
+     * locale.
+     */
+    private Calendar calendar;
+
+    /**
+     * The {@link RegularTimePeriod} subclass used to automatically determine
+     * the axis range.
+     */
+    private Class autoRangeTimePeriodClass;
+
+    /**
+     * Indicates the {@link RegularTimePeriod} subclass that is used to
+     * determine the spacing of the major tick marks.
+     */
+    private Class majorTickTimePeriodClass;
+
+    /**
+     * A flag that indicates whether or not tick marks are visible for the
+     * axis.
+     */
+    private boolean minorTickMarksVisible;
+
+    /**
+     * Indicates the {@link RegularTimePeriod} subclass that is used to
+     * determine the spacing of the minor tick marks.
+     */
+    private Class minorTickTimePeriodClass;
+
+    /** The length of the tick mark inside the data area (zero permitted). */
+<span class="fc" id="L139">    private float minorTickMarkInsideLength = 0.0f;</span>
+
+    /** The length of the tick mark outside the data area (zero permitted). */
+<span class="fc" id="L142">    private float minorTickMarkOutsideLength = 2.0f;</span>
+
+    /** The stroke used to draw tick marks. */
+<span class="fc" id="L145">    private transient Stroke minorTickMarkStroke = new BasicStroke(0.5f);</span>
+
+    /** The paint used to draw tick marks. */
+<span class="fc" id="L148">    private transient Paint minorTickMarkPaint = Color.BLACK;</span>
+
+    /** Info for each labeling band. */
+    private PeriodAxisLabelInfo[] labelInfo;
+
+    /**
+     * Creates a new axis.
+     *
+     * @param label  the axis label.
+     */
+    public PeriodAxis(String label) {
+<span class="fc" id="L159">        this(label, new Day(), new Day());</span>
+<span class="fc" id="L160">    }</span>
+
+    /**
+     * Creates a new axis.
+     *
+     * @param label  the axis label ({@code null} permitted).
+     * @param first  the first time period in the axis range
+     *               ({@code null} not permitted).
+     * @param last  the last time period in the axis range
+     *              ({@code null} not permitted).
+     */
+    public PeriodAxis(String label,
+                      RegularTimePeriod first, RegularTimePeriod last) {
+<span class="fc" id="L173">        this(label, first, last, TimeZone.getDefault(), Locale.getDefault());</span>
+<span class="fc" id="L174">    }</span>
+
+    /**
+     * Creates a new axis.
+     *
+     * @param label  the axis label ({@code null} permitted).
+     * @param first  the first time period in the axis range
+     *               ({@code null} not permitted).
+     * @param last  the last time period in the axis range
+     *              ({@code null} not permitted).
+     * @param timeZone  the time zone ({@code null} not permitted).
+     * @param locale  the locale ({@code null} not permitted).
+     */
+    public PeriodAxis(String label, RegularTimePeriod first,
+            RegularTimePeriod last, TimeZone timeZone, Locale locale) {
+<span class="fc" id="L189">        super(label, null);</span>
+<span class="fc" id="L190">        Args.nullNotPermitted(timeZone, &quot;timeZone&quot;);</span>
+<span class="fc" id="L191">        Args.nullNotPermitted(locale, &quot;locale&quot;);</span>
+<span class="fc" id="L192">        this.first = first;</span>
+<span class="fc" id="L193">        this.last = last;</span>
+<span class="fc" id="L194">        this.timeZone = timeZone;</span>
+<span class="fc" id="L195">        this.locale = locale;</span>
+<span class="fc" id="L196">        this.calendar = Calendar.getInstance(timeZone, locale);</span>
+<span class="fc" id="L197">        this.first.peg(this.calendar);</span>
+<span class="fc" id="L198">        this.last.peg(this.calendar);</span>
+<span class="fc" id="L199">        this.autoRangeTimePeriodClass = first.getClass();</span>
+<span class="fc" id="L200">        this.majorTickTimePeriodClass = first.getClass();</span>
+<span class="fc" id="L201">        this.minorTickMarksVisible = false;</span>
+<span class="fc" id="L202">        this.minorTickTimePeriodClass = RegularTimePeriod.downsize(</span>
+<span class="fc" id="L203">                this.majorTickTimePeriodClass);</span>
+<span class="fc" id="L204">        setAutoRange(true);</span>
+<span class="fc" id="L205">        this.labelInfo = new PeriodAxisLabelInfo[2];</span>
+<span class="fc" id="L206">        SimpleDateFormat df0 = new SimpleDateFormat(&quot;MMM&quot;, locale);</span>
+<span class="fc" id="L207">        df0.setTimeZone(timeZone);</span>
+<span class="fc" id="L208">        this.labelInfo[0] = new PeriodAxisLabelInfo(Month.class, df0);</span>
+<span class="fc" id="L209">        SimpleDateFormat df1 = new SimpleDateFormat(&quot;yyyy&quot;, locale);</span>
+<span class="fc" id="L210">        df1.setTimeZone(timeZone);</span>
+<span class="fc" id="L211">        this.labelInfo[1] = new PeriodAxisLabelInfo(Year.class, df1);</span>
+<span class="fc" id="L212">    }</span>
+
+    /**
+     * Returns the first time period in the axis range.
+     *
+     * @return The first time period (never {@code null}).
+     */
+    public RegularTimePeriod getFirst() {
+<span class="nc" id="L220">        return this.first;</span>
+    }
+
+    /**
+     * Sets the first time period in the axis range and sends an
+     * {@link AxisChangeEvent} to all registered listeners.
+     *
+     * @param first  the time period ({@code null} not permitted).
+     */
+    public void setFirst(RegularTimePeriod first) {
+<span class="fc" id="L230">        Args.nullNotPermitted(first, &quot;first&quot;);</span>
+<span class="fc" id="L231">        this.first = first;</span>
+<span class="fc" id="L232">        this.first.peg(this.calendar);</span>
+<span class="fc" id="L233">        fireChangeEvent();</span>
+<span class="fc" id="L234">    }</span>
+
+    /**
+     * Returns the last time period in the axis range.
+     *
+     * @return The last time period (never {@code null}).
+     */
+    public RegularTimePeriod getLast() {
+<span class="nc" id="L242">        return this.last;</span>
+    }
+
+    /**
+     * Sets the last time period in the axis range and sends an
+     * {@link AxisChangeEvent} to all registered listeners.
+     *
+     * @param last  the time period ({@code null} not permitted).
+     */
+    public void setLast(RegularTimePeriod last) {
+<span class="fc" id="L252">        Args.nullNotPermitted(last, &quot;last&quot;);</span>
+<span class="fc" id="L253">        this.last = last;</span>
+<span class="fc" id="L254">        this.last.peg(this.calendar);</span>
+<span class="fc" id="L255">        fireChangeEvent();</span>
+<span class="fc" id="L256">    }</span>
+
+    /**
+     * Returns the time zone used to convert the periods defining the axis
+     * range into absolute milliseconds.
+     *
+     * @return The time zone (never {@code null}).
+     */
+    public TimeZone getTimeZone() {
+<span class="nc" id="L265">        return this.timeZone;</span>
+    }
+
+    /**
+     * Sets the time zone that is used to convert the time periods into
+     * absolute milliseconds.
+     *
+     * @param zone  the time zone ({@code null} not permitted).
+     */
+    public void setTimeZone(TimeZone zone) {
+<span class="fc" id="L275">        Args.nullNotPermitted(zone, &quot;zone&quot;);</span>
+<span class="fc" id="L276">        this.timeZone = zone;</span>
+<span class="fc" id="L277">        this.calendar = Calendar.getInstance(zone, this.locale);</span>
+<span class="fc" id="L278">        this.first.peg(this.calendar);</span>
+<span class="fc" id="L279">        this.last.peg(this.calendar);</span>
+<span class="fc" id="L280">        fireChangeEvent();</span>
+<span class="fc" id="L281">    }</span>
+
+    /**
+     * Returns the locale for this axis.
+     *
+     * @return The locale (never ({@code null}).
+     */
+    public Locale getLocale() {
+<span class="nc" id="L289">        return this.locale;</span>
+    }
+
+    /**
+     * Returns the class used to create the first and last time periods for
+     * the axis range when the auto-range flag is set to {@code true}.
+     *
+     * @return The class (never {@code null}).
+     */
+    public Class getAutoRangeTimePeriodClass() {
+<span class="nc" id="L299">        return this.autoRangeTimePeriodClass;</span>
+    }
+
+    /**
+     * Sets the class used to create the first and last time periods for the
+     * axis range when the auto-range flag is set to {@code true} and
+     * sends an {@link AxisChangeEvent} to all registered listeners.
+     *
+     * @param c  the class ({@code null} not permitted).
+     */
+    public void setAutoRangeTimePeriodClass(Class c) {
+<span class="fc" id="L310">        Args.nullNotPermitted(c, &quot;c&quot;);</span>
+<span class="fc" id="L311">        this.autoRangeTimePeriodClass = c;</span>
+<span class="fc" id="L312">        fireChangeEvent();</span>
+<span class="fc" id="L313">    }</span>
+
+    /**
+     * Returns the class that controls the spacing of the major tick marks.
+     *
+     * @return The class (never {@code null}).
+     */
+    public Class getMajorTickTimePeriodClass() {
+<span class="nc" id="L321">        return this.majorTickTimePeriodClass;</span>
+    }
+
+    /**
+     * Sets the class that controls the spacing of the major tick marks, and
+     * sends an {@link AxisChangeEvent} to all registered listeners.
+     *
+     * @param c  the class (a subclass of {@link RegularTimePeriod} is
+     *           expected).
+     */
+    public void setMajorTickTimePeriodClass(Class c) {
+<span class="fc" id="L332">        Args.nullNotPermitted(c, &quot;c&quot;);</span>
+<span class="fc" id="L333">        this.majorTickTimePeriodClass = c;</span>
+<span class="fc" id="L334">        fireChangeEvent();</span>
+<span class="fc" id="L335">    }</span>
+
+    /**
+     * Returns the flag that controls whether or not minor tick marks
+     * are displayed for the axis.
+     *
+     * @return A boolean.
+     */
+    @Override
+    public boolean isMinorTickMarksVisible() {
+<span class="fc" id="L345">        return this.minorTickMarksVisible;</span>
+    }
+
+    /**
+     * Sets the flag that controls whether or not minor tick marks
+     * are displayed for the axis, and sends a {@link AxisChangeEvent}
+     * to all registered listeners.
+     *
+     * @param visible  the flag.
+     */
+    @Override
+    public void setMinorTickMarksVisible(boolean visible) {
+<span class="fc" id="L357">        this.minorTickMarksVisible = visible;</span>
+<span class="fc" id="L358">        fireChangeEvent();</span>
+<span class="fc" id="L359">    }</span>
+
+    /**
+     * Returns the class that controls the spacing of the minor tick marks.
+     *
+     * @return The class (never {@code null}).
+     */
+    public Class getMinorTickTimePeriodClass() {
+<span class="nc" id="L367">        return this.minorTickTimePeriodClass;</span>
+    }
+
+    /**
+     * Sets the class that controls the spacing of the minor tick marks, and
+     * sends an {@link AxisChangeEvent} to all registered listeners.
+     *
+     * @param c  the class (a subclass of {@link RegularTimePeriod} is
+     *           expected).
+     */
+    public void setMinorTickTimePeriodClass(Class c) {
+<span class="fc" id="L378">        Args.nullNotPermitted(c, &quot;c&quot;);</span>
+<span class="fc" id="L379">        this.minorTickTimePeriodClass = c;</span>
+<span class="fc" id="L380">        fireChangeEvent();</span>
+<span class="fc" id="L381">    }</span>
+
+    /**
+     * Returns the stroke used to display minor tick marks, if they are
+     * visible.
+     *
+     * @return A stroke (never {@code null}).
+     */
+    public Stroke getMinorTickMarkStroke() {
+<span class="nc" id="L390">        return this.minorTickMarkStroke;</span>
+    }
+
+    /**
+     * Sets the stroke used to display minor tick marks, if they are
+     * visible, and sends a {@link AxisChangeEvent} to all registered
+     * listeners.
+     *
+     * @param stroke  the stroke ({@code null} not permitted).
+     */
+    public void setMinorTickMarkStroke(Stroke stroke) {
+<span class="fc" id="L401">        Args.nullNotPermitted(stroke, &quot;stroke&quot;);</span>
+<span class="fc" id="L402">        this.minorTickMarkStroke = stroke;</span>
+<span class="fc" id="L403">        fireChangeEvent();</span>
+<span class="fc" id="L404">    }</span>
+
+    /**
+     * Returns the paint used to display minor tick marks, if they are
+     * visible.
+     *
+     * @return A paint (never {@code null}).
+     */
+    public Paint getMinorTickMarkPaint() {
+<span class="nc" id="L413">        return this.minorTickMarkPaint;</span>
+    }
+
+    /**
+     * Sets the paint used to display minor tick marks, if they are
+     * visible, and sends a {@link AxisChangeEvent} to all registered
+     * listeners.
+     *
+     * @param paint  the paint ({@code null} not permitted).
+     */
+    public void setMinorTickMarkPaint(Paint paint) {
+<span class="fc" id="L424">        Args.nullNotPermitted(paint, &quot;paint&quot;);</span>
+<span class="fc" id="L425">        this.minorTickMarkPaint = paint;</span>
+<span class="fc" id="L426">        fireChangeEvent();</span>
+<span class="fc" id="L427">    }</span>
+
+    /**
+     * Returns the inside length for the minor tick marks.
+     *
+     * @return The length.
+     */
+    @Override
+    public float getMinorTickMarkInsideLength() {
+<span class="nc" id="L436">        return this.minorTickMarkInsideLength;</span>
+    }
+
+    /**
+     * Sets the inside length of the minor tick marks and sends an
+     * {@link AxisChangeEvent} to all registered listeners.
+     *
+     * @param length  the length.
+     */
+    @Override
+    public void setMinorTickMarkInsideLength(float length) {
+<span class="nc" id="L447">        this.minorTickMarkInsideLength = length;</span>
+<span class="nc" id="L448">        fireChangeEvent();</span>
+<span class="nc" id="L449">    }</span>
+
+    /**
+     * Returns the outside length for the minor tick marks.
+     *
+     * @return The length.
+     */
+    @Override
+    public float getMinorTickMarkOutsideLength() {
+<span class="nc" id="L458">        return this.minorTickMarkOutsideLength;</span>
+    }
+
+    /**
+     * Sets the outside length of the minor tick marks and sends an
+     * {@link AxisChangeEvent} to all registered listeners.
+     *
+     * @param length  the length.
+     */
+    @Override
+    public void setMinorTickMarkOutsideLength(float length) {
+<span class="nc" id="L469">        this.minorTickMarkOutsideLength = length;</span>
+<span class="nc" id="L470">        fireChangeEvent();</span>
+<span class="nc" id="L471">    }</span>
+
+    /**
+     * Returns an array of label info records.
+     *
+     * @return An array.
+     */
+    public PeriodAxisLabelInfo[] getLabelInfo() {
+<span class="nc" id="L479">        return this.labelInfo;</span>
+    }
+
+    /**
+     * Sets the array of label info records and sends an
+     * {@link AxisChangeEvent} to all registered listeners.
+     *
+     * @param info  the info.
+     */
+    public void setLabelInfo(PeriodAxisLabelInfo[] info) {
+<span class="fc" id="L489">        this.labelInfo = info;</span>
+<span class="fc" id="L490">        fireChangeEvent();</span>
+<span class="fc" id="L491">    }</span>
+
+    /**
+     * Sets the range for the axis, if requested, sends an
+     * {@link AxisChangeEvent} to all registered listeners.  As a side-effect,
+     * the auto-range flag is set to {@code false} (optional).
+     *
+     * @param range  the range ({@code null} not permitted).
+     * @param turnOffAutoRange  a flag that controls whether or not the auto
+     *                          range is turned off.
+     * @param notify  a flag that controls whether or not listeners are
+     *                notified.
+     */
+    @Override
+    public void setRange(Range range, boolean turnOffAutoRange, 
+            boolean notify) {
+<span class="fc" id="L507">        long upper = Math.round(range.getUpperBound());</span>
+<span class="fc" id="L508">        long lower = Math.round(range.getLowerBound());</span>
+<span class="fc" id="L509">        this.first = createInstance(this.autoRangeTimePeriodClass,</span>
+<span class="fc" id="L510">                new Date(lower), this.timeZone, this.locale);</span>
+<span class="fc" id="L511">        this.last = createInstance(this.autoRangeTimePeriodClass,</span>
+<span class="fc" id="L512">                new Date(upper), this.timeZone, this.locale);</span>
+<span class="fc" id="L513">        super.setRange(new Range(this.first.getFirstMillisecond(),</span>
+<span class="fc" id="L514">                this.last.getLastMillisecond() + 1.0), turnOffAutoRange,</span>
+<span class="fc" id="L515">                notify);</span>
+<span class="fc" id="L516">    }</span>
+
+    /**
+     * Configures the axis to work with the current plot.  Override this method
+     * to perform any special processing (such as auto-rescaling).
+     */
+    @Override
+    public void configure() {
+<span class="nc bnc" id="L524" title="All 2 branches missed.">        if (this.isAutoRange()) {</span>
+<span class="nc" id="L525">            autoAdjustRange();</span>
+        }
+<span class="nc" id="L527">    }</span>
+
+    /**
+     * Estimates the space (height or width) required to draw the axis.
+     *
+     * @param g2  the graphics device.
+     * @param plot  the plot that the axis belongs to.
+     * @param plotArea  the area within which the plot (including axes) should
+     *                  be drawn.
+     * @param edge  the axis location.
+     * @param space  space already reserved.
+     *
+     * @return The space required to draw the axis (including pre-reserved
+     *         space).
+     */
+    @Override
+    public AxisSpace reserveSpace(Graphics2D g2, Plot plot, 
+            Rectangle2D plotArea, RectangleEdge edge, AxisSpace space) {
+        // create a new space object if one wasn't supplied...
+<span class="nc bnc" id="L546" title="All 2 branches missed.">        if (space == null) {</span>
+<span class="nc" id="L547">            space = new AxisSpace();</span>
+        }
+
+        // if the axis is not visible, no additional space is required...
+<span class="nc bnc" id="L551" title="All 2 branches missed.">        if (!isVisible()) {</span>
+<span class="nc" id="L552">            return space;</span>
+        }
+
+        // if the axis has a fixed dimension, return it...
+<span class="nc" id="L556">        double dimension = getFixedDimension();</span>
+<span class="nc bnc" id="L557" title="All 2 branches missed.">        if (dimension &gt; 0.0) {</span>
+<span class="nc" id="L558">            space.ensureAtLeast(dimension, edge);</span>
+        }
+
+        // get the axis label size and update the space object...
+<span class="nc" id="L562">        Rectangle2D labelEnclosure = getLabelEnclosure(g2, edge);</span>
+        double labelHeight, labelWidth;
+<span class="nc" id="L564">        double tickLabelBandsDimension = 0.0;</span>
+
+<span class="nc bnc" id="L566" title="All 2 branches missed.">        for (PeriodAxisLabelInfo info : this.labelInfo) {</span>
+<span class="nc" id="L567">            FontMetrics fm = g2.getFontMetrics(info.getLabelFont());</span>
+<span class="nc" id="L568">            tickLabelBandsDimension</span>
+<span class="nc" id="L569">                += info.getPadding().extendHeight(fm.getHeight());</span>
+        }
+
+<span class="nc bnc" id="L572" title="All 2 branches missed.">        if (RectangleEdge.isTopOrBottom(edge)) {</span>
+<span class="nc" id="L573">            labelHeight = labelEnclosure.getHeight();</span>
+<span class="nc" id="L574">            space.add(labelHeight + tickLabelBandsDimension, edge);</span>
+<span class="nc" id="L575">        }</span>
+<span class="nc bnc" id="L576" title="All 2 branches missed.">        else if (RectangleEdge.isLeftOrRight(edge)) {</span>
+<span class="nc" id="L577">            labelWidth = labelEnclosure.getWidth();</span>
+<span class="nc" id="L578">            space.add(labelWidth + tickLabelBandsDimension, edge);</span>
+        }
+
+        // add space for the outer tick labels, if any...
+<span class="nc" id="L582">        double tickMarkSpace = 0.0;</span>
+<span class="nc bnc" id="L583" title="All 2 branches missed.">        if (isTickMarksVisible()) {</span>
+<span class="nc" id="L584">            tickMarkSpace = getTickMarkOutsideLength();</span>
+        }
+<span class="nc bnc" id="L586" title="All 2 branches missed.">        if (this.minorTickMarksVisible) {</span>
+<span class="nc" id="L587">            tickMarkSpace = Math.max(tickMarkSpace,</span>
+<span class="nc" id="L588">                    this.minorTickMarkOutsideLength);</span>
+        }
+<span class="nc" id="L590">        space.add(tickMarkSpace, edge);</span>
+<span class="nc" id="L591">        return space;</span>
+    }
+
+    /**
+     * Draws the axis on a Java 2D graphics device (such as the screen or a
+     * printer).
+     *
+     * @param g2  the graphics device ({@code null} not permitted).
+     * @param cursor  the cursor location (determines where to draw the axis).
+     * @param plotArea  the area within which the axes and plot should be drawn.
+     * @param dataArea  the area within which the data should be drawn.
+     * @param edge  the axis location ({@code null} not permitted).
+     * @param plotState  collects information about the plot
+     *                   ({@code null} permitted).
+     *
+     * @return The axis state (never {@code null}).
+     */
+    @Override
+    public AxisState draw(Graphics2D g2, double cursor, Rectangle2D plotArea,
+            Rectangle2D dataArea, RectangleEdge edge,
+            PlotRenderingInfo plotState) {
+
+        // if the axis is not visible, don't draw it... bug#198
+<span class="nc bnc" id="L614" title="All 2 branches missed.">        if (!isVisible()) {</span>
+<span class="nc" id="L615">            AxisState state = new AxisState(cursor);</span>
+            // even though the axis is not visible, we need to refresh ticks in
+            // case the grid is being drawn...
+<span class="nc" id="L618">            List ticks = refreshTicks(g2, state, dataArea, edge);</span>
+<span class="nc" id="L619">            state.setTicks(ticks);</span>
+<span class="nc" id="L620">            return state;</span>
+        }
+
+<span class="nc" id="L623">        AxisState axisState = new AxisState(cursor);</span>
+<span class="nc bnc" id="L624" title="All 2 branches missed.">        if (isAxisLineVisible()) {</span>
+<span class="nc" id="L625">            drawAxisLine(g2, cursor, dataArea, edge);</span>
+        }
+<span class="nc bnc" id="L627" title="All 2 branches missed.">        if (isTickMarksVisible()) {</span>
+<span class="nc" id="L628">            drawTickMarks(g2, axisState, dataArea, edge);</span>
+        }
+<span class="nc bnc" id="L630" title="All 2 branches missed.">        if (isTickLabelsVisible()) {</span>
+<span class="nc bnc" id="L631" title="All 2 branches missed.">            for (int band = 0; band &lt; this.labelInfo.length; band++) {</span>
+<span class="nc" id="L632">                axisState = drawTickLabels(band, g2, axisState, dataArea, edge);</span>
+            }
+        }
+
+<span class="nc bnc" id="L636" title="All 2 branches missed.">        if (getAttributedLabel() != null) {</span>
+<span class="nc" id="L637">            axisState = drawAttributedLabel(getAttributedLabel(), g2, plotArea, </span>
+<span class="nc" id="L638">                    dataArea, edge, axisState);</span>
+<span class="nc" id="L639">        } else {</span>
+<span class="nc" id="L640">            axisState = drawLabel(getLabel(), g2, plotArea, dataArea, edge, </span>
+<span class="nc" id="L641">                    axisState);</span>
+        } 
+<span class="nc" id="L643">        return axisState;</span>
+
+    }
+
+    /**
+     * Draws the tick marks for the axis.
+     *
+     * @param g2  the graphics device.
+     * @param state  the axis state.
+     * @param dataArea  the data area.
+     * @param edge  the edge.
+     */
+    protected void drawTickMarks(Graphics2D g2, AxisState state, 
+            Rectangle2D dataArea, RectangleEdge edge) {
+<span class="nc bnc" id="L657" title="All 2 branches missed.">        if (RectangleEdge.isTopOrBottom(edge)) {</span>
+<span class="nc" id="L658">            drawTickMarksHorizontal(g2, state, dataArea, edge);</span>
+<span class="nc" id="L659">        }</span>
+<span class="nc bnc" id="L660" title="All 2 branches missed.">        else if (RectangleEdge.isLeftOrRight(edge)) {</span>
+<span class="nc" id="L661">            drawTickMarksVertical(g2, state, dataArea, edge);</span>
+        }
+<span class="nc" id="L663">    }</span>
+
+    /**
+     * Draws the major and minor tick marks for an axis that lies at the top or
+     * bottom of the plot.
+     *
+     * @param g2  the graphics device.
+     * @param state  the axis state.
+     * @param dataArea  the data area.
+     * @param edge  the edge.
+     */
+    protected void drawTickMarksHorizontal(Graphics2D g2, AxisState state,
+            Rectangle2D dataArea, RectangleEdge edge) {
+<span class="nc" id="L676">        List ticks = new ArrayList();</span>
+        double x0;
+<span class="nc" id="L678">        double y0 = state.getCursor();</span>
+<span class="nc" id="L679">        double insideLength = getTickMarkInsideLength();</span>
+<span class="nc" id="L680">        double outsideLength = getTickMarkOutsideLength();</span>
+<span class="nc" id="L681">        RegularTimePeriod t = createInstance(this.majorTickTimePeriodClass, </span>
+<span class="nc" id="L682">                this.first.getStart(), getTimeZone(), this.locale);</span>
+<span class="nc" id="L683">        long t0 = t.getFirstMillisecond();</span>
+<span class="nc" id="L684">        Line2D inside = null;</span>
+<span class="nc" id="L685">        Line2D outside = null;</span>
+<span class="nc" id="L686">        long firstOnAxis = getFirst().getFirstMillisecond();</span>
+<span class="nc" id="L687">        long lastOnAxis = getLast().getLastMillisecond() + 1;</span>
+<span class="nc bnc" id="L688" title="All 2 branches missed.">        while (t0 &lt;= lastOnAxis) {</span>
+<span class="nc" id="L689">            ticks.add(new NumberTick((double) t0, &quot;&quot;, TextAnchor.CENTER,</span>
+<span class="nc" id="L690">                    TextAnchor.CENTER, 0.0));</span>
+<span class="nc" id="L691">            x0 = valueToJava2D(t0, dataArea, edge);</span>
+<span class="nc bnc" id="L692" title="All 2 branches missed.">            if (edge == RectangleEdge.TOP) {</span>
+<span class="nc" id="L693">                inside = new Line2D.Double(x0, y0, x0, y0 + insideLength);</span>
+<span class="nc" id="L694">                outside = new Line2D.Double(x0, y0, x0, y0 - outsideLength);</span>
+<span class="nc" id="L695">            }</span>
+<span class="nc bnc" id="L696" title="All 2 branches missed.">            else if (edge == RectangleEdge.BOTTOM) {</span>
+<span class="nc" id="L697">                inside = new Line2D.Double(x0, y0, x0, y0 - insideLength);</span>
+<span class="nc" id="L698">                outside = new Line2D.Double(x0, y0, x0, y0 + outsideLength);</span>
+            }
+<span class="nc bnc" id="L700" title="All 2 branches missed.">            if (t0 &gt;= firstOnAxis) {</span>
+<span class="nc" id="L701">                g2.setPaint(getTickMarkPaint());</span>
+<span class="nc" id="L702">                g2.setStroke(getTickMarkStroke());</span>
+<span class="nc" id="L703">                g2.draw(inside);</span>
+<span class="nc" id="L704">                g2.draw(outside);</span>
+            }
+            // draw minor tick marks
+<span class="nc bnc" id="L707" title="All 2 branches missed.">            if (this.minorTickMarksVisible) {</span>
+<span class="nc" id="L708">                RegularTimePeriod tminor = createInstance(</span>
+<span class="nc" id="L709">                        this.minorTickTimePeriodClass, new Date(t0),</span>
+<span class="nc" id="L710">                        getTimeZone(), this.locale);</span>
+<span class="nc" id="L711">                long tt0 = tminor.getFirstMillisecond();</span>
+<span class="nc bnc" id="L712" title="All 4 branches missed.">                while (tt0 &lt; t.getLastMillisecond()</span>
+<span class="nc" id="L713">                        &amp;&amp; tt0 &lt; lastOnAxis) {</span>
+<span class="nc" id="L714">                    double xx0 = valueToJava2D(tt0, dataArea, edge);</span>
+<span class="nc bnc" id="L715" title="All 2 branches missed.">                    if (edge == RectangleEdge.TOP) {</span>
+<span class="nc" id="L716">                        inside = new Line2D.Double(xx0, y0, xx0,</span>
+<span class="nc" id="L717">                                y0 + this.minorTickMarkInsideLength);</span>
+<span class="nc" id="L718">                        outside = new Line2D.Double(xx0, y0, xx0,</span>
+<span class="nc" id="L719">                                y0 - this.minorTickMarkOutsideLength);</span>
+<span class="nc" id="L720">                    }</span>
+<span class="nc bnc" id="L721" title="All 2 branches missed.">                    else if (edge == RectangleEdge.BOTTOM) {</span>
+<span class="nc" id="L722">                        inside = new Line2D.Double(xx0, y0, xx0,</span>
+<span class="nc" id="L723">                                y0 - this.minorTickMarkInsideLength);</span>
+<span class="nc" id="L724">                        outside = new Line2D.Double(xx0, y0, xx0,</span>
+<span class="nc" id="L725">                                y0 + this.minorTickMarkOutsideLength);</span>
+                    }
+<span class="nc bnc" id="L727" title="All 2 branches missed.">                    if (tt0 &gt;= firstOnAxis) {</span>
+<span class="nc" id="L728">                        g2.setPaint(this.minorTickMarkPaint);</span>
+<span class="nc" id="L729">                        g2.setStroke(this.minorTickMarkStroke);</span>
+<span class="nc" id="L730">                        g2.draw(inside);</span>
+<span class="nc" id="L731">                        g2.draw(outside);</span>
+                    }
+<span class="nc" id="L733">                    tminor = tminor.next();</span>
+<span class="nc" id="L734">                    tminor.peg(this.calendar);</span>
+<span class="nc" id="L735">                    tt0 = tminor.getFirstMillisecond();</span>
+                }
+            }
+<span class="nc" id="L738">            t = t.next();</span>
+<span class="nc" id="L739">            t.peg(this.calendar);</span>
+<span class="nc" id="L740">            t0 = t.getFirstMillisecond();</span>
+        }
+<span class="nc bnc" id="L742" title="All 2 branches missed.">        if (edge == RectangleEdge.TOP) {</span>
+<span class="nc" id="L743">            state.cursorUp(Math.max(outsideLength,</span>
+<span class="nc" id="L744">                    this.minorTickMarkOutsideLength));</span>
+<span class="nc" id="L745">        }</span>
+<span class="nc bnc" id="L746" title="All 2 branches missed.">        else if (edge == RectangleEdge.BOTTOM) {</span>
+<span class="nc" id="L747">            state.cursorDown(Math.max(outsideLength,</span>
+<span class="nc" id="L748">                    this.minorTickMarkOutsideLength));</span>
+        }
+<span class="nc" id="L750">        state.setTicks(ticks);</span>
+<span class="nc" id="L751">    }</span>
+
+    /**
+     * Draws the tick marks for a vertical axis.
+     *
+     * @param g2  the graphics device.
+     * @param state  the axis state.
+     * @param dataArea  the data area.
+     * @param edge  the edge.
+     */
+    protected void drawTickMarksVertical(Graphics2D g2, AxisState state,
+            Rectangle2D dataArea, RectangleEdge edge) {
+        // FIXME:  implement this...
+<span class="nc" id="L764">    }</span>
+
+    /**
+     * Draws the tick labels for one &quot;band&quot; of time periods.
+     *
+     * @param band  the band index (zero-based).
+     * @param g2  the graphics device.
+     * @param state  the axis state.
+     * @param dataArea  the data area.
+     * @param edge  the edge where the axis is located.
+     *
+     * @return The updated axis state.
+     */
+    protected AxisState drawTickLabels(int band, Graphics2D g2, AxisState state,
+            Rectangle2D dataArea, RectangleEdge edge) {
+
+        // work out the initial gap
+<span class="nc" id="L781">        double delta1 = 0.0;</span>
+<span class="nc" id="L782">        FontMetrics fm = g2.getFontMetrics(this.labelInfo[band].getLabelFont());</span>
+<span class="nc bnc" id="L783" title="All 2 branches missed.">        if (edge == RectangleEdge.BOTTOM) {</span>
+<span class="nc" id="L784">            delta1 = this.labelInfo[band].getPadding().calculateTopOutset(</span>
+<span class="nc" id="L785">                    fm.getHeight());</span>
+<span class="nc" id="L786">        }</span>
+<span class="nc bnc" id="L787" title="All 2 branches missed.">        else if (edge == RectangleEdge.TOP) {</span>
+<span class="nc" id="L788">            delta1 = this.labelInfo[band].getPadding().calculateBottomOutset(</span>
+<span class="nc" id="L789">                    fm.getHeight());</span>
+        }
+<span class="nc" id="L791">        state.moveCursor(delta1, edge);</span>
+<span class="nc" id="L792">        long axisMin = this.first.getFirstMillisecond();</span>
+<span class="nc" id="L793">        long axisMax = this.last.getLastMillisecond();</span>
+<span class="nc" id="L794">        g2.setFont(this.labelInfo[band].getLabelFont());</span>
+<span class="nc" id="L795">        g2.setPaint(this.labelInfo[band].getLabelPaint());</span>
+
+        // work out the number of periods to skip for labelling
+<span class="nc" id="L798">        RegularTimePeriod p1 = this.labelInfo[band].createInstance(</span>
+<span class="nc" id="L799">                new Date(axisMin), this.timeZone, this.locale);</span>
+<span class="nc" id="L800">        RegularTimePeriod p2 = this.labelInfo[band].createInstance(</span>
+<span class="nc" id="L801">                new Date(axisMax), this.timeZone, this.locale);</span>
+<span class="nc" id="L802">        DateFormat df = this.labelInfo[band].getDateFormat();</span>
+<span class="nc" id="L803">        df.setTimeZone(this.timeZone);</span>
+<span class="nc" id="L804">        String label1 = df.format(new Date(p1.getMiddleMillisecond()));</span>
+<span class="nc" id="L805">        String label2 = df.format(new Date(p2.getMiddleMillisecond()));</span>
+<span class="nc" id="L806">        Rectangle2D b1 = TextUtils.getTextBounds(label1, g2,</span>
+<span class="nc" id="L807">                g2.getFontMetrics());</span>
+<span class="nc" id="L808">        Rectangle2D b2 = TextUtils.getTextBounds(label2, g2,</span>
+<span class="nc" id="L809">                g2.getFontMetrics());</span>
+<span class="nc" id="L810">        double w = Math.max(b1.getWidth(), b2.getWidth());</span>
+<span class="nc" id="L811">        long ww = Math.round(java2DToValue(dataArea.getX() + w + 5.0,</span>
+<span class="nc" id="L812">                dataArea, edge));</span>
+<span class="nc bnc" id="L813" title="All 2 branches missed.">        if (isInverted()) {</span>
+<span class="nc" id="L814">            ww = axisMax - ww;</span>
+<span class="nc" id="L815">        }</span>
+        else {
+<span class="nc" id="L817">            ww = ww - axisMin;</span>
+        }
+<span class="nc" id="L819">        long length = p1.getLastMillisecond()</span>
+<span class="nc" id="L820">                      - p1.getFirstMillisecond();</span>
+<span class="nc" id="L821">        int periods = (int) (ww / length) + 1;</span>
+
+<span class="nc" id="L823">        RegularTimePeriod p = this.labelInfo[band].createInstance(</span>
+<span class="nc" id="L824">                new Date(axisMin), this.timeZone, this.locale);</span>
+<span class="nc" id="L825">        Rectangle2D b = null;</span>
+<span class="nc" id="L826">        long lastXX = 0L;</span>
+<span class="nc" id="L827">        float y = (float) (state.getCursor());</span>
+<span class="nc" id="L828">        TextAnchor anchor = TextAnchor.TOP_CENTER;</span>
+<span class="nc" id="L829">        float yDelta = (float) b1.getHeight();</span>
+<span class="nc bnc" id="L830" title="All 2 branches missed.">        if (edge == RectangleEdge.TOP) {</span>
+<span class="nc" id="L831">            anchor = TextAnchor.BOTTOM_CENTER;</span>
+<span class="nc" id="L832">            yDelta = -yDelta;</span>
+        }
+<span class="nc bnc" id="L834" title="All 2 branches missed.">        while (p.getFirstMillisecond() &lt;= axisMax) {</span>
+<span class="nc" id="L835">            float x = (float) valueToJava2D(p.getMiddleMillisecond(), dataArea,</span>
+<span class="nc" id="L836">                    edge);</span>
+<span class="nc" id="L837">            String label = df.format(new Date(p.getMiddleMillisecond()));</span>
+<span class="nc" id="L838">            long first = p.getFirstMillisecond();</span>
+<span class="nc" id="L839">            long last = p.getLastMillisecond();</span>
+<span class="nc bnc" id="L840" title="All 2 branches missed.">            if (last &gt; axisMax) {</span>
+                // this is the last period, but it is only partially visible
+                // so check that the label will fit before displaying it...
+<span class="nc" id="L843">                Rectangle2D bb = TextUtils.getTextBounds(label, g2,</span>
+<span class="nc" id="L844">                        g2.getFontMetrics());</span>
+<span class="nc bnc" id="L845" title="All 2 branches missed.">                if ((x + bb.getWidth() / 2) &gt; dataArea.getMaxX()) {</span>
+<span class="nc" id="L846">                    float xstart = (float) valueToJava2D(Math.max(first,</span>
+<span class="nc" id="L847">                            axisMin), dataArea, edge);</span>
+<span class="nc bnc" id="L848" title="All 2 branches missed.">                    if (bb.getWidth() &lt; (dataArea.getMaxX() - xstart)) {</span>
+<span class="nc" id="L849">                        x = ((float) dataArea.getMaxX() + xstart) / 2.0f;</span>
+<span class="nc" id="L850">                    }</span>
+                    else {
+<span class="nc" id="L852">                        label = null;</span>
+                    }
+                }
+            }
+<span class="nc bnc" id="L856" title="All 2 branches missed.">            if (first &lt; axisMin) {</span>
+                // this is the first period, but it is only partially visible
+                // so check that the label will fit before displaying it...
+<span class="nc" id="L859">                Rectangle2D bb = TextUtils.getTextBounds(label, g2,</span>
+<span class="nc" id="L860">                        g2.getFontMetrics());</span>
+<span class="nc bnc" id="L861" title="All 2 branches missed.">                if ((x - bb.getWidth() / 2) &lt; dataArea.getX()) {</span>
+<span class="nc" id="L862">                    float xlast = (float) valueToJava2D(Math.min(last,</span>
+<span class="nc" id="L863">                            axisMax), dataArea, edge);</span>
+<span class="nc bnc" id="L864" title="All 2 branches missed.">                    if (bb.getWidth() &lt; (xlast - dataArea.getX())) {</span>
+<span class="nc" id="L865">                        x = (xlast + (float) dataArea.getX()) / 2.0f;</span>
+<span class="nc" id="L866">                    }</span>
+                    else {
+<span class="nc" id="L868">                        label = null;</span>
+                    }
+                }
+
+            }
+<span class="nc bnc" id="L873" title="All 2 branches missed.">            if (label != null) {</span>
+<span class="nc" id="L874">                g2.setPaint(this.labelInfo[band].getLabelPaint());</span>
+<span class="nc" id="L875">                b = TextUtils.drawAlignedString(label, g2, x, y, anchor);</span>
+            }
+<span class="nc bnc" id="L877" title="All 2 branches missed.">            if (lastXX &gt; 0L) {</span>
+<span class="nc bnc" id="L878" title="All 2 branches missed.">                if (this.labelInfo[band].getDrawDividers()) {</span>
+<span class="nc" id="L879">                    long nextXX = p.getFirstMillisecond();</span>
+<span class="nc" id="L880">                    long mid = (lastXX + nextXX) / 2;</span>
+<span class="nc" id="L881">                    float mid2d = (float) valueToJava2D(mid, dataArea, edge);</span>
+<span class="nc" id="L882">                    g2.setStroke(this.labelInfo[band].getDividerStroke());</span>
+<span class="nc" id="L883">                    g2.setPaint(this.labelInfo[band].getDividerPaint());</span>
+<span class="nc" id="L884">                    g2.draw(new Line2D.Float(mid2d, y, mid2d, y + yDelta));</span>
+                }
+            }
+<span class="nc" id="L887">            lastXX = last;</span>
+<span class="nc bnc" id="L888" title="All 2 branches missed.">            for (int i = 0; i &lt; periods; i++) {</span>
+<span class="nc" id="L889">                p = p.next();</span>
+            }
+<span class="nc" id="L891">            p.peg(this.calendar);</span>
+        }
+<span class="nc" id="L893">        double used = 0.0;</span>
+<span class="nc bnc" id="L894" title="All 2 branches missed.">        if (b != null) {</span>
+<span class="nc" id="L895">            used = b.getHeight();</span>
+            // work out the trailing gap
+<span class="nc bnc" id="L897" title="All 2 branches missed.">            if (edge == RectangleEdge.BOTTOM) {</span>
+<span class="nc" id="L898">                used += this.labelInfo[band].getPadding().calculateBottomOutset(</span>
+<span class="nc" id="L899">                        fm.getHeight());</span>
+<span class="nc" id="L900">            }</span>
+<span class="nc bnc" id="L901" title="All 2 branches missed.">            else if (edge == RectangleEdge.TOP) {</span>
+<span class="nc" id="L902">                used += this.labelInfo[band].getPadding().calculateTopOutset(</span>
+<span class="nc" id="L903">                        fm.getHeight());</span>
+            }
+        }
+<span class="nc" id="L906">        state.moveCursor(used, edge);</span>
+<span class="nc" id="L907">        return state;</span>
+    }
+
+    /**
+     * Calculates the positions of the ticks for the axis, storing the results
+     * in the tick list (ready for drawing).
+     *
+     * @param g2  the graphics device.
+     * @param state  the axis state.
+     * @param dataArea  the area inside the axes.
+     * @param edge  the edge on which the axis is located.
+     *
+     * @return The list of ticks.
+     */
+    @Override
+    public List refreshTicks(Graphics2D g2, AxisState state,
+            Rectangle2D dataArea, RectangleEdge edge) {
+<span class="nc" id="L924">        return Collections.EMPTY_LIST;</span>
+    }
+
+    /**
+     * Converts a data value to a coordinate in Java2D space, assuming that the
+     * axis runs along one edge of the specified dataArea.
+     * &lt;p&gt;
+     * Note that it is possible for the coordinate to fall outside the area.
+     *
+     * @param value  the data value.
+     * @param area  the area for plotting the data.
+     * @param edge  the edge along which the axis lies.
+     *
+     * @return The Java2D coordinate.
+     */
+    @Override
+    public double valueToJava2D(double value, Rectangle2D area,
+            RectangleEdge edge) {
+
+<span class="nc" id="L943">        double result = Double.NaN;</span>
+<span class="nc" id="L944">        double axisMin = this.first.getFirstMillisecond();</span>
+<span class="nc" id="L945">        double axisMax = this.last.getLastMillisecond();</span>
+<span class="nc bnc" id="L946" title="All 2 branches missed.">        if (RectangleEdge.isTopOrBottom(edge)) {</span>
+<span class="nc" id="L947">            double minX = area.getX();</span>
+<span class="nc" id="L948">            double maxX = area.getMaxX();</span>
+<span class="nc bnc" id="L949" title="All 2 branches missed.">            if (isInverted()) {</span>
+<span class="nc" id="L950">                result = maxX + ((value - axisMin) / (axisMax - axisMin))</span>
+<span class="nc" id="L951">                         * (minX - maxX);</span>
+<span class="nc" id="L952">            }</span>
+            else {
+<span class="nc" id="L954">                result = minX + ((value - axisMin) / (axisMax - axisMin))</span>
+<span class="nc" id="L955">                         * (maxX - minX);</span>
+            }
+<span class="nc" id="L957">        }</span>
+<span class="nc bnc" id="L958" title="All 2 branches missed.">        else if (RectangleEdge.isLeftOrRight(edge)) {</span>
+<span class="nc" id="L959">            double minY = area.getMinY();</span>
+<span class="nc" id="L960">            double maxY = area.getMaxY();</span>
+<span class="nc bnc" id="L961" title="All 2 branches missed.">            if (isInverted()) {</span>
+<span class="nc" id="L962">                result = minY + (((value - axisMin) / (axisMax - axisMin))</span>
+<span class="nc" id="L963">                         * (maxY - minY));</span>
+<span class="nc" id="L964">            }</span>
+            else {
+<span class="nc" id="L966">                result = maxY - (((value - axisMin) / (axisMax - axisMin))</span>
+<span class="nc" id="L967">                         * (maxY - minY));</span>
+            }
+        }
+<span class="nc" id="L970">        return result;</span>
+
+    }
+
+    /**
+     * Converts a coordinate in Java2D space to the corresponding data value,
+     * assuming that the axis runs along one edge of the specified dataArea.
+     *
+     * @param java2DValue  the coordinate in Java2D space.
+     * @param area  the area in which the data is plotted.
+     * @param edge  the edge along which the axis lies.
+     *
+     * @return The data value.
+     */
+    @Override
+    public double java2DToValue(double java2DValue, Rectangle2D area,
+            RectangleEdge edge) {
+
+        double result;
+<span class="nc" id="L989">        double min = 0.0;</span>
+<span class="nc" id="L990">        double max = 0.0;</span>
+<span class="nc" id="L991">        double axisMin = this.first.getFirstMillisecond();</span>
+<span class="nc" id="L992">        double axisMax = this.last.getLastMillisecond();</span>
+<span class="nc bnc" id="L993" title="All 2 branches missed.">        if (RectangleEdge.isTopOrBottom(edge)) {</span>
+<span class="nc" id="L994">            min = area.getX();</span>
+<span class="nc" id="L995">            max = area.getMaxX();</span>
+<span class="nc" id="L996">        }</span>
+<span class="nc bnc" id="L997" title="All 2 branches missed.">        else if (RectangleEdge.isLeftOrRight(edge)) {</span>
+<span class="nc" id="L998">            min = area.getMaxY();</span>
+<span class="nc" id="L999">            max = area.getY();</span>
+        }
+<span class="nc bnc" id="L1001" title="All 2 branches missed.">        if (isInverted()) {</span>
+<span class="nc" id="L1002">             result = axisMax - ((java2DValue - min) / (max - min)</span>
+<span class="nc" id="L1003">                      * (axisMax - axisMin));</span>
+<span class="nc" id="L1004">        }</span>
+        else {
+<span class="nc" id="L1006">             result = axisMin + ((java2DValue - min) / (max - min)</span>
+<span class="nc" id="L1007">                      * (axisMax - axisMin));</span>
+        }
+<span class="nc" id="L1009">        return result;</span>
+    }
+
+    /**
+     * Rescales the axis to ensure that all data is visible.
+     */
+    @Override
+    protected void autoAdjustRange() {
+
+<span class="fc" id="L1018">        Plot plot = getPlot();</span>
+<span class="pc bpc" id="L1019" title="1 of 2 branches missed.">        if (plot == null) {</span>
+<span class="fc" id="L1020">            return;  // no plot, no data</span>
+        }
+
+<span class="nc bnc" id="L1023" title="All 2 branches missed.">        if (plot instanceof ValueAxisPlot) {</span>
+<span class="nc" id="L1024">            ValueAxisPlot vap = (ValueAxisPlot) plot;</span>
+
+<span class="nc" id="L1026">            Range r = vap.getDataRange(this);</span>
+<span class="nc bnc" id="L1027" title="All 2 branches missed.">            if (r == null) {</span>
+<span class="nc" id="L1028">                r = getDefaultAutoRange();</span>
+            }
+
+<span class="nc" id="L1031">            long upper = Math.round(r.getUpperBound());</span>
+<span class="nc" id="L1032">            long lower = Math.round(r.getLowerBound());</span>
+<span class="nc" id="L1033">            this.first = createInstance(this.autoRangeTimePeriodClass,</span>
+<span class="nc" id="L1034">                    new Date(lower), this.timeZone, this.locale);</span>
+<span class="nc" id="L1035">            this.last = createInstance(this.autoRangeTimePeriodClass,</span>
+<span class="nc" id="L1036">                    new Date(upper), this.timeZone, this.locale);</span>
+<span class="nc" id="L1037">            setRange(r, false, false);</span>
+        }
+
+<span class="nc" id="L1040">    }</span>
+
+    /**
+     * Tests the axis for equality with an arbitrary object.
+     *
+     * @param obj  the object ({@code null} permitted).
+     *
+     * @return A boolean.
+     */
+    @Override
+    public boolean equals(Object obj) {
+<span class="pc bpc" id="L1051" title="1 of 2 branches missed.">        if (obj == this) {</span>
+<span class="nc" id="L1052">            return true;</span>
+        }
+<span class="pc bpc" id="L1054" title="1 of 2 branches missed.">        if (!(obj instanceof PeriodAxis)) {</span>
+<span class="nc" id="L1055">            return false;</span>
+        }
+<span class="fc" id="L1057">        PeriodAxis that = (PeriodAxis) obj;</span>
+<span class="fc bfc" id="L1058" title="All 2 branches covered.">        if (!this.first.equals(that.first)) {</span>
+<span class="fc" id="L1059">            return false;</span>
+        }
+<span class="fc bfc" id="L1061" title="All 2 branches covered.">        if (!this.last.equals(that.last)) {</span>
+<span class="fc" id="L1062">            return false;</span>
+        }
+<span class="fc bfc" id="L1064" title="All 2 branches covered.">        if (!this.timeZone.equals(that.timeZone)) {</span>
+<span class="fc" id="L1065">            return false;</span>
+        }
+<span class="fc bfc" id="L1067" title="All 2 branches covered.">        if (!this.locale.equals(that.locale)) {</span>
+<span class="fc" id="L1068">            return false;</span>
+        }
+<span class="fc" id="L1070">        if (!this.autoRangeTimePeriodClass.equals(</span>
+<span class="fc bfc" id="L1071" title="All 2 branches covered.">                that.autoRangeTimePeriodClass)) {</span>
+<span class="fc" id="L1072">            return false;</span>
+        }
+<span class="fc bfc" id="L1074" title="All 2 branches covered.">        if (!(isMinorTickMarksVisible() == that.isMinorTickMarksVisible())) {</span>
+<span class="fc" id="L1075">            return false;</span>
+        }
+<span class="fc" id="L1077">        if (!this.majorTickTimePeriodClass.equals(</span>
+<span class="fc bfc" id="L1078" title="All 2 branches covered.">                that.majorTickTimePeriodClass)) {</span>
+<span class="fc" id="L1079">            return false;</span>
+        }
+<span class="fc" id="L1081">        if (!this.minorTickTimePeriodClass.equals(</span>
+<span class="fc bfc" id="L1082" title="All 2 branches covered.">                that.minorTickTimePeriodClass)) {</span>
+<span class="fc" id="L1083">            return false;</span>
+        }
+<span class="fc bfc" id="L1085" title="All 2 branches covered.">        if (!this.minorTickMarkPaint.equals(that.minorTickMarkPaint)) {</span>
+<span class="fc" id="L1086">            return false;</span>
+        }
+<span class="fc bfc" id="L1088" title="All 2 branches covered.">        if (!this.minorTickMarkStroke.equals(that.minorTickMarkStroke)) {</span>
+<span class="fc" id="L1089">            return false;</span>
+        }
+<span class="fc bfc" id="L1091" title="All 2 branches covered.">        if (!Arrays.equals(this.labelInfo, that.labelInfo)) {</span>
+<span class="fc" id="L1092">            return false;</span>
+        }
+<span class="fc" id="L1094">        return super.equals(obj);</span>
+    }
+
+    /**
+     * Returns a hash code for this object.
+     *
+     * @return A hash code.
+     */
+    @Override
+    public int hashCode() {
+<span class="fc" id="L1104">        return super.hashCode();</span>
+    }
+
+    /**
+     * Returns a clone of the axis.
+     *
+     * @return A clone.
+     *
+     * @throws CloneNotSupportedException  this class is cloneable, but
+     *         subclasses may not be.
+     */
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+<span class="fc" id="L1117">        PeriodAxis clone = (PeriodAxis) super.clone();</span>
+<span class="fc" id="L1118">        clone.timeZone = (TimeZone) this.timeZone.clone();</span>
+<span class="fc" id="L1119">        clone.labelInfo = (PeriodAxisLabelInfo[]) this.labelInfo.clone();</span>
+<span class="fc" id="L1120">        return clone;</span>
+    }
+
+    /**
+     * A utility method used to create a particular subclass of the
+     * {@link RegularTimePeriod} class that includes the specified millisecond,
+     * assuming the specified time zone.
+     *
+     * @param periodClass  the class.
+     * @param millisecond  the time.
+     * @param zone  the time zone.
+     * @param locale  the locale.
+     *
+     * @return The time period.
+     */
+    private RegularTimePeriod createInstance(Class periodClass, 
+            Date millisecond, TimeZone zone, Locale locale) {
+<span class="fc" id="L1137">        RegularTimePeriod result = null;</span>
+        try {
+<span class="fc" id="L1139">            Constructor c = periodClass.getDeclaredConstructor(new Class[] {</span>
+<span class="fc" id="L1140">                    Date.class, TimeZone.class, Locale.class});</span>
+<span class="fc" id="L1141">            result = (RegularTimePeriod) c.newInstance(new Object[] {</span>
+<span class="fc" id="L1142">                    millisecond, zone, locale});</span>
+<span class="fc" id="L1143">        }</span>
+<span class="nc" id="L1144">        catch (Exception e) {</span>
+            try {
+<span class="nc" id="L1146">                Constructor c = periodClass.getDeclaredConstructor(new Class[] {</span>
+<span class="nc" id="L1147">                        Date.class});</span>
+<span class="nc" id="L1148">                result = (RegularTimePeriod) c.newInstance(new Object[] {</span>
+<span class="nc" id="L1149">                        millisecond});</span>
+<span class="nc" id="L1150">            }</span>
+<span class="nc" id="L1151">            catch (Exception e2) {</span>
+                // do nothing
+            }
+        }
+<span class="fc" id="L1155">        return result;</span>
+    }
+
+    /**
+     * Provides serialization support.
+     *
+     * @param stream  the output stream.
+     *
+     * @throws IOException  if there is an I/O error.
+     */
+    private void writeObject(ObjectOutputStream stream) throws IOException {
+<span class="fc" id="L1166">        stream.defaultWriteObject();</span>
+<span class="fc" id="L1167">        SerialUtils.writeStroke(this.minorTickMarkStroke, stream);</span>
+<span class="fc" id="L1168">        SerialUtils.writePaint(this.minorTickMarkPaint, stream);</span>
+<span class="fc" id="L1169">    }</span>
+
+    /**
+     * Provides serialization support.
+     *
+     * @param stream  the input stream.
+     *
+     * @throws IOException  if there is an I/O error.
+     * @throws ClassNotFoundException  if there is a classpath problem.
+     */
+    private void readObject(ObjectInputStream stream)
+        throws IOException, ClassNotFoundException {
+<span class="fc" id="L1181">        stream.defaultReadObject();</span>
+<span class="fc" id="L1182">        this.minorTickMarkStroke = SerialUtils.readStroke(stream);</span>
+<span class="fc" id="L1183">        this.minorTickMarkPaint = SerialUtils.readPaint(stream);</span>
+<span class="fc" id="L1184">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (25 Mar 2022 23:00:41)</div></body></html>

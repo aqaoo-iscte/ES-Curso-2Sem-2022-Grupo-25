@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>NumberTickUnitTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (25 Mar 2022 23:00:41)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart.axis</a> &gt; <span class="el_source">NumberTickUnitTest.java</span></div><h1>NumberTickUnitTest.java</h1><pre class="source lang-java linenums">/* ===========================================================
+ * JFreeChart : a free chart library for the Java(tm) platform
+ * ===========================================================
+ *
+ * (C) Copyright 2000-2022, by David Gilbert and Contributors.
+ *
+ * Project Info:  http://www.jfree.org/jfreechart/index.html
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ *
+ * [Oracle and Java are registered trademarks of Oracle and/or its affiliates. 
+ * Other names may be trademarks of their respective owners.]
+ *
+ * -----------------------
+ * NumberTickUnitTest.java
+ * -----------------------
+ * (C) Copyright 2005-2022, by David Gilbert and Contributors.
+ *
+ * Original Author:  David Gilbert;
+ * Contributor(s):   -;
+ *
+ */
+
+package org.jfree.chart.axis;
+
+import java.text.DecimalFormat;
+
+import org.jfree.chart.TestUtils;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Some tests for the {@link NumberTickUnit} class.
+ */
+<span class="fc" id="L49">public class NumberTickUnitTest {</span>
+
+
+    /**
+     * Confirm that the equals method can distinguish all the required fields.
+     */
+    @Test
+    public void testEquals() {
+<span class="fc" id="L57">        NumberTickUnit t1 = new NumberTickUnit(1.23, new DecimalFormat(&quot;0.00&quot;));</span>
+<span class="fc" id="L58">        NumberTickUnit t2 = new NumberTickUnit(1.23, new DecimalFormat(&quot;0.00&quot;));</span>
+<span class="fc" id="L59">        assertEquals(t1, t2);</span>
+<span class="fc" id="L60">        assertEquals(t2, t1);</span>
+
+<span class="fc" id="L62">        t1 = new NumberTickUnit(3.21, new DecimalFormat(&quot;0.00&quot;));</span>
+<span class="fc" id="L63">        assertNotEquals(t1, t2);</span>
+<span class="fc" id="L64">        t2 = new NumberTickUnit(3.21, new DecimalFormat(&quot;0.00&quot;));</span>
+<span class="fc" id="L65">        assertEquals(t1, t2);</span>
+
+<span class="fc" id="L67">        t1 = new NumberTickUnit(3.21, new DecimalFormat(&quot;0.000&quot;));</span>
+<span class="fc" id="L68">        assertNotEquals(t1, t2);</span>
+<span class="fc" id="L69">        t2 = new NumberTickUnit(3.21, new DecimalFormat(&quot;0.000&quot;));</span>
+<span class="fc" id="L70">        assertEquals(t1, t2);</span>
+<span class="fc" id="L71">    }</span>
+
+    /**
+     * Two objects that are equal are required to return the same hashCode.
+     */
+    @Test
+    public void testHashCode() {
+<span class="fc" id="L78">        NumberTickUnit t1 = new NumberTickUnit(1.23, new DecimalFormat(&quot;0.00&quot;));</span>
+<span class="fc" id="L79">        NumberTickUnit t2 = new NumberTickUnit(1.23, new DecimalFormat(&quot;0.00&quot;));</span>
+<span class="fc" id="L80">        int h1 = t1.hashCode();</span>
+<span class="fc" id="L81">        int h2 = t2.hashCode();</span>
+<span class="fc" id="L82">        assertEquals(h1, h2);</span>
+<span class="fc" id="L83">    }</span>
+
+    /**
+     * This is an immutable class so it doesn't need to be cloneable.
+     */
+    @Test
+    public void testCloning() {
+<span class="fc" id="L90">        NumberTickUnit t1 = new NumberTickUnit(1.23, new DecimalFormat(&quot;0.00&quot;));</span>
+<span class="fc" id="L91">        assertFalse(t1 instanceof Cloneable);</span>
+<span class="fc" id="L92">    }</span>
+
+    /**
+     * Serialize an instance, restore it, and check for equality.
+     */
+    @Test
+    public void testSerialization() {
+<span class="fc" id="L99">        NumberTickUnit t1 = new NumberTickUnit(1.23, new DecimalFormat(&quot;0.00&quot;));</span>
+<span class="fc" id="L100">        NumberTickUnit t2 = TestUtils.serialised(t1);</span>
+<span class="fc" id="L101">        assertEquals(t1, t2);</span>
+<span class="fc" id="L102">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (25 Mar 2022 23:00:41)</div></body></html>

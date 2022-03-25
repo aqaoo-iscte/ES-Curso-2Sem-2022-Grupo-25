@@ -1,0 +1,434 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>WaferMapPlot.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (25 Mar 2022 23:00:41)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart.plot</a> &gt; <span class="el_source">WaferMapPlot.java</span></div><h1>WaferMapPlot.java</h1><pre class="source lang-java linenums">/* ===========================================================
+ * JFreeChart : a free chart library for the Java(tm) platform
+ * ===========================================================
+ *
+ * (C) Copyright 2000-2022, by David Gilbert and Contributors.
+ *
+ * Project Info:  http://www.jfree.org/jfreechart/index.html
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ *
+ * [Oracle and Java are registered trademarks of Oracle and/or its affiliates. 
+ * Other names may be trademarks of their respective owners.]
+ *
+ * -----------------
+ * WaferMapPlot.java
+ * -----------------
+ *
+ * (C) Copyright 2003-2021, by Robert Redburn and Contributors.
+ *
+ * Original Author:  Robert Redburn;
+ * Contributor(s):   David Gilbert;
+ *
+ */
+
+package org.jfree.chart.plot;
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Paint;
+import java.awt.Shape;
+import java.awt.Stroke;
+import java.awt.geom.Arc2D;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.io.Serializable;
+import java.util.ResourceBundle;
+import org.jfree.chart.ChartElementVisitor;
+
+import org.jfree.chart.legend.LegendItemCollection;
+import org.jfree.chart.event.PlotChangeEvent;
+import org.jfree.chart.event.RendererChangeEvent;
+import org.jfree.chart.event.RendererChangeListener;
+import org.jfree.chart.renderer.WaferMapRenderer;
+import org.jfree.chart.api.RectangleInsets;
+import org.jfree.data.general.DatasetChangeEvent;
+import org.jfree.data.general.WaferMapDataset;
+
+/**
+ * A wafer map plot.
+ */
+public class WaferMapPlot extends Plot implements RendererChangeListener,
+        Cloneable, Serializable {
+
+    /** For serialization. */
+    private static final long serialVersionUID = 4668320403707308155L;
+
+    /** The default grid line stroke. */
+<span class="nc" id="L73">    public static final Stroke DEFAULT_GRIDLINE_STROKE = new BasicStroke(0.5f,</span>
+<span class="nc" id="L74">        BasicStroke.CAP_BUTT,</span>
+<span class="nc" id="L75">        BasicStroke.JOIN_BEVEL,</span>
+<span class="nc" id="L76">        0.0f,</span>
+<span class="nc" id="L77">        new float[] {2.0f, 2.0f},</span>
+<span class="nc" id="L78">        0.0f);</span>
+
+    /** The default grid line paint. */
+<span class="nc" id="L81">    public static final Paint DEFAULT_GRIDLINE_PAINT = Color.LIGHT_GRAY;</span>
+
+    /** The default crosshair visibility. */
+    public static final boolean DEFAULT_CROSSHAIR_VISIBLE = false;
+
+    /** The default crosshair stroke. */
+<span class="nc" id="L87">    public static final Stroke DEFAULT_CROSSHAIR_STROKE</span>
+<span class="nc" id="L88">            = DEFAULT_GRIDLINE_STROKE;</span>
+
+    /** The default crosshair paint. */
+<span class="nc" id="L91">    public static final Paint DEFAULT_CROSSHAIR_PAINT = Color.BLUE;</span>
+
+    /** The resourceBundle for the localization. */
+<span class="nc" id="L94">    protected static ResourceBundle localizationResources</span>
+<span class="nc" id="L95">            = ResourceBundle.getBundle(&quot;org.jfree.chart.plot.LocalizationBundle&quot;);</span>
+
+    /** The plot orientation.
+     *  vertical = notch down
+     *  horizontal = notch right
+     */
+    private final PlotOrientation orientation;
+
+    /** The dataset. */
+    private WaferMapDataset dataset;
+
+    /**
+     * Object responsible for drawing the visual representation of each point
+     * on the plot.
+     */
+    private WaferMapRenderer renderer;
+
+    /**
+     * Creates a new plot with no dataset.
+     */
+    public WaferMapPlot() {
+<span class="nc" id="L116">        this(null);</span>
+<span class="nc" id="L117">    }</span>
+
+    /**
+     * Creates a new plot.
+     *
+     * @param dataset  the dataset ({@code null} permitted).
+     */
+    public WaferMapPlot(WaferMapDataset dataset) {
+<span class="nc" id="L125">        this(dataset, null);</span>
+<span class="nc" id="L126">    }</span>
+
+    /**
+     * Creates a new plot.
+     *
+     * @param dataset  the dataset ({@code null} permitted).
+     * @param renderer  the renderer ({@code null} permitted).
+     */
+    public WaferMapPlot(WaferMapDataset dataset, WaferMapRenderer renderer) {
+
+<span class="nc" id="L136">        super();</span>
+
+<span class="nc" id="L138">        this.orientation = PlotOrientation.VERTICAL;</span>
+
+<span class="nc" id="L140">        this.dataset = dataset;</span>
+<span class="nc bnc" id="L141" title="All 2 branches missed.">        if (dataset != null) {</span>
+<span class="nc" id="L142">            dataset.addChangeListener(this);</span>
+        }
+
+<span class="nc" id="L145">        this.renderer = renderer;</span>
+<span class="nc bnc" id="L146" title="All 2 branches missed.">        if (renderer != null) {</span>
+<span class="nc" id="L147">            renderer.setPlot(this);</span>
+<span class="nc" id="L148">            renderer.addChangeListener(this);</span>
+        }
+
+<span class="nc" id="L151">    }</span>
+
+    /**
+     * Returns the plot type as a string.
+     *
+     * @return A short string describing the type of plot.
+     */
+    @Override
+    public String getPlotType() {
+<span class="nc" id="L160">        return (&quot;WMAP_Plot&quot;);</span>
+    }
+
+    /**
+     * Returns the dataset
+     *
+     * @return The dataset (possibly {@code null}).
+     */
+    public WaferMapDataset getDataset() {
+<span class="nc" id="L169">        return this.dataset;</span>
+    }
+
+    /**
+     * Sets the dataset used by the plot and sends a {@link PlotChangeEvent}
+     * to all registered listeners.
+     *
+     * @param dataset  the dataset ({@code null} permitted).
+     */
+    public void setDataset(WaferMapDataset dataset) {
+        // if there is an existing dataset, remove the plot from the list of
+        // change listeners...
+<span class="nc bnc" id="L181" title="All 2 branches missed.">        if (this.dataset != null) {</span>
+<span class="nc" id="L182">            this.dataset.removeChangeListener(this);</span>
+        }
+
+        // set the new dataset, and register the chart as a change listener...
+<span class="nc" id="L186">        this.dataset = dataset;</span>
+<span class="nc bnc" id="L187" title="All 2 branches missed.">        if (dataset != null) {</span>
+<span class="nc" id="L188">            dataset.addChangeListener(this);</span>
+        }
+
+        // send a dataset change event to self to trigger plot change event
+<span class="nc" id="L192">        datasetChanged(new DatasetChangeEvent(this, dataset));</span>
+<span class="nc" id="L193">    }</span>
+
+    /**
+     * Sets the item renderer, and notifies all listeners of a change to the
+     * plot.  If the renderer is set to {@code null}, no chart will be
+     * drawn.
+     *
+     * @param renderer  the new renderer ({@code null} permitted).
+     */
+    public void setRenderer(WaferMapRenderer renderer) {
+<span class="nc bnc" id="L203" title="All 2 branches missed.">        if (this.renderer != null) {</span>
+<span class="nc" id="L204">            this.renderer.removeChangeListener(this);</span>
+        }
+<span class="nc" id="L206">        this.renderer = renderer;</span>
+<span class="nc bnc" id="L207" title="All 2 branches missed.">        if (renderer != null) {</span>
+<span class="nc" id="L208">            renderer.setPlot(this);</span>
+        }
+<span class="nc" id="L210">        fireChangeEvent();</span>
+<span class="nc" id="L211">    }</span>
+
+    /**
+     * Receives a chart element visitor.  Many plot subclasses will override
+     * this method to handle their subcomponents.
+     * 
+     * @param visitor  the visitor ({@code null} not permitted).
+     */
+    @Override
+    public void receive(ChartElementVisitor visitor) {
+        // FIXME : handle the renderer
+<span class="nc" id="L222">        super.receive(visitor);</span>
+<span class="nc" id="L223">    }</span>
+
+    /**
+     * Draws the wafermap view.
+     *
+     * @param g2  the graphics device.
+     * @param area  the plot area.
+     * @param anchor  the anchor point ({@code null} permitted).
+     * @param state  the plot state.
+     * @param info  the plot rendering info.
+     */
+    @Override
+    public void draw(Graphics2D g2, Rectangle2D area, Point2D anchor,
+            PlotState state, PlotRenderingInfo info) {
+
+        // if the plot area is too small, just return...
+<span class="nc bnc" id="L239" title="All 2 branches missed.">        boolean b1 = (area.getWidth() &lt;= MINIMUM_WIDTH_TO_DRAW);</span>
+<span class="nc bnc" id="L240" title="All 2 branches missed.">        boolean b2 = (area.getHeight() &lt;= MINIMUM_HEIGHT_TO_DRAW);</span>
+<span class="nc bnc" id="L241" title="All 4 branches missed.">        if (b1 || b2) {</span>
+<span class="nc" id="L242">            return;</span>
+        }
+
+        // record the plot area...
+<span class="nc bnc" id="L246" title="All 2 branches missed.">        if (info != null) {</span>
+<span class="nc" id="L247">            info.setPlotArea(area);</span>
+        }
+
+        // adjust the drawing area for the plot insets (if any)...
+<span class="nc" id="L251">        RectangleInsets insets = getInsets();</span>
+<span class="nc" id="L252">        insets.trim(area);</span>
+
+<span class="nc" id="L254">        drawChipGrid(g2, area);</span>
+<span class="nc" id="L255">        drawWaferEdge(g2, area);</span>
+
+<span class="nc" id="L257">    }</span>
+
+    /**
+     * Calculates and draws the chip locations on the wafer.
+     *
+     * @param g2  the graphics device.
+     * @param plotArea  the plot area.
+     */
+    protected void drawChipGrid(Graphics2D g2, Rectangle2D plotArea) {
+
+<span class="nc" id="L267">        Shape savedClip = g2.getClip();</span>
+<span class="nc" id="L268">        g2.setClip(getWaferEdge(plotArea));</span>
+<span class="nc" id="L269">        Rectangle2D chip = new Rectangle2D.Double();</span>
+<span class="nc" id="L270">        int xchips = 35;</span>
+<span class="nc" id="L271">        int ychips = 20;</span>
+<span class="nc" id="L272">        double space = 1d;</span>
+<span class="nc bnc" id="L273" title="All 2 branches missed.">        if (this.dataset != null) {</span>
+<span class="nc" id="L274">            xchips = this.dataset.getMaxChipX() + 2;</span>
+<span class="nc" id="L275">            ychips = this.dataset.getMaxChipY() + 2;</span>
+<span class="nc" id="L276">            space = this.dataset.getChipSpace();</span>
+        }
+<span class="nc" id="L278">        double startX = plotArea.getX();</span>
+<span class="nc" id="L279">        double startY = plotArea.getY();</span>
+<span class="nc" id="L280">        double chipWidth = 1d;</span>
+<span class="nc" id="L281">        double chipHeight = 1d;</span>
+<span class="nc bnc" id="L282" title="All 2 branches missed.">        if (plotArea.getWidth() != plotArea.getHeight()) {</span>
+            double major, minor;
+<span class="nc bnc" id="L284" title="All 2 branches missed.">            if (plotArea.getWidth() &gt; plotArea.getHeight()) {</span>
+<span class="nc" id="L285">                major = plotArea.getWidth();</span>
+<span class="nc" id="L286">                minor = plotArea.getHeight();</span>
+<span class="nc" id="L287">            }</span>
+            else {
+<span class="nc" id="L289">                major = plotArea.getHeight();</span>
+<span class="nc" id="L290">                minor = plotArea.getWidth();</span>
+            }
+            //set upperLeft point
+<span class="nc bnc" id="L293" title="All 2 branches missed.">            if (plotArea.getWidth() == minor) { // x is minor</span>
+<span class="nc" id="L294">                startY += (major - minor) / 2;</span>
+<span class="nc" id="L295">                chipWidth = (plotArea.getWidth() - (space * xchips - 1))</span>
+<span class="nc" id="L296">                    / xchips;</span>
+<span class="nc" id="L297">                chipHeight = (plotArea.getWidth() - (space * ychips - 1))</span>
+<span class="nc" id="L298">                    / ychips;</span>
+<span class="nc" id="L299">            }</span>
+            else { // y is minor
+<span class="nc" id="L301">                startX += (major - minor) / 2;</span>
+<span class="nc" id="L302">                chipWidth = (plotArea.getHeight() - (space * xchips - 1))</span>
+<span class="nc" id="L303">                    / xchips;</span>
+<span class="nc" id="L304">                chipHeight = (plotArea.getHeight() - (space * ychips - 1))</span>
+<span class="nc" id="L305">                    / ychips;</span>
+            }
+        }
+
+<span class="nc bnc" id="L309" title="All 2 branches missed.">        for (int x = 1; x &lt;= xchips; x++) {</span>
+<span class="nc" id="L310">            double upperLeftX = (startX - chipWidth) + (chipWidth * x)</span>
+<span class="nc" id="L311">                + (space * (x - 1));</span>
+<span class="nc bnc" id="L312" title="All 2 branches missed.">            for (int y = 1; y &lt;= ychips; y++) {</span>
+<span class="nc" id="L313">                double upperLeftY = (startY - chipHeight) + (chipHeight * y)</span>
+<span class="nc" id="L314">                    + (space * (y - 1));</span>
+<span class="nc" id="L315">                chip.setFrame(upperLeftX, upperLeftY, chipWidth, chipHeight);</span>
+<span class="nc" id="L316">                g2.setColor(Color.WHITE);</span>
+<span class="nc bnc" id="L317" title="All 2 branches missed.">                if (this.dataset.getChipValue(x - 1, ychips - y - 1) != null) {</span>
+<span class="nc" id="L318">                    g2.setPaint(</span>
+<span class="nc" id="L319">                        this.renderer.getChipColor(</span>
+<span class="nc" id="L320">                            this.dataset.getChipValue(x - 1, ychips - y - 1)</span>
+                        )
+                    );
+                }
+<span class="nc" id="L324">                g2.fill(chip);</span>
+<span class="nc" id="L325">                g2.setColor(Color.LIGHT_GRAY);</span>
+<span class="nc" id="L326">                g2.draw(chip);</span>
+            }
+        }
+<span class="nc" id="L329">        g2.setClip(savedClip);</span>
+<span class="nc" id="L330">    }</span>
+
+    /**
+     * Calculates the location of the waferedge.
+     *
+     * @param plotArea  the plot area.
+     *
+     * @return The wafer edge.
+     */
+    protected Ellipse2D getWaferEdge(Rectangle2D plotArea) {
+<span class="nc" id="L340">        Ellipse2D edge = new Ellipse2D.Double();</span>
+<span class="nc" id="L341">        double diameter = plotArea.getWidth();</span>
+<span class="nc" id="L342">        double upperLeftX = plotArea.getX();</span>
+<span class="nc" id="L343">        double upperLeftY = plotArea.getY();</span>
+        //get major dimension
+<span class="nc bnc" id="L345" title="All 2 branches missed.">        if (plotArea.getWidth() != plotArea.getHeight()) {</span>
+            double major, minor;
+<span class="nc bnc" id="L347" title="All 2 branches missed.">            if (plotArea.getWidth() &gt; plotArea.getHeight()) {</span>
+<span class="nc" id="L348">                major = plotArea.getWidth();</span>
+<span class="nc" id="L349">                minor = plotArea.getHeight();</span>
+<span class="nc" id="L350">            }</span>
+            else {
+<span class="nc" id="L352">                major = plotArea.getHeight();</span>
+<span class="nc" id="L353">                minor = plotArea.getWidth();</span>
+            }
+            //ellipse diameter is the minor dimension
+<span class="nc" id="L356">            diameter = minor;</span>
+            //set upperLeft point
+<span class="nc bnc" id="L358" title="All 2 branches missed.">            if (plotArea.getWidth() == minor) { // x is minor</span>
+<span class="nc" id="L359">                upperLeftY = plotArea.getY() + (major - minor) / 2;</span>
+<span class="nc" id="L360">            }</span>
+            else { // y is minor
+<span class="nc" id="L362">                upperLeftX = plotArea.getX() + (major - minor) / 2;</span>
+            }
+        }
+<span class="nc" id="L365">        edge.setFrame(upperLeftX, upperLeftY, diameter, diameter);</span>
+<span class="nc" id="L366">        return edge;</span>
+    }
+
+    /**
+     * Draws the waferedge, including the notch.
+     *
+     * @param g2  the graphics device.
+     * @param plotArea  the plot area.
+     */
+    protected void drawWaferEdge(Graphics2D g2, Rectangle2D plotArea) {
+        // draw the wafer
+<span class="nc" id="L377">        Ellipse2D waferEdge = getWaferEdge(plotArea);</span>
+<span class="nc" id="L378">        g2.setColor(Color.BLACK);</span>
+<span class="nc" id="L379">        g2.draw(waferEdge);</span>
+        // calculate and draw the notch
+        // horizontal orientation is considered notch right
+        // vertical orientation is considered notch down
+        Arc2D notch;
+<span class="nc" id="L384">        Rectangle2D waferFrame = waferEdge.getFrame();</span>
+<span class="nc" id="L385">        double notchDiameter = waferFrame.getWidth() * 0.04;</span>
+<span class="nc bnc" id="L386" title="All 2 branches missed.">        if (this.orientation == PlotOrientation.HORIZONTAL) {</span>
+<span class="nc" id="L387">            Rectangle2D notchFrame =</span>
+<span class="nc" id="L388">                new Rectangle2D.Double(</span>
+<span class="nc" id="L389">                    waferFrame.getX() + waferFrame.getWidth()</span>
+<span class="nc" id="L390">                    - (notchDiameter / 2), waferFrame.getY()</span>
+<span class="nc" id="L391">                    + (waferFrame.getHeight() / 2) - (notchDiameter / 2),</span>
+<span class="nc" id="L392">                    notchDiameter, notchDiameter</span>
+                );
+<span class="nc" id="L394">            notch = new Arc2D.Double(notchFrame, 90d, 180d, Arc2D.OPEN);</span>
+<span class="nc" id="L395">        }</span>
+        else {
+<span class="nc" id="L397">            Rectangle2D notchFrame =</span>
+<span class="nc" id="L398">                new Rectangle2D.Double(</span>
+<span class="nc" id="L399">                    waferFrame.getX() + (waferFrame.getWidth() / 2)</span>
+<span class="nc" id="L400">                    - (notchDiameter / 2), waferFrame.getY()</span>
+<span class="nc" id="L401">                    + waferFrame.getHeight() - (notchDiameter / 2),</span>
+<span class="nc" id="L402">                    notchDiameter, notchDiameter</span>
+                );
+<span class="nc" id="L404">            notch = new Arc2D.Double(notchFrame, 0d, 180d, Arc2D.OPEN);</span>
+        }
+<span class="nc" id="L406">        g2.setColor(Color.WHITE);</span>
+<span class="nc" id="L407">        g2.fill(notch);</span>
+<span class="nc" id="L408">        g2.setColor(Color.BLACK);</span>
+<span class="nc" id="L409">        g2.draw(notch);</span>
+
+<span class="nc" id="L411">    }</span>
+
+    /**
+     * Return the legend items from the renderer.
+     *
+     * @return The legend items.
+     */
+    @Override
+    public LegendItemCollection getLegendItems() {
+<span class="nc" id="L420">        return this.renderer.getLegendCollection();</span>
+    }
+
+    /**
+     * Notifies all registered listeners of a renderer change.
+     *
+     * @param event  the event.
+     */
+    @Override
+    public void rendererChanged(RendererChangeEvent event) {
+<span class="nc" id="L430">        fireChangeEvent();</span>
+<span class="nc" id="L431">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (25 Mar 2022 23:00:41)</div></body></html>

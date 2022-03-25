@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>ValueAxisTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (25 Mar 2022 23:00:41)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart.axis</a> &gt; <span class="el_source">ValueAxisTest.java</span></div><h1>ValueAxisTest.java</h1><pre class="source lang-java linenums">/* ===========================================================
+ * JFreeChart : a free chart library for the Java(tm) platform
+ * ===========================================================
+ *
+ * (C) Copyright 2000-2022, by David Gilbert and Contributors.
+ *
+ * Project Info:  http://www.jfree.org/jfreechart/index.html
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ *
+ * [Oracle and Java are registered trademarks of Oracle and/or its affiliates. 
+ * Other names may be trademarks of their respective owners.]
+ *
+ * ------------------
+ * ValueAxisTest.java
+ * ------------------
+ * (C) Copyright 2003-2022, by David Gilbert and Contributors.
+ *
+ * Original Author:  David Gilbert;
+ * Contributor(s):   -;
+ *
+ */
+
+package org.jfree.chart.axis;
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Stroke;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartRenderingInfo;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.api.RectangleInsets;
+import org.jfree.data.Range;
+import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Tests for the {@link ValueAxis} class.
+ */
+<span class="fc" id="L64">public class ValueAxisTest {</span>
+
+    private static final double EPSILON = 0.000000001;
+
+    /**
+     * Confirm that cloning works.
+     */
+    @Test
+    public void testCloning() throws CloneNotSupportedException {
+<span class="fc" id="L73">        ValueAxis a1 = new NumberAxis(&quot;Test&quot;);</span>
+<span class="fc" id="L74">        ValueAxis a2 = (NumberAxis) a1.clone();</span>
+<span class="fc" id="L75">        assertNotSame(a1, a2);</span>
+<span class="fc" id="L76">        assertSame(a1.getClass(), a2.getClass());</span>
+<span class="fc" id="L77">        assertEquals(a1, a2);</span>
+<span class="fc" id="L78">    }</span>
+
+    /**
+     * Confirm that the equals method can distinguish all the required fields.
+     */
+    @Test
+    public void testEquals() {
+
+<span class="fc" id="L86">        NumberAxis a1 = new NumberAxis(&quot;Test&quot;);</span>
+<span class="fc" id="L87">        NumberAxis a2 = new NumberAxis(&quot;Test&quot;);</span>
+<span class="fc" id="L88">        assertEquals(a1, a2);</span>
+
+        // axis line visible flag...
+<span class="fc" id="L91">        a1.setAxisLineVisible(false);</span>
+<span class="fc" id="L92">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L93">        a2.setAxisLineVisible(false);</span>
+<span class="fc" id="L94">        assertEquals(a1, a2);</span>
+
+        // positiveArrowVisible;
+<span class="fc" id="L97">        a1.setPositiveArrowVisible(true);</span>
+<span class="fc" id="L98">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L99">        a2.setPositiveArrowVisible(true);</span>
+<span class="fc" id="L100">        assertEquals(a1, a2);</span>
+
+        // negativeArrowVisible;
+<span class="fc" id="L103">        a1.setNegativeArrowVisible(true);</span>
+<span class="fc" id="L104">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L105">        a2.setNegativeArrowVisible(true);</span>
+<span class="fc" id="L106">        assertEquals(a1, a2);</span>
+
+        //private Shape upArrow;
+
+        //private Shape downArrow;
+
+        //private Shape leftArrow;
+
+        //private Shape rightArrow;
+
+        // axisLinePaint
+<span class="fc" id="L117">        a1.setAxisLinePaint(Color.BLUE);</span>
+<span class="fc" id="L118">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L119">        a2.setAxisLinePaint(Color.BLUE);</span>
+<span class="fc" id="L120">        assertEquals(a1, a2);</span>
+
+        // axisLineStroke
+<span class="fc" id="L123">        Stroke stroke = new BasicStroke(2.0f);</span>
+<span class="fc" id="L124">        a1.setAxisLineStroke(stroke);</span>
+<span class="fc" id="L125">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L126">        a2.setAxisLineStroke(stroke);</span>
+<span class="fc" id="L127">        assertEquals(a1, a2);</span>
+
+        // inverted
+<span class="fc" id="L130">        a1.setInverted(true);</span>
+<span class="fc" id="L131">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L132">        a2.setInverted(true);</span>
+<span class="fc" id="L133">        assertEquals(a1, a2);</span>
+
+        // range
+<span class="fc" id="L136">        a1.setRange(new Range(50.0, 75.0));</span>
+<span class="fc" id="L137">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L138">        a2.setRange(new Range(50.0, 75.0));</span>
+<span class="fc" id="L139">        assertEquals(a1, a2);</span>
+
+        // autoRange
+<span class="fc" id="L142">        a1.setAutoRange(true);</span>
+<span class="fc" id="L143">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L144">        a2.setAutoRange(true);</span>
+<span class="fc" id="L145">        assertEquals(a1, a2);</span>
+
+        // autoRangeMinimumSize
+<span class="fc" id="L148">        a1.setAutoRangeMinimumSize(3.33);</span>
+<span class="fc" id="L149">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L150">        a2.setAutoRangeMinimumSize(3.33);</span>
+<span class="fc" id="L151">        assertEquals(a1, a2);</span>
+
+<span class="fc" id="L153">        a1.setDefaultAutoRange(new Range(1.2, 3.4));</span>
+<span class="fc" id="L154">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L155">        a2.setDefaultAutoRange(new Range(1.2, 3.4));</span>
+<span class="fc" id="L156">        assertEquals(a1, a2);</span>
+
+        // upperMargin
+<span class="fc" id="L159">        a1.setUpperMargin(0.09);</span>
+<span class="fc" id="L160">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L161">        a2.setUpperMargin(0.09);</span>
+<span class="fc" id="L162">        assertEquals(a1, a2);</span>
+
+        // lowerMargin
+<span class="fc" id="L165">        a1.setLowerMargin(0.09);</span>
+<span class="fc" id="L166">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L167">        a2.setLowerMargin(0.09);</span>
+<span class="fc" id="L168">        assertEquals(a1, a2);</span>
+
+        //private double fixedAutoRange;
+<span class="fc" id="L171">        a1.setFixedAutoRange(50.0);</span>
+<span class="fc" id="L172">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L173">        a2.setFixedAutoRange(50.0);</span>
+<span class="fc" id="L174">        assertEquals(a1, a2);</span>
+
+        //private boolean autoTickUnitSelection;
+<span class="fc" id="L177">        a1.setAutoTickUnitSelection(false);</span>
+<span class="fc" id="L178">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L179">        a2.setAutoTickUnitSelection(false);</span>
+<span class="fc" id="L180">        assertEquals(a1, a2);</span>
+
+        //private TickUnits standardTickUnits;
+<span class="fc" id="L183">        a1.setStandardTickUnits(NumberAxis.createIntegerTickUnits());</span>
+<span class="fc" id="L184">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L185">        a2.setStandardTickUnits(NumberAxis.createIntegerTickUnits());</span>
+<span class="fc" id="L186">        assertEquals(a1, a2);</span>
+
+        // verticalTickLabels
+<span class="fc" id="L189">        a1.setVerticalTickLabels(true);</span>
+<span class="fc" id="L190">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L191">        a2.setVerticalTickLabels(true);</span>
+<span class="fc" id="L192">        assertEquals(a1, a2);</span>
+
+
+        //private int autoTickIndex;
+        //protected double reservedForTickLabels;
+        //protected double reservedForAxisLabel;
+
+<span class="fc" id="L199">    }</span>
+
+    /**
+     * Tests the the lower and upper margin settings produce the expected
+     * results.
+     */
+    @Test
+    public void testAxisMargins() {
+<span class="fc" id="L207">        XYSeries&lt;String&gt; series = new XYSeries&lt;&gt;(&quot;S1&quot;);</span>
+<span class="fc" id="L208">        series.add(100.0, 1.1);</span>
+<span class="fc" id="L209">        series.add(200.0, 2.2);</span>
+<span class="fc" id="L210">        XYSeriesCollection&lt;String&gt; dataset = new XYSeriesCollection&lt;&gt;(series);</span>
+<span class="fc" id="L211">        dataset.setIntervalWidth(0.0);</span>
+<span class="fc" id="L212">        JFreeChart chart = ChartFactory.createScatterPlot(&quot;Title&quot;, &quot;X&quot;, &quot;Y&quot;, </span>
+<span class="fc" id="L213">                dataset);</span>
+<span class="fc" id="L214">        ValueAxis domainAxis = ((XYPlot) chart.getPlot()).getDomainAxis();</span>
+<span class="fc" id="L215">        Range r = domainAxis.getRange();</span>
+<span class="fc" id="L216">        assertEquals(110.0, r.getLength(), EPSILON);</span>
+<span class="fc" id="L217">        domainAxis.setLowerMargin(0.10);</span>
+<span class="fc" id="L218">        domainAxis.setUpperMargin(0.10);</span>
+<span class="fc" id="L219">        r = domainAxis.getRange();</span>
+<span class="fc" id="L220">        assertEquals(120.0, r.getLength(), EPSILON);</span>
+<span class="fc" id="L221">    }</span>
+    
+    /**
+     * A test for bug 3555275 (where the fixed axis space is calculated 
+     * incorrectly).
+     */
+    @Test
+    public void test3555275() {
+<span class="fc" id="L229">        DefaultCategoryDataset&lt;String, String&gt; dataset = new DefaultCategoryDataset&lt;&gt;();</span>
+<span class="fc" id="L230">        JFreeChart chart = ChartFactory.createLineChart(&quot;Title&quot;, &quot;X&quot;, &quot;Y&quot;,</span>
+<span class="fc" id="L231">                dataset, PlotOrientation.VERTICAL, true, false, false);</span>
+<span class="fc" id="L232">        CategoryPlot&lt;String, String&gt; plot = (CategoryPlot) chart.getPlot();</span>
+<span class="fc" id="L233">        plot.setInsets(RectangleInsets.ZERO_INSETS);</span>
+<span class="fc" id="L234">        plot.setAxisOffset(RectangleInsets.ZERO_INSETS);</span>
+<span class="fc" id="L235">        ValueAxis yAxis = plot.getRangeAxis();</span>
+<span class="fc" id="L236">        yAxis.setFixedDimension(100.0);</span>
+<span class="fc" id="L237">        BufferedImage image = new BufferedImage(500, 300, </span>
+<span class="fc" id="L238">                BufferedImage.TYPE_INT_RGB);</span>
+<span class="fc" id="L239">        Graphics2D g2 = image.createGraphics();</span>
+<span class="fc" id="L240">        ChartRenderingInfo info = new ChartRenderingInfo();</span>
+<span class="fc" id="L241">        chart.draw(g2, new Rectangle2D.Double(0, 0, 500, 300), info);</span>
+<span class="fc" id="L242">        g2.dispose();</span>
+<span class="fc" id="L243">        Rectangle2D rect = info.getPlotInfo().getDataArea();</span>
+<span class="fc" id="L244">        double x = rect.getMinX();</span>
+<span class="fc" id="L245">        assertEquals(100.0, x, 1.0);</span>
+<span class="fc" id="L246">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (25 Mar 2022 23:00:41)</div></body></html>

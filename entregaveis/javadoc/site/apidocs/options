@@ -1,0 +1,32 @@
+--module-path
+'D:/ES/ES-Curso-2Sem-2022-Grupo-25/jfreechart/target/classes'
+--patch-module
+org.jfree.chart='D:/ES/ES-Curso-2Sem-2022-Grupo-25/jfreechart/src/main/java;D:/ES/ES-Curso-2Sem-2022-Grupo-25/jfreechart/src/main/javadoc'
+-encoding
+'UTF-8'
+-overview
+'D:/ES/ES-Curso-2Sem-2022-Grupo-25/jfreechart/src/main/javadoc/overview.html'
+-protected
+-source
+'11'
+--module-source-path
+'D:/ES/ES-Curso-2Sem-2022-Grupo-25/jfreechart/target/site/apidocs/src'
+-author
+-bottom
+'Copyright &#169; 2001&#x2013;2022 <a href="http://www.jfree.org/">JFree.org</a>. All rights reserved.'
+-charset
+'UTF-8'
+-d
+'D:/ES/ES-Curso-2Sem-2022-Grupo-25/jfreechart/target/site/apidocs'
+-docencoding
+'UTF-8'
+-docfilessubdirs
+-doctitle
+'JFreeChart-2.0 2.0.0-SNAPSHOT API'
+-linkoffline
+'https://docs.oracle.com/en/java/javase/11/docs/api' 'D:/ES/ES-Curso-2Sem-2022-Grupo-25/jfreechart/target/javadoc-bundle-options'
+-linksource
+-use
+-version
+-windowtitle
+'JFreeChart-2.0 2.0.0-SNAPSHOT API'

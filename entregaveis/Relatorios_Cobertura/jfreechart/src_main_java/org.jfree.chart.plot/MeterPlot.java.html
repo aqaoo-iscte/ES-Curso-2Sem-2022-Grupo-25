@@ -1,0 +1,1303 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>MeterPlot.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (25 Mar 2022 23:00:41)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart.plot</a> &gt; <span class="el_source">MeterPlot.java</span></div><h1>MeterPlot.java</h1><pre class="source lang-java linenums">/* ===========================================================
+ * JFreeChart : a free chart library for the Java(tm) platform
+ * ===========================================================
+ *
+ * (C) Copyright 2000-2022, by David Gilbert and Contributors.
+ *
+ * Project Info:  http://www.jfree.org/jfreechart/index.html
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ *
+ * [Oracle and Java are registered trademarks of Oracle and/or its affiliates. 
+ * Other names may be trademarks of their respective owners.]
+ *
+ * --------------
+ * MeterPlot.java
+ * --------------
+ * (C) Copyright 2000-2021, by Hari and Contributors.
+ *
+ * Original Author:  Hari (ourhari@hotmail.com);
+ * Contributor(s):   David Gilbert;
+ *                   Bob Orchard;
+ *                   Arnaud Lelievre;
+ *                   Nicolas Brodu;
+ *                   David Bastend;
+ *
+ */
+
+package org.jfree.chart.plot;
+
+import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Composite;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
+import java.awt.Paint;
+import java.awt.Polygon;
+import java.awt.Shape;
+import java.awt.Stroke;
+import java.awt.geom.Arc2D;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.ResourceBundle;
+
+import org.jfree.chart.legend.LegendItem;
+import org.jfree.chart.legend.LegendItemCollection;
+import org.jfree.chart.event.PlotChangeEvent;
+import org.jfree.chart.text.TextUtils;
+import org.jfree.chart.api.RectangleInsets;
+import org.jfree.chart.text.TextAnchor;
+import org.jfree.chart.internal.PaintUtils;
+import org.jfree.chart.internal.Args;
+import org.jfree.chart.internal.SerialUtils;
+import org.jfree.data.Range;
+import org.jfree.data.general.DatasetChangeEvent;
+import org.jfree.data.general.ValueDataset;
+
+/**
+ * A plot that displays a single value in the form of a needle on a dial.
+ * Defined ranges (for example, 'normal', 'warning' and 'critical') can be
+ * highlighted on the dial.
+ */
+public class MeterPlot extends Plot implements Serializable, Cloneable {
+
+    /** For serialization. */
+    private static final long serialVersionUID = 2987472457734470962L;
+
+    /** The default background paint. */
+<span class="fc" id="L94">    static final Paint DEFAULT_DIAL_BACKGROUND_PAINT = Color.BLACK;</span>
+
+    /** The default needle paint. */
+<span class="fc" id="L97">    static final Paint DEFAULT_NEEDLE_PAINT = Color.GREEN;</span>
+
+    /** The default value font. */
+<span class="fc" id="L100">    static final Font DEFAULT_VALUE_FONT = new Font(&quot;SansSerif&quot;, Font.BOLD, 12);</span>
+
+    /** The default value paint. */
+<span class="fc" id="L103">    static final Paint DEFAULT_VALUE_PAINT = Color.YELLOW;</span>
+
+    /** The default meter angle. */
+    public static final int DEFAULT_METER_ANGLE = 270;
+
+    /** The default border size. */
+    public static final float DEFAULT_BORDER_SIZE = 3f;
+
+    /** The default circle size. */
+    public static final float DEFAULT_CIRCLE_SIZE = 10f;
+
+    /** The default label font. */
+<span class="fc" id="L115">    public static final Font DEFAULT_LABEL_FONT = new Font(&quot;SansSerif&quot;,</span>
+<span class="fc" id="L116">            Font.BOLD, 10);</span>
+
+    /** The dataset (contains a single value). */
+    private ValueDataset dataset;
+
+    /** The dial shape (background shape). */
+    private DialShape shape;
+
+    /** The dial extent (measured in degrees). */
+    private int meterAngle;
+
+    /** The overall range of data values on the dial. */
+    private Range range;
+
+    /** The tick size. */
+    private double tickSize;
+
+    /** The paint used to draw the ticks. */
+    private transient Paint tickPaint;
+
+    /** The units displayed on the dial. */
+    private String units;
+
+    /** The font for the value displayed in the center of the dial. */
+    private Font valueFont;
+
+    /** The paint for the value displayed in the center of the dial. */
+    private transient Paint valuePaint;
+
+    /** A flag that indicates whether the value is visible. */
+<span class="fc" id="L146">    private boolean valueVisible = true;</span>
+
+    /** A flag that controls whether or not the border is drawn. */
+    private boolean drawBorder;
+
+    /** The outline paint. */
+    private transient Paint dialOutlinePaint;
+
+    /** The paint for the dial background. */
+    private transient Paint dialBackgroundPaint;
+
+    /** The paint for the needle. */
+    private transient Paint needlePaint;
+
+    /** A flag that controls whether or not the tick labels are visible. */
+    private boolean tickLabelsVisible;
+
+    /** The tick label font. */
+    private Font tickLabelFont;
+
+    /** The tick label paint. */
+    private transient Paint tickLabelPaint;
+
+    /** The tick label format. */
+    private NumberFormat tickLabelFormat;
+
+    /** The resourceBundle for the localization. */
+<span class="fc" id="L173">    protected static ResourceBundle localizationResources</span>
+<span class="fc" id="L174">            = ResourceBundle.getBundle(&quot;org.jfree.chart.plot.LocalizationBundle&quot;);</span>
+
+    /**
+     * A (possibly empty) list of the {@link MeterInterval}s to be highlighted
+     * on the dial.
+     */
+    private List&lt;MeterInterval&gt; intervals;
+
+    /**
+     * Creates a new plot with a default range of {@code 0} to {@code 100} and 
+     * no value to display.
+     */
+    public MeterPlot() {
+<span class="nc" id="L187">        this(null);</span>
+<span class="nc" id="L188">    }</span>
+
+    /**
+     * Creates a new plot that displays the value from the supplied dataset.
+     *
+     * @param dataset  the dataset ({@code null} permitted).
+     */
+    public MeterPlot(ValueDataset dataset) {
+<span class="fc" id="L196">        super();</span>
+<span class="fc" id="L197">        this.shape = DialShape.CIRCLE;</span>
+<span class="fc" id="L198">        this.meterAngle = DEFAULT_METER_ANGLE;</span>
+<span class="fc" id="L199">        this.range = new Range(0.0, 100.0);</span>
+<span class="fc" id="L200">        this.tickSize = 10.0;</span>
+<span class="fc" id="L201">        this.tickPaint = Color.WHITE;</span>
+<span class="fc" id="L202">        this.units = &quot;Units&quot;;</span>
+<span class="fc" id="L203">        this.needlePaint = MeterPlot.DEFAULT_NEEDLE_PAINT;</span>
+<span class="fc" id="L204">        this.tickLabelsVisible = true;</span>
+<span class="fc" id="L205">        this.tickLabelFont = MeterPlot.DEFAULT_LABEL_FONT;</span>
+<span class="fc" id="L206">        this.tickLabelPaint = Color.BLACK;</span>
+<span class="fc" id="L207">        this.tickLabelFormat = NumberFormat.getInstance();</span>
+<span class="fc" id="L208">        this.valueFont = MeterPlot.DEFAULT_VALUE_FONT;</span>
+<span class="fc" id="L209">        this.valuePaint = MeterPlot.DEFAULT_VALUE_PAINT;</span>
+<span class="fc" id="L210">        this.dialBackgroundPaint = MeterPlot.DEFAULT_DIAL_BACKGROUND_PAINT;</span>
+<span class="fc" id="L211">        this.intervals = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L212">        setDataset(dataset);</span>
+<span class="fc" id="L213">    }</span>
+
+    /**
+     * Returns the dial shape.  The default is {@link DialShape#CIRCLE}).
+     *
+     * @return The dial shape (never {@code null}).
+     *
+     * @see #setDialShape(DialShape)
+     */
+    public DialShape getDialShape() {
+<span class="nc" id="L223">        return this.shape;</span>
+    }
+
+    /**
+     * Sets the dial shape and sends a {@link PlotChangeEvent} to all
+     * registered listeners.
+     *
+     * @param shape  the shape ({@code null} not permitted).
+     *
+     * @see #getDialShape()
+     */
+    public void setDialShape(DialShape shape) {
+<span class="nc" id="L235">        Args.nullNotPermitted(shape, &quot;shape&quot;);</span>
+<span class="nc" id="L236">        this.shape = shape;</span>
+<span class="nc" id="L237">        fireChangeEvent();</span>
+<span class="nc" id="L238">    }</span>
+
+    /**
+     * Returns the meter angle in degrees.  This defines, in part, the shape
+     * of the dial.  The default is 270 degrees.
+     *
+     * @return The meter angle (in degrees).
+     *
+     * @see #setMeterAngle(int)
+     */
+    public int getMeterAngle() {
+<span class="nc" id="L249">        return this.meterAngle;</span>
+    }
+
+    /**
+     * Sets the angle (in degrees) for the whole range of the dial and sends
+     * a {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param angle  the angle (in degrees, in the range 1-360).
+     *
+     * @see #getMeterAngle()
+     */
+    public void setMeterAngle(int angle) {
+<span class="nc bnc" id="L261" title="All 4 branches missed.">        if (angle &lt; 1 || angle &gt; 360) {</span>
+<span class="nc" id="L262">            throw new IllegalArgumentException(&quot;Invalid 'angle' (&quot; + angle</span>
+<span class="nc" id="L263">                    + &quot;)&quot;);</span>
+        }
+<span class="nc" id="L265">        this.meterAngle = angle;</span>
+<span class="nc" id="L266">        fireChangeEvent();</span>
+<span class="nc" id="L267">    }</span>
+
+    /**
+     * Returns the overall range for the dial.
+     *
+     * @return The overall range (never {@code null}).
+     *
+     * @see #setRange(Range)
+     */
+    public Range getRange() {
+<span class="nc" id="L277">        return this.range;</span>
+    }
+
+    /**
+     * Sets the range for the dial and sends a {@link PlotChangeEvent} to all
+     * registered listeners.
+     *
+     * @param range  the range ({@code null} not permitted and zero-length
+     *               ranges not permitted).
+     *
+     * @see #getRange()
+     */
+    public void setRange(Range range) {
+<span class="nc" id="L290">        Args.nullNotPermitted(range, &quot;range&quot;);</span>
+<span class="nc bnc" id="L291" title="All 2 branches missed.">        if (!(range.getLength() &gt; 0.0)) {</span>
+<span class="nc" id="L292">            throw new IllegalArgumentException(</span>
+<span class="nc" id="L293">                    &quot;Range length must be positive.&quot;);</span>
+        }
+<span class="nc" id="L295">        this.range = range;</span>
+<span class="nc" id="L296">        fireChangeEvent();</span>
+<span class="nc" id="L297">    }</span>
+
+    /**
+     * Returns the tick size (the interval between ticks on the dial).
+     *
+     * @return The tick size.
+     *
+     * @see #setTickSize(double)
+     */
+    public double getTickSize() {
+<span class="nc" id="L307">        return this.tickSize;</span>
+    }
+
+    /**
+     * Sets the tick size and sends a {@link PlotChangeEvent} to all
+     * registered listeners.
+     *
+     * @param size  the tick size (must be &amp;gt; 0).
+     *
+     * @see #getTickSize()
+     */
+    public void setTickSize(double size) {
+<span class="nc bnc" id="L319" title="All 2 branches missed.">        if (size &lt;= 0) {</span>
+<span class="nc" id="L320">            throw new IllegalArgumentException(&quot;Requires 'size' &gt; 0.&quot;);</span>
+        }
+<span class="nc" id="L322">        this.tickSize = size;</span>
+<span class="nc" id="L323">        fireChangeEvent();</span>
+<span class="nc" id="L324">    }</span>
+
+    /**
+     * Returns the paint used to draw the ticks around the dial.
+     *
+     * @return The paint used to draw the ticks around the dial (never
+     *         {@code null}).
+     *
+     * @see #setTickPaint(Paint)
+     */
+    public Paint getTickPaint() {
+<span class="nc" id="L335">        return this.tickPaint;</span>
+    }
+
+    /**
+     * Sets the paint used to draw the tick labels around the dial and sends
+     * a {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param paint  the paint ({@code null} not permitted).
+     *
+     * @see #getTickPaint()
+     */
+    public void setTickPaint(Paint paint) {
+<span class="nc" id="L347">        Args.nullNotPermitted(paint, &quot;paint&quot;);</span>
+<span class="nc" id="L348">        this.tickPaint = paint;</span>
+<span class="nc" id="L349">        fireChangeEvent();</span>
+<span class="nc" id="L350">    }</span>
+
+    /**
+     * Returns a string describing the units for the dial.
+     *
+     * @return The units (possibly {@code null}).
+     *
+     * @see #setUnits(String)
+     */
+    public String getUnits() {
+<span class="nc" id="L360">        return this.units;</span>
+    }
+
+    /**
+     * Sets the units for the dial and sends a {@link PlotChangeEvent} to all
+     * registered listeners.
+     *
+     * @param units  the units ({@code null} permitted).
+     *
+     * @see #getUnits()
+     */
+    public void setUnits(String units) {
+<span class="nc" id="L372">        this.units = units;</span>
+<span class="nc" id="L373">        fireChangeEvent();</span>
+<span class="nc" id="L374">    }</span>
+
+    /**
+     * Returns the paint for the needle.
+     *
+     * @return The paint (never {@code null}).
+     *
+     * @see #setNeedlePaint(Paint)
+     */
+    public Paint getNeedlePaint() {
+<span class="nc" id="L384">        return this.needlePaint;</span>
+    }
+
+    /**
+     * Sets the paint used to display the needle and sends a
+     * {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param paint  the paint ({@code null} not permitted).
+     *
+     * @see #getNeedlePaint()
+     */
+    public void setNeedlePaint(Paint paint) {
+<span class="nc" id="L396">        Args.nullNotPermitted(paint, &quot;paint&quot;);</span>
+<span class="nc" id="L397">        this.needlePaint = paint;</span>
+<span class="nc" id="L398">        fireChangeEvent();</span>
+<span class="nc" id="L399">    }</span>
+
+    /**
+     * Returns the flag that determines whether or not tick labels are visible.
+     *
+     * @return The flag.
+     *
+     * @see #setTickLabelsVisible(boolean)
+     */
+    public boolean getTickLabelsVisible() {
+<span class="nc" id="L409">        return this.tickLabelsVisible;</span>
+    }
+
+    /**
+     * Sets the flag that controls whether or not the tick labels are visible
+     * and sends a {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param visible  the flag.
+     *
+     * @see #getTickLabelsVisible()
+     */
+    public void setTickLabelsVisible(boolean visible) {
+<span class="nc bnc" id="L421" title="All 2 branches missed.">        if (this.tickLabelsVisible != visible) {</span>
+<span class="nc" id="L422">            this.tickLabelsVisible = visible;</span>
+<span class="nc" id="L423">            fireChangeEvent();</span>
+        }
+<span class="nc" id="L425">    }</span>
+
+    /**
+     * Returns the tick label font.
+     *
+     * @return The font (never {@code null}).
+     *
+     * @see #setTickLabelFont(Font)
+     */
+    public Font getTickLabelFont() {
+<span class="nc" id="L435">        return this.tickLabelFont;</span>
+    }
+
+    /**
+     * Sets the tick label font and sends a {@link PlotChangeEvent} to all
+     * registered listeners.
+     *
+     * @param font  the font ({@code null} not permitted).
+     *
+     * @see #getTickLabelFont()
+     */
+    public void setTickLabelFont(Font font) {
+<span class="nc" id="L447">        Args.nullNotPermitted(font, &quot;font&quot;);</span>
+<span class="nc bnc" id="L448" title="All 2 branches missed.">        if (!this.tickLabelFont.equals(font)) {</span>
+<span class="nc" id="L449">            this.tickLabelFont = font;</span>
+<span class="nc" id="L450">            fireChangeEvent();</span>
+        }
+<span class="nc" id="L452">    }</span>
+
+    /**
+     * Returns the tick label paint.
+     *
+     * @return The paint (never {@code null}).
+     *
+     * @see #setTickLabelPaint(Paint)
+     */
+    public Paint getTickLabelPaint() {
+<span class="nc" id="L462">        return this.tickLabelPaint;</span>
+    }
+
+    /**
+     * Sets the tick label paint and sends a {@link PlotChangeEvent} to all
+     * registered listeners.
+     *
+     * @param paint  the paint ({@code null} not permitted).
+     *
+     * @see #getTickLabelPaint()
+     */
+    public void setTickLabelPaint(Paint paint) {
+<span class="nc" id="L474">        Args.nullNotPermitted(paint, &quot;paint&quot;);</span>
+<span class="nc bnc" id="L475" title="All 2 branches missed.">        if (!this.tickLabelPaint.equals(paint)) {</span>
+<span class="nc" id="L476">            this.tickLabelPaint = paint;</span>
+<span class="nc" id="L477">            fireChangeEvent();</span>
+        }
+<span class="nc" id="L479">    }</span>
+
+    /**
+     * Returns the flag that controls whether or not the value is visible.
+     * The default value is {@code true}.
+     *
+     * @return A flag.
+     *
+     * @see #setValueVisible
+     * @since 1.5.4
+     */
+    public boolean isValueVisible() {
+<span class="nc" id="L491">        return valueVisible;</span>
+    }
+
+    /**
+     *  Sets the flag that controls whether or not the value is visible
+     *  and sends a change event to all registered listeners.
+     *
+     * @param valueVisible  the new flag value.
+     *
+     * @see #isValueVisible()
+     * @since 1.5.4
+     */
+    public void setValueVisible(boolean valueVisible) {
+<span class="nc" id="L504">        this.valueVisible = valueVisible;</span>
+<span class="nc" id="L505">        fireChangeEvent();</span>
+<span class="nc" id="L506">    }</span>
+
+    /**
+     * Returns the tick label format.
+     *
+     * @return The tick label format (never {@code null}).
+     *
+     * @see #setTickLabelFormat(NumberFormat)
+     */
+    public NumberFormat getTickLabelFormat() {
+<span class="nc" id="L516">        return this.tickLabelFormat;</span>
+    }
+
+    /**
+     * Sets the format for the tick labels and sends a {@link PlotChangeEvent}
+     * to all registered listeners.
+     *
+     * @param format  the format ({@code null} not permitted).
+     *
+     * @see #getTickLabelFormat()
+     */
+    public void setTickLabelFormat(NumberFormat format) {
+<span class="nc" id="L528">        Args.nullNotPermitted(format, &quot;format&quot;);</span>
+<span class="nc" id="L529">        this.tickLabelFormat = format;</span>
+<span class="nc" id="L530">        fireChangeEvent();</span>
+<span class="nc" id="L531">    }</span>
+
+    /**
+     * Returns the font for the value label.
+     *
+     * @return The font (never {@code null}).
+     *
+     * @see #setValueFont(Font)
+     */
+    public Font getValueFont() {
+<span class="nc" id="L541">        return this.valueFont;</span>
+    }
+
+    /**
+     * Sets the font used to display the value label and sends a
+     * {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param font  the font ({@code null} not permitted).
+     *
+     * @see #getValueFont()
+     */
+    public void setValueFont(Font font) {
+<span class="nc" id="L553">        Args.nullNotPermitted(font, &quot;font&quot;);</span>
+<span class="nc" id="L554">        this.valueFont = font;</span>
+<span class="nc" id="L555">        fireChangeEvent();</span>
+<span class="nc" id="L556">    }</span>
+
+    /**
+     * Returns the paint for the value label.
+     *
+     * @return The paint (never {@code null}).
+     *
+     * @see #setValuePaint(Paint)
+     */
+    public Paint getValuePaint() {
+<span class="nc" id="L566">        return this.valuePaint;</span>
+    }
+
+    /**
+     * Sets the paint used to display the value label and sends a
+     * {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param paint  the paint ({@code null} not permitted).
+     *
+     * @see #getValuePaint()
+     */
+    public void setValuePaint(Paint paint) {
+<span class="nc" id="L578">        Args.nullNotPermitted(paint, &quot;paint&quot;);</span>
+<span class="nc" id="L579">        this.valuePaint = paint;</span>
+<span class="nc" id="L580">        fireChangeEvent();</span>
+<span class="nc" id="L581">    }</span>
+
+    /**
+     * Returns the paint for the dial background.
+     *
+     * @return The paint (possibly {@code null}).
+     *
+     * @see #setDialBackgroundPaint(Paint)
+     */
+    public Paint getDialBackgroundPaint() {
+<span class="nc" id="L591">        return this.dialBackgroundPaint;</span>
+    }
+
+    /**
+     * Sets the paint used to fill the dial background.  Set this to
+     * {@code null} for no background.
+     *
+     * @param paint  the paint ({@code null} permitted).
+     *
+     * @see #getDialBackgroundPaint()
+     */
+    public void setDialBackgroundPaint(Paint paint) {
+<span class="nc" id="L603">        this.dialBackgroundPaint = paint;</span>
+<span class="nc" id="L604">        fireChangeEvent();</span>
+<span class="nc" id="L605">    }</span>
+
+    /**
+     * Returns a flag that controls whether or not a rectangular border is
+     * drawn around the plot area.
+     *
+     * @return A flag.
+     *
+     * @see #setDrawBorder(boolean)
+     */
+    public boolean getDrawBorder() {
+<span class="nc" id="L616">        return this.drawBorder;</span>
+    }
+
+    /**
+     * Sets the flag that controls whether or not a rectangular border is drawn
+     * around the plot area and sends a {@link PlotChangeEvent} to all
+     * registered listeners.
+     *
+     * @param draw  the flag.
+     *
+     * @see #getDrawBorder()
+     */
+    public void setDrawBorder(boolean draw) {
+        // TODO: fix output when this flag is set to true
+<span class="nc" id="L630">        this.drawBorder = draw;</span>
+<span class="nc" id="L631">        fireChangeEvent();</span>
+<span class="nc" id="L632">    }</span>
+
+    /**
+     * Returns the dial outline paint.
+     *
+     * @return The paint.
+     *
+     * @see #setDialOutlinePaint(Paint)
+     */
+    public Paint getDialOutlinePaint() {
+<span class="nc" id="L642">        return this.dialOutlinePaint;</span>
+    }
+
+    /**
+     * Sets the dial outline paint and sends a {@link PlotChangeEvent} to all
+     * registered listeners.
+     *
+     * @param paint  the paint.
+     *
+     * @see #getDialOutlinePaint()
+     */
+    public void setDialOutlinePaint(Paint paint) {
+<span class="nc" id="L654">        this.dialOutlinePaint = paint;</span>
+<span class="nc" id="L655">        fireChangeEvent();</span>
+<span class="nc" id="L656">    }</span>
+
+    /**
+     * Returns the dataset for the plot.
+     *
+     * @return The dataset (possibly {@code null}).
+     *
+     * @see #setDataset(ValueDataset)
+     */
+    public ValueDataset getDataset() {
+<span class="fc" id="L666">        return this.dataset;</span>
+    }
+
+    /**
+     * Sets the dataset for the plot, replacing the existing dataset if there
+     * is one, and triggers a {@link PlotChangeEvent}.
+     *
+     * @param dataset  the dataset ({@code null} permitted).
+     *
+     * @see #getDataset()
+     */
+    public void setDataset(ValueDataset dataset) {
+
+        // if there is an existing dataset, remove the plot from the list of
+        // change listeners...
+<span class="fc" id="L681">        ValueDataset existing = this.dataset;</span>
+<span class="pc bpc" id="L682" title="1 of 2 branches missed.">        if (existing != null) {</span>
+<span class="nc" id="L683">            existing.removeChangeListener(this);</span>
+        }
+
+        // set the new dataset, and register the chart as a change listener...
+<span class="fc" id="L687">        this.dataset = dataset;</span>
+<span class="pc bpc" id="L688" title="1 of 2 branches missed.">        if (dataset != null) {</span>
+<span class="fc" id="L689">            dataset.addChangeListener(this);</span>
+        }
+
+        // send a dataset change event to self...
+<span class="fc" id="L693">        DatasetChangeEvent event = new DatasetChangeEvent(this, dataset);</span>
+<span class="fc" id="L694">        datasetChanged(event);</span>
+
+<span class="fc" id="L696">    }</span>
+
+    /**
+     * Returns an unmodifiable list of the intervals for the plot.
+     *
+     * @return A list.
+     *
+     * @see #addInterval(MeterInterval)
+     */
+    public List&lt;MeterInterval&gt; getIntervals() {
+<span class="nc" id="L706">        return Collections.unmodifiableList(intervals);</span>
+    }
+
+    /**
+     * Adds an interval and sends a {@link PlotChangeEvent} to all registered
+     * listeners.
+     *
+     * @param interval  the interval ({@code null} not permitted).
+     *
+     * @see #getIntervals()
+     * @see #clearIntervals()
+     */
+    public void addInterval(MeterInterval interval) {
+<span class="fc" id="L719">        Args.nullNotPermitted(interval, &quot;interval&quot;);</span>
+<span class="fc" id="L720">        intervals.add(interval);</span>
+<span class="fc" id="L721">        fireChangeEvent();</span>
+<span class="fc" id="L722">    }</span>
+
+    /**
+     * Clears the intervals for the plot and sends a {@link PlotChangeEvent} to
+     * all registered listeners.
+     *
+     * @see #addInterval(MeterInterval)
+     */
+    public void clearIntervals() {
+<span class="nc" id="L731">        intervals.clear();</span>
+<span class="nc" id="L732">        fireChangeEvent();</span>
+<span class="nc" id="L733">    }</span>
+
+    /**
+     * Returns an item for each interval.
+     *
+     * @return A collection of legend items.
+     */
+    @Override
+    public LegendItemCollection getLegendItems() {
+<span class="fc" id="L742">        LegendItemCollection result = new LegendItemCollection();</span>
+<span class="fc bfc" id="L743" title="All 2 branches covered.">        for (MeterInterval mi : intervals) {</span>
+<span class="fc" id="L744">            Paint color = mi.getBackgroundPaint();</span>
+<span class="pc bpc" id="L745" title="1 of 2 branches missed.">            if (color == null) {</span>
+<span class="fc" id="L746">                color = mi.getOutlinePaint();</span>
+            }
+<span class="fc" id="L748">            LegendItem item = new LegendItem(mi.getLabel(), mi.getLabel(),</span>
+<span class="fc" id="L749">                    null, null, new Rectangle2D.Double(-4.0, -4.0, 8.0, 8.0),</span>
+<span class="fc" id="L750">                    color);</span>
+<span class="fc" id="L751">            item.setDataset(getDataset());</span>
+<span class="fc" id="L752">            result.add(item);</span>
+        }
+<span class="fc" id="L754">        return result;</span>
+    }
+
+    /**
+     * Draws the plot on a Java 2D graphics device (such as the screen or a
+     * printer).
+     *
+     * @param g2  the graphics device.
+     * @param area  the area within which the plot should be drawn.
+     * @param anchor  the anchor point ({@code null} permitted).
+     * @param parentState  the state from the parent plot, if there is one.
+     * @param info  collects info about the drawing.
+     */
+    @Override
+    public void draw(Graphics2D g2, Rectangle2D area, Point2D anchor,
+                     PlotState parentState, PlotRenderingInfo info) {
+
+<span class="pc bpc" id="L771" title="1 of 2 branches missed.">        if (info != null) {</span>
+<span class="nc" id="L772">            info.setPlotArea(area);</span>
+        }
+
+        // adjust for insets...
+<span class="fc" id="L776">        RectangleInsets insets = getInsets();</span>
+<span class="fc" id="L777">        insets.trim(area);</span>
+
+<span class="fc" id="L779">        area.setRect(area.getX() + 4, area.getY() + 4, area.getWidth() - 8,</span>
+<span class="fc" id="L780">                area.getHeight() - 8);</span>
+
+        // draw the background
+<span class="pc bpc" id="L783" title="1 of 2 branches missed.">        if (this.drawBorder) {</span>
+<span class="nc" id="L784">            drawBackground(g2, area);</span>
+        }
+
+        // adjust the plot area by the interior spacing value
+<span class="fc" id="L788">        double gapHorizontal = (2 * DEFAULT_BORDER_SIZE);</span>
+<span class="fc" id="L789">        double gapVertical = (2 * DEFAULT_BORDER_SIZE);</span>
+<span class="fc" id="L790">        double meterX = area.getX() + gapHorizontal / 2;</span>
+<span class="fc" id="L791">        double meterY = area.getY() + gapVertical / 2;</span>
+<span class="fc" id="L792">        double meterW = area.getWidth() - gapHorizontal;</span>
+<span class="fc" id="L793">        double meterH = area.getHeight() - gapVertical</span>
+<span class="pc bpc" id="L794" title="3 of 4 branches missed.">                + ((this.meterAngle &lt;= 180) &amp;&amp; (this.shape != DialShape.CIRCLE)</span>
+<span class="pc" id="L795">                ? area.getHeight() / 1.25 : 0);</span>
+
+<span class="fc" id="L797">        double min = Math.min(meterW, meterH) / 2;</span>
+<span class="fc" id="L798">        meterX = (meterX + meterX + meterW) / 2 - min;</span>
+<span class="fc" id="L799">        meterY = (meterY + meterY + meterH) / 2 - min;</span>
+<span class="fc" id="L800">        meterW = 2 * min;</span>
+<span class="fc" id="L801">        meterH = 2 * min;</span>
+
+<span class="fc" id="L803">        Rectangle2D meterArea = new Rectangle2D.Double(meterX, meterY, meterW,</span>
+<span class="fc" id="L804">                meterH);</span>
+
+<span class="fc" id="L806">        Rectangle2D.Double originalArea = new Rectangle2D.Double(</span>
+<span class="fc" id="L807">                meterArea.getX() - 4, meterArea.getY() - 4,</span>
+<span class="fc" id="L808">                meterArea.getWidth() + 8, meterArea.getHeight() + 8);</span>
+
+<span class="fc" id="L810">        double meterMiddleX = meterArea.getCenterX();</span>
+<span class="fc" id="L811">        double meterMiddleY = meterArea.getCenterY();</span>
+
+        // plot the data (unless the dataset is null)...
+<span class="fc" id="L814">        ValueDataset data = getDataset();</span>
+<span class="pc bpc" id="L815" title="1 of 2 branches missed.">        if (data != null) {</span>
+<span class="fc" id="L816">            double dataMin = this.range.getLowerBound();</span>
+<span class="fc" id="L817">            double dataMax = this.range.getUpperBound();</span>
+
+<span class="fc" id="L819">            Shape savedClip = g2.getClip();</span>
+<span class="fc" id="L820">            g2.clip(originalArea);</span>
+<span class="fc" id="L821">            Composite originalComposite = g2.getComposite();</span>
+<span class="fc" id="L822">            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER,</span>
+<span class="fc" id="L823">                    getForegroundAlpha()));</span>
+
+<span class="pc bpc" id="L825" title="1 of 2 branches missed.">            if (this.dialBackgroundPaint != null) {</span>
+<span class="fc" id="L826">                fillArc(g2, originalArea, dataMin, dataMax,</span>
+<span class="fc" id="L827">                        this.dialBackgroundPaint, true);</span>
+            }
+<span class="fc" id="L829">            drawTicks(g2, meterArea, dataMin, dataMax);</span>
+<span class="fc" id="L830">            drawArcForInterval(g2, meterArea, new MeterInterval(&quot;&quot;, this.range,</span>
+<span class="fc" id="L831">                    this.dialOutlinePaint, new BasicStroke(1.0f), null));</span>
+
+<span class="fc bfc" id="L833" title="All 2 branches covered.">            for (MeterInterval interval : this.intervals) {</span>
+<span class="fc" id="L834">                drawArcForInterval(g2, meterArea, interval);</span>
+            }
+
+<span class="fc" id="L837">            Number n = data.getValue();</span>
+<span class="pc bpc" id="L838" title="1 of 2 branches missed.">            if (n != null) {</span>
+<span class="fc" id="L839">                double value = n.doubleValue();</span>
+<span class="fc" id="L840">                drawValueLabel(g2, meterArea);</span>
+
+<span class="pc bpc" id="L842" title="1 of 2 branches missed.">                if (this.range.contains(value)) {</span>
+<span class="fc" id="L843">                    g2.setPaint(this.needlePaint);</span>
+<span class="fc" id="L844">                    g2.setStroke(new BasicStroke(2.0f));</span>
+
+<span class="fc" id="L846">                    double radius = (meterArea.getWidth() / 2)</span>
+<span class="fc" id="L847">                                    + DEFAULT_BORDER_SIZE + 15;</span>
+<span class="fc" id="L848">                    double valueAngle = valueToAngle(value);</span>
+<span class="fc" id="L849">                    double valueP1 = meterMiddleX</span>
+<span class="fc" id="L850">                            + (radius * Math.cos(Math.PI * (valueAngle / 180)));</span>
+<span class="fc" id="L851">                    double valueP2 = meterMiddleY</span>
+<span class="fc" id="L852">                            - (radius * Math.sin(Math.PI * (valueAngle / 180)));</span>
+
+<span class="fc" id="L854">                    Polygon arrow = new Polygon();</span>
+<span class="pc bpc" id="L855" title="3 of 4 branches missed.">                    if ((valueAngle &gt; 135 &amp;&amp; valueAngle &lt; 225)</span>
+<span class="pc bpc" id="L856" title="3 of 4 branches missed.">                        || (valueAngle &lt; 45 &amp;&amp; valueAngle &gt; -45)) {</span>
+
+<span class="nc" id="L858">                        double valueP3 = (meterMiddleY</span>
+<span class="nc" id="L859">                                - DEFAULT_CIRCLE_SIZE / 4);</span>
+<span class="nc" id="L860">                        double valueP4 = (meterMiddleY</span>
+<span class="nc" id="L861">                                + DEFAULT_CIRCLE_SIZE / 4);</span>
+<span class="nc" id="L862">                        arrow.addPoint((int) meterMiddleX, (int) valueP3);</span>
+<span class="nc" id="L863">                        arrow.addPoint((int) meterMiddleX, (int) valueP4);</span>
+
+<span class="nc" id="L865">                    }</span>
+                    else {
+<span class="fc" id="L867">                        arrow.addPoint((int) (meterMiddleX</span>
+<span class="fc" id="L868">                                - DEFAULT_CIRCLE_SIZE / 4), (int) meterMiddleY);</span>
+<span class="fc" id="L869">                        arrow.addPoint((int) (meterMiddleX</span>
+<span class="fc" id="L870">                                + DEFAULT_CIRCLE_SIZE / 4), (int) meterMiddleY);</span>
+                    }
+<span class="fc" id="L872">                    arrow.addPoint((int) valueP1, (int) valueP2);</span>
+<span class="fc" id="L873">                    g2.fill(arrow);</span>
+
+<span class="fc" id="L875">                    Ellipse2D circle = new Ellipse2D.Double(meterMiddleX</span>
+<span class="fc" id="L876">                            - DEFAULT_CIRCLE_SIZE / 2, meterMiddleY</span>
+<span class="fc" id="L877">                            - DEFAULT_CIRCLE_SIZE / 2, DEFAULT_CIRCLE_SIZE,</span>
+<span class="fc" id="L878">                            DEFAULT_CIRCLE_SIZE);</span>
+<span class="fc" id="L879">                    g2.fill(circle);</span>
+                }
+            }
+
+<span class="fc" id="L883">            g2.setClip(savedClip);</span>
+<span class="fc" id="L884">            g2.setComposite(originalComposite);</span>
+
+        }
+<span class="pc bpc" id="L887" title="1 of 2 branches missed.">        if (this.drawBorder) {</span>
+<span class="nc" id="L888">            drawOutline(g2, area);</span>
+        }
+
+<span class="fc" id="L891">    }</span>
+
+    /**
+     * Draws the arc to represent an interval.
+     *
+     * @param g2  the graphics device.
+     * @param meterArea  the drawing area.
+     * @param interval  the interval.
+     */
+    protected void drawArcForInterval(Graphics2D g2, Rectangle2D meterArea,
+                                      MeterInterval interval) {
+
+<span class="fc" id="L903">        double minValue = interval.getRange().getLowerBound();</span>
+<span class="fc" id="L904">        double maxValue = interval.getRange().getUpperBound();</span>
+<span class="fc" id="L905">        Paint outlinePaint = interval.getOutlinePaint();</span>
+<span class="fc" id="L906">        Stroke outlineStroke = interval.getOutlineStroke();</span>
+<span class="fc" id="L907">        Paint backgroundPaint = interval.getBackgroundPaint();</span>
+
+<span class="pc bpc" id="L909" title="1 of 2 branches missed.">        if (backgroundPaint != null) {</span>
+<span class="nc" id="L910">            fillArc(g2, meterArea, minValue, maxValue, backgroundPaint, false);</span>
+        }
+<span class="fc bfc" id="L912" title="All 2 branches covered.">        if (outlinePaint != null) {</span>
+<span class="pc bpc" id="L913" title="1 of 2 branches missed.">            if (outlineStroke != null) {</span>
+<span class="fc" id="L914">                drawArc(g2, meterArea, minValue, maxValue, outlinePaint,</span>
+<span class="fc" id="L915">                        outlineStroke);</span>
+            }
+<span class="fc" id="L917">            drawTick(g2, meterArea, minValue, true);</span>
+<span class="fc" id="L918">            drawTick(g2, meterArea, maxValue, true);</span>
+        }
+<span class="fc" id="L920">    }</span>
+
+    /**
+     * Draws an arc.
+     *
+     * @param g2  the graphics device.
+     * @param area  the plot area.
+     * @param minValue  the minimum value.
+     * @param maxValue  the maximum value.
+     * @param paint  the paint.
+     * @param stroke  the stroke.
+     */
+    protected void drawArc(Graphics2D g2, Rectangle2D area, double minValue,
+                           double maxValue, Paint paint, Stroke stroke) {
+
+<span class="fc" id="L935">        double startAngle = valueToAngle(maxValue);</span>
+<span class="fc" id="L936">        double endAngle = valueToAngle(minValue);</span>
+<span class="fc" id="L937">        double extent = endAngle - startAngle;</span>
+
+<span class="fc" id="L939">        double x = area.getX();</span>
+<span class="fc" id="L940">        double y = area.getY();</span>
+<span class="fc" id="L941">        double w = area.getWidth();</span>
+<span class="fc" id="L942">        double h = area.getHeight();</span>
+<span class="fc" id="L943">        g2.setPaint(paint);</span>
+<span class="fc" id="L944">        g2.setStroke(stroke);</span>
+
+<span class="pc bpc" id="L946" title="2 of 4 branches missed.">        if (paint != null &amp;&amp; stroke != null) {</span>
+<span class="fc" id="L947">            Arc2D.Double arc = new Arc2D.Double(x, y, w, h, startAngle,</span>
+<span class="fc" id="L948">                    extent, Arc2D.OPEN);</span>
+<span class="fc" id="L949">            g2.setPaint(paint);</span>
+<span class="fc" id="L950">            g2.setStroke(stroke);</span>
+<span class="fc" id="L951">            g2.draw(arc);</span>
+        }
+
+<span class="fc" id="L954">    }</span>
+
+    /**
+     * Fills an arc on the dial between the given values.
+     *
+     * @param g2  the graphics device.
+     * @param area  the plot area.
+     * @param minValue  the minimum data value.
+     * @param maxValue  the maximum data value.
+     * @param paint  the background paint ({@code null} not permitted).
+     * @param dial  a flag that indicates whether the arc represents the whole
+     *              dial.
+     */
+    protected void fillArc(Graphics2D g2, Rectangle2D area,
+            double minValue, double maxValue, Paint paint, boolean dial) {
+
+<span class="fc" id="L970">        Args.nullNotPermitted(paint, &quot;paint&quot;);</span>
+<span class="fc" id="L971">        double startAngle = valueToAngle(maxValue);</span>
+<span class="fc" id="L972">        double endAngle = valueToAngle(minValue);</span>
+<span class="fc" id="L973">        double extent = endAngle - startAngle;</span>
+
+<span class="fc" id="L975">        double x = area.getX();</span>
+<span class="fc" id="L976">        double y = area.getY();</span>
+<span class="fc" id="L977">        double w = area.getWidth();</span>
+<span class="fc" id="L978">        double h = area.getHeight();</span>
+<span class="fc" id="L979">        int joinType = Arc2D.OPEN;</span>
+<span class="pc bpc" id="L980" title="1 of 2 branches missed.">        if (this.shape == DialShape.PIE) {</span>
+<span class="nc" id="L981">            joinType = Arc2D.PIE;</span>
+<span class="nc" id="L982">        }</span>
+<span class="pc bpc" id="L983" title="1 of 2 branches missed.">        else if (this.shape == DialShape.CHORD) {</span>
+<span class="nc bnc" id="L984" title="All 4 branches missed.">            if (dial &amp;&amp; this.meterAngle &gt; 180) {</span>
+<span class="nc" id="L985">                joinType = Arc2D.CHORD;</span>
+<span class="nc" id="L986">            }</span>
+            else {
+<span class="nc" id="L988">                joinType = Arc2D.PIE;</span>
+            }
+<span class="nc" id="L990">        }</span>
+<span class="pc bpc" id="L991" title="1 of 2 branches missed.">        else if (this.shape == DialShape.CIRCLE) {</span>
+<span class="fc" id="L992">            joinType = Arc2D.PIE;</span>
+<span class="pc bpc" id="L993" title="1 of 2 branches missed.">            if (dial) {</span>
+<span class="fc" id="L994">                extent = 360;</span>
+            }
+<span class="fc" id="L996">        }</span>
+        else {
+<span class="nc" id="L998">            throw new IllegalStateException(&quot;DialShape not recognised.&quot;);</span>
+        }
+
+<span class="fc" id="L1001">        g2.setPaint(paint);</span>
+<span class="fc" id="L1002">        Arc2D.Double arc = new Arc2D.Double(x, y, w, h, startAngle, extent,</span>
+<span class="fc" id="L1003">                joinType);</span>
+<span class="fc" id="L1004">        g2.fill(arc);</span>
+<span class="fc" id="L1005">    }</span>
+
+    /**
+     * Translates a data value to an angle on the dial.
+     *
+     * @param value  the value.
+     *
+     * @return The angle on the dial.
+     */
+    public double valueToAngle(double value) {
+<span class="fc" id="L1015">        value = value - this.range.getLowerBound();</span>
+<span class="fc" id="L1016">        double baseAngle = 180 + ((this.meterAngle - 180) / 2.0);</span>
+<span class="fc" id="L1017">        return baseAngle - ((value / this.range.getLength()) * this.meterAngle);</span>
+    }
+
+    /**
+     * Draws the ticks that subdivide the overall range.
+     *
+     * @param g2  the graphics device.
+     * @param meterArea  the meter area.
+     * @param minValue  the minimum value.
+     * @param maxValue  the maximum value.
+     */
+    protected void drawTicks(Graphics2D g2, Rectangle2D meterArea,
+                             double minValue, double maxValue) {
+<span class="fc bfc" id="L1030" title="All 2 branches covered.">        for (double v = minValue; v &lt;= maxValue; v += this.tickSize) {</span>
+<span class="fc" id="L1031">            drawTick(g2, meterArea, v);</span>
+        }
+<span class="fc" id="L1033">    }</span>
+
+    /**
+     * Draws a tick.
+     *
+     * @param g2  the graphics device.
+     * @param meterArea  the meter area.
+     * @param value  the value.
+     */
+    protected void drawTick(Graphics2D g2, Rectangle2D meterArea,
+            double value) {
+<span class="fc" id="L1044">        drawTick(g2, meterArea, value, false);</span>
+<span class="fc" id="L1045">    }</span>
+
+    /**
+     * Draws a tick on the dial.
+     *
+     * @param g2  the graphics device.
+     * @param meterArea  the meter area.
+     * @param value  the tick value.
+     * @param label  a flag that controls whether or not a value label is drawn.
+     */
+    protected void drawTick(Graphics2D g2, Rectangle2D meterArea,
+                            double value, boolean label) {
+
+<span class="fc" id="L1058">        double valueAngle = valueToAngle(value);</span>
+
+<span class="fc" id="L1060">        double meterMiddleX = meterArea.getCenterX();</span>
+<span class="fc" id="L1061">        double meterMiddleY = meterArea.getCenterY();</span>
+
+<span class="fc" id="L1063">        g2.setPaint(this.tickPaint);</span>
+<span class="fc" id="L1064">        g2.setStroke(new BasicStroke(2.0f));</span>
+
+        double valueP2X;
+        double valueP2Y;
+
+<span class="fc" id="L1069">        double radius = (meterArea.getWidth() / 2) + DEFAULT_BORDER_SIZE;</span>
+<span class="fc" id="L1070">        double radius1 = radius - 15;</span>
+
+<span class="fc" id="L1072">        double valueP1X = meterMiddleX</span>
+<span class="fc" id="L1073">                + (radius * Math.cos(Math.PI * (valueAngle / 180)));</span>
+<span class="fc" id="L1074">        double valueP1Y = meterMiddleY</span>
+<span class="fc" id="L1075">                - (radius * Math.sin(Math.PI * (valueAngle / 180)));</span>
+
+<span class="fc" id="L1077">        valueP2X = meterMiddleX</span>
+<span class="fc" id="L1078">                + (radius1 * Math.cos(Math.PI * (valueAngle / 180)));</span>
+<span class="fc" id="L1079">        valueP2Y = meterMiddleY</span>
+<span class="fc" id="L1080">                - (radius1 * Math.sin(Math.PI * (valueAngle / 180)));</span>
+
+<span class="fc" id="L1082">        Line2D.Double line = new Line2D.Double(valueP1X, valueP1Y, valueP2X,</span>
+<span class="fc" id="L1083">                valueP2Y);</span>
+<span class="fc" id="L1084">        g2.draw(line);</span>
+
+<span class="pc bpc" id="L1086" title="1 of 4 branches missed.">        if (this.tickLabelsVisible &amp;&amp; label) {</span>
+
+<span class="fc" id="L1088">            String tickLabel =  this.tickLabelFormat.format(value);</span>
+<span class="fc" id="L1089">            g2.setFont(this.tickLabelFont);</span>
+<span class="fc" id="L1090">            g2.setPaint(this.tickLabelPaint);</span>
+
+<span class="fc" id="L1092">            FontMetrics fm = g2.getFontMetrics();</span>
+<span class="fc" id="L1093">            Rectangle2D tickLabelBounds</span>
+<span class="fc" id="L1094">                = TextUtils.getTextBounds(tickLabel, g2, fm);</span>
+
+<span class="fc" id="L1096">            double x = valueP2X;</span>
+<span class="fc" id="L1097">            double y = valueP2Y;</span>
+<span class="pc bpc" id="L1098" title="2 of 4 branches missed.">            if (valueAngle == 90 || valueAngle == 270) {</span>
+<span class="nc" id="L1099">                x = x - tickLabelBounds.getWidth() / 2;</span>
+<span class="nc" id="L1100">            }</span>
+<span class="pc bpc" id="L1101" title="1 of 4 branches missed.">            else if (valueAngle &lt; 90 || valueAngle &gt; 270) {</span>
+<span class="fc" id="L1102">                x = x - tickLabelBounds.getWidth();</span>
+            }
+<span class="pc bpc" id="L1104" title="1 of 4 branches missed.">            if ((valueAngle &gt; 135 &amp;&amp; valueAngle &lt; 225)</span>
+<span class="pc bpc" id="L1105" title="1 of 4 branches missed.">                    || valueAngle &gt; 315 || valueAngle &lt; 45) {</span>
+<span class="fc" id="L1106">                y = y - tickLabelBounds.getHeight() / 2;</span>
+<span class="fc" id="L1107">            }</span>
+            else {
+<span class="fc" id="L1109">                y = y + tickLabelBounds.getHeight() / 2;</span>
+            }
+<span class="fc" id="L1111">            g2.drawString(tickLabel, (float) x, (float) y);</span>
+        }
+<span class="fc" id="L1113">    }</span>
+
+    /**
+     * Draws the value label just below the center of the dial.
+     *
+     * @param g2  the graphics device.
+     * @param area  the plot area.
+     */
+    protected void drawValueLabel(Graphics2D g2, Rectangle2D area) {
+<span class="pc bpc" id="L1122" title="1 of 2 branches missed.">        if (valueVisible) {</span>
+<span class="fc" id="L1123">            g2.setFont(this.valueFont);</span>
+<span class="fc" id="L1124">            g2.setPaint(this.valuePaint);</span>
+<span class="fc" id="L1125">            String valueStr = &quot;No value&quot;;</span>
+<span class="pc bpc" id="L1126" title="1 of 2 branches missed.">            if (this.dataset != null) {</span>
+<span class="fc" id="L1127">                Number n = this.dataset.getValue();</span>
+<span class="pc bpc" id="L1128" title="1 of 2 branches missed.">                if (n != null) {</span>
+<span class="fc" id="L1129">                    valueStr = this.tickLabelFormat.format(n.doubleValue()) + &quot; &quot;</span>
+<span class="fc" id="L1130">                        + this.units;</span>
+                }
+            }
+<span class="fc" id="L1133">            float x = (float) area.getCenterX();</span>
+<span class="fc" id="L1134">            float y = (float) area.getCenterY() + DEFAULT_CIRCLE_SIZE;</span>
+<span class="fc" id="L1135">            TextUtils.drawAlignedString(valueStr, g2, x, y,</span>
+<span class="fc" id="L1136">                TextAnchor.TOP_CENTER);</span>
+        }
+<span class="fc" id="L1138">    }</span>
+
+    /**
+     * Returns a short string describing the type of plot.
+     *
+     * @return A string describing the type of plot.
+     */
+    @Override
+    public String getPlotType() {
+<span class="nc" id="L1147">        return localizationResources.getString(&quot;Meter_Plot&quot;);</span>
+    }
+
+    /**
+     * A zoom method that does nothing.  Plots are required to support the
+     * zoom operation.  In the case of a meter plot, it doesn't make sense to
+     * zoom in or out, so the method is empty.
+     *
+     * @param percent   The zoom percentage.
+     */
+    @Override
+    public void zoom(double percent) {
+        // intentionally blank
+<span class="nc" id="L1160">    }</span>
+
+    /**
+     * Tests the plot for equality with an arbitrary object.  Note that the
+     * dataset is ignored for the purposes of testing equality.
+     *
+     * @param obj  the object ({@code null} permitted).
+     *
+     * @return A boolean.
+     */
+    @Override
+    public boolean equals(Object obj) {
+<span class="nc bnc" id="L1172" title="All 2 branches missed.">        if (obj == this) {</span>
+<span class="nc" id="L1173">            return true;</span>
+        }
+<span class="nc bnc" id="L1175" title="All 2 branches missed.">        if (!(obj instanceof MeterPlot)) {</span>
+<span class="nc" id="L1176">            return false;</span>
+        }
+<span class="nc bnc" id="L1178" title="All 2 branches missed.">        if (!super.equals(obj)) {</span>
+<span class="nc" id="L1179">            return false;</span>
+        }
+<span class="nc" id="L1181">        MeterPlot that = (MeterPlot) obj;</span>
+<span class="nc bnc" id="L1182" title="All 2 branches missed.">        if (!Objects.equals(this.units, that.units)) {</span>
+<span class="nc" id="L1183">            return false;</span>
+        }
+<span class="nc bnc" id="L1185" title="All 2 branches missed.">        if (!Objects.equals(this.range, that.range)) {</span>
+<span class="nc" id="L1186">            return false;</span>
+        }
+<span class="nc bnc" id="L1188" title="All 2 branches missed.">        if (!Objects.equals(this.intervals, that.intervals)) {</span>
+<span class="nc" id="L1189">            return false;</span>
+        }
+<span class="nc" id="L1191">        if (!PaintUtils.equal(this.dialOutlinePaint,</span>
+<span class="nc bnc" id="L1192" title="All 2 branches missed.">                that.dialOutlinePaint)) {</span>
+<span class="nc" id="L1193">            return false;</span>
+        }
+<span class="nc bnc" id="L1195" title="All 2 branches missed.">        if (this.shape != that.shape) {</span>
+<span class="nc" id="L1196">            return false;</span>
+        }
+<span class="nc" id="L1198">        if (!PaintUtils.equal(this.dialBackgroundPaint,</span>
+<span class="nc bnc" id="L1199" title="All 2 branches missed.">                that.dialBackgroundPaint)) {</span>
+<span class="nc" id="L1200">            return false;</span>
+        }
+<span class="nc bnc" id="L1202" title="All 2 branches missed.">        if (!PaintUtils.equal(this.needlePaint, that.needlePaint)) {</span>
+<span class="nc" id="L1203">            return false;</span>
+        }
+<span class="nc bnc" id="L1205" title="All 2 branches missed.">        if (this.valueVisible != that.valueVisible) {</span>
+<span class="nc" id="L1206">            return false;</span>
+        }
+<span class="nc bnc" id="L1208" title="All 2 branches missed.">        if (!Objects.equals(this.valueFont, that.valueFont)) {</span>
+<span class="nc" id="L1209">            return false;</span>
+        }
+<span class="nc bnc" id="L1211" title="All 2 branches missed.">        if (!PaintUtils.equal(this.valuePaint, that.valuePaint)) {</span>
+<span class="nc" id="L1212">            return false;</span>
+        }
+<span class="nc bnc" id="L1214" title="All 2 branches missed.">        if (!PaintUtils.equal(this.tickPaint, that.tickPaint)) {</span>
+<span class="nc" id="L1215">            return false;</span>
+        }
+<span class="nc bnc" id="L1217" title="All 2 branches missed.">        if (this.tickSize != that.tickSize) {</span>
+<span class="nc" id="L1218">            return false;</span>
+        }
+<span class="nc bnc" id="L1220" title="All 2 branches missed.">        if (this.tickLabelsVisible != that.tickLabelsVisible) {</span>
+<span class="nc" id="L1221">            return false;</span>
+        }
+<span class="nc bnc" id="L1223" title="All 2 branches missed.">        if (!Objects.equals(this.tickLabelFont, that.tickLabelFont)) {</span>
+<span class="nc" id="L1224">            return false;</span>
+        }
+<span class="nc bnc" id="L1226" title="All 2 branches missed.">        if (!PaintUtils.equal(this.tickLabelPaint, that.tickLabelPaint)) {</span>
+<span class="nc" id="L1227">            return false;</span>
+        }
+<span class="nc bnc" id="L1229" title="All 2 branches missed.">        if (!Objects.equals(this.tickLabelFormat, that.tickLabelFormat)) {</span>
+<span class="nc" id="L1230">            return false;</span>
+        }
+<span class="nc bnc" id="L1232" title="All 2 branches missed.">        if (this.drawBorder != that.drawBorder) {</span>
+<span class="nc" id="L1233">            return false;</span>
+        }
+<span class="nc bnc" id="L1235" title="All 2 branches missed.">        if (this.meterAngle != that.meterAngle) {</span>
+<span class="nc" id="L1236">            return false;</span>
+        }
+<span class="nc" id="L1238">        return true;</span>
+    }
+
+    /**
+     * Provides serialization support.
+     *
+     * @param stream  the output stream.
+     *
+     * @throws IOException  if there is an I/O error.
+     */
+    private void writeObject(ObjectOutputStream stream) throws IOException {
+<span class="nc" id="L1249">        stream.defaultWriteObject();</span>
+<span class="nc" id="L1250">        SerialUtils.writePaint(this.dialBackgroundPaint, stream);</span>
+<span class="nc" id="L1251">        SerialUtils.writePaint(this.dialOutlinePaint, stream);</span>
+<span class="nc" id="L1252">        SerialUtils.writePaint(this.needlePaint, stream);</span>
+<span class="nc" id="L1253">        SerialUtils.writePaint(this.valuePaint, stream);</span>
+<span class="nc" id="L1254">        SerialUtils.writePaint(this.tickPaint, stream);</span>
+<span class="nc" id="L1255">        SerialUtils.writePaint(this.tickLabelPaint, stream);</span>
+<span class="nc" id="L1256">    }</span>
+
+    /**
+     * Provides serialization support.
+     *
+     * @param stream  the input stream.
+     *
+     * @throws IOException  if there is an I/O error.
+     * @throws ClassNotFoundException  if there is a classpath problem.
+     */
+    private void readObject(ObjectInputStream stream)
+        throws IOException, ClassNotFoundException {
+<span class="nc" id="L1268">        stream.defaultReadObject();</span>
+<span class="nc" id="L1269">        this.dialBackgroundPaint = SerialUtils.readPaint(stream);</span>
+<span class="nc" id="L1270">        this.dialOutlinePaint = SerialUtils.readPaint(stream);</span>
+<span class="nc" id="L1271">        this.needlePaint = SerialUtils.readPaint(stream);</span>
+<span class="nc" id="L1272">        this.valuePaint = SerialUtils.readPaint(stream);</span>
+<span class="nc" id="L1273">        this.tickPaint = SerialUtils.readPaint(stream);</span>
+<span class="nc" id="L1274">        this.tickLabelPaint = SerialUtils.readPaint(stream);</span>
+<span class="nc bnc" id="L1275" title="All 2 branches missed.">        if (this.dataset != null) {</span>
+<span class="nc" id="L1276">            this.dataset.addChangeListener(this);</span>
+        }
+<span class="nc" id="L1278">    }</span>
+
+    /**
+     * Returns an independent copy (clone) of the plot.  The dataset is NOT
+     * cloned - both the original and the clone will have a reference to the
+     * same dataset.
+     *
+     * @return A clone.
+     *
+     * @throws CloneNotSupportedException if some component of the plot cannot
+     *         be cloned.
+     */
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+<span class="nc" id="L1292">        MeterPlot clone = (MeterPlot) super.clone();</span>
+<span class="nc" id="L1293">        clone.tickLabelFormat = (NumberFormat) this.tickLabelFormat.clone();</span>
+        // the following relies on the fact that the intervals are immutable
+<span class="nc" id="L1295">        clone.intervals = new ArrayList&lt;&gt;(this.intervals);</span>
+<span class="nc bnc" id="L1296" title="All 2 branches missed.">        if (clone.dataset != null) {</span>
+<span class="nc" id="L1297">            clone.dataset.addChangeListener(clone);</span>
+        }
+<span class="nc" id="L1299">        return clone;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (25 Mar 2022 23:00:41)</div></body></html>

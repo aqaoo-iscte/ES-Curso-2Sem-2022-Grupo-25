@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>XYShapeAnnotationTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (25 Mar 2022 23:00:41)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart.annotations</a> &gt; <span class="el_source">XYShapeAnnotationTest.java</span></div><h1>XYShapeAnnotationTest.java</h1><pre class="source lang-java linenums">/* ===========================================================
+ * JFreeChart : a free chart library for the Java(tm) platform
+ * ===========================================================
+ *
+ * (C) Copyright 2000-2022, by David Gilbert and Contributors.
+ *
+ * Project Info:  http://www.jfree.org/jfreechart/index.html
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ *
+ * [Oracle and Java are registered trademarks of Oracle and/or its affiliates. 
+ * Other names may be trademarks of their respective owners.]
+ *
+ * --------------------------
+ * XYShapeAnnotationTest.java
+ * --------------------------
+ * (C) Copyright 2004-2022, by David Gilbert and Contributors.
+ *
+ * Original Author:  David Gilbert;
+ * Contributor(s):   -;
+ *
+ */
+
+package org.jfree.chart.annotations;
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.GradientPaint;
+import java.awt.geom.Rectangle2D;
+
+import org.jfree.chart.TestUtils;
+import org.jfree.chart.api.PublicCloneable;
+
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Some tests for the {@link XYShapeAnnotation} class.
+ */
+<span class="fc" id="L54">public class XYShapeAnnotationTest {</span>
+
+    /**
+     * Confirm that the equals method can distinguish all the required fields.
+     */
+    @Test
+    public void testEquals() {
+
+<span class="fc" id="L62">        XYShapeAnnotation a1 = new XYShapeAnnotation(</span>
+<span class="fc" id="L63">                new Rectangle2D.Double(1.0, 2.0, 3.0, 4.0),</span>
+<span class="fc" id="L64">                new BasicStroke(1.2f), Color.RED, Color.BLUE);</span>
+<span class="fc" id="L65">        XYShapeAnnotation a2 = new XYShapeAnnotation(</span>
+<span class="fc" id="L66">                new Rectangle2D.Double(1.0, 2.0, 3.0, 4.0),</span>
+<span class="fc" id="L67">                new BasicStroke(1.2f), Color.RED, Color.BLUE);</span>
+<span class="fc" id="L68">        assertEquals(a1, a2);</span>
+<span class="fc" id="L69">        assertEquals(a2, a1);</span>
+
+        // shape
+<span class="fc" id="L72">        a1 = new XYShapeAnnotation(</span>
+<span class="fc" id="L73">                new Rectangle2D.Double(4.0, 3.0, 2.0, 1.0),</span>
+<span class="fc" id="L74">                new BasicStroke(1.2f), Color.RED, Color.BLUE);</span>
+<span class="fc" id="L75">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L76">        a2 = new XYShapeAnnotation(</span>
+<span class="fc" id="L77">                new Rectangle2D.Double(4.0, 3.0, 2.0, 1.0),</span>
+<span class="fc" id="L78">                new BasicStroke(1.2f), Color.RED, Color.BLUE);</span>
+<span class="fc" id="L79">        assertEquals(a1, a2);</span>
+
+        // stroke
+<span class="fc" id="L82">        a1 = new XYShapeAnnotation(</span>
+<span class="fc" id="L83">                new Rectangle2D.Double(4.0, 3.0, 2.0, 1.0),</span>
+<span class="fc" id="L84">                new BasicStroke(2.3f), Color.RED, Color.BLUE);</span>
+<span class="fc" id="L85">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L86">        a2 = new XYShapeAnnotation(</span>
+<span class="fc" id="L87">                new Rectangle2D.Double(4.0, 3.0, 2.0, 1.0),</span>
+<span class="fc" id="L88">                new BasicStroke(2.3f), Color.RED, Color.BLUE);</span>
+<span class="fc" id="L89">        assertEquals(a1, a2);</span>
+
+<span class="fc" id="L91">        GradientPaint gp1a = new GradientPaint(1.0f, 2.0f, Color.BLUE,</span>
+<span class="fc" id="L92">                3.0f, 4.0f, Color.RED);</span>
+<span class="fc" id="L93">        GradientPaint gp1b = new GradientPaint(1.0f, 2.0f, Color.BLUE,</span>
+<span class="fc" id="L94">                3.0f, 4.0f, Color.RED);</span>
+<span class="fc" id="L95">        GradientPaint gp2a = new GradientPaint(5.0f, 6.0f, Color.pink,</span>
+<span class="fc" id="L96">                7.0f, 8.0f, Color.WHITE);</span>
+<span class="fc" id="L97">        GradientPaint gp2b = new GradientPaint(5.0f, 6.0f, Color.pink,</span>
+<span class="fc" id="L98">                7.0f, 8.0f, Color.WHITE);</span>
+
+        // outlinePaint
+<span class="fc" id="L101">        a1 = new XYShapeAnnotation(</span>
+<span class="fc" id="L102">                new Rectangle2D.Double(4.0, 3.0, 2.0, 1.0),</span>
+<span class="fc" id="L103">                new BasicStroke(2.3f), gp1a, Color.BLUE);</span>
+<span class="fc" id="L104">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L105">        a2 = new XYShapeAnnotation(</span>
+<span class="fc" id="L106">                new Rectangle2D.Double(4.0, 3.0, 2.0, 1.0),</span>
+<span class="fc" id="L107">                new BasicStroke(2.3f), gp1b, Color.BLUE);</span>
+<span class="fc" id="L108">        assertEquals(a1, a2);</span>
+
+        // fillPaint
+<span class="fc" id="L111">        a1 = new XYShapeAnnotation(</span>
+<span class="fc" id="L112">                new Rectangle2D.Double(4.0, 3.0, 2.0, 1.0),</span>
+<span class="fc" id="L113">                new BasicStroke(2.3f), gp1a, gp2a);</span>
+<span class="fc" id="L114">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L115">        a2 = new XYShapeAnnotation(</span>
+<span class="fc" id="L116">                new Rectangle2D.Double(4.0, 3.0, 2.0, 1.0),</span>
+<span class="fc" id="L117">                new BasicStroke(2.3f), gp1b, gp2b);</span>
+<span class="fc" id="L118">        assertEquals(a1, a2);</span>
+<span class="fc" id="L119">    }</span>
+
+    /**
+     * Two objects that are equal are required to return the same hashCode.
+     */
+    @Test
+    public void testHashCode() {
+<span class="fc" id="L126">        XYShapeAnnotation a1 = new XYShapeAnnotation(</span>
+<span class="fc" id="L127">                new Rectangle2D.Double(1.0, 2.0, 3.0, 4.0),</span>
+<span class="fc" id="L128">                new BasicStroke(1.2f), Color.RED, Color.BLUE);</span>
+<span class="fc" id="L129">        XYShapeAnnotation a2 = new XYShapeAnnotation(</span>
+<span class="fc" id="L130">                new Rectangle2D.Double(1.0, 2.0, 3.0, 4.0),</span>
+<span class="fc" id="L131">                new BasicStroke(1.2f), Color.RED, Color.BLUE);</span>
+<span class="fc" id="L132">        assertEquals(a1, a2);</span>
+<span class="fc" id="L133">        int h1 = a1.hashCode();</span>
+<span class="fc" id="L134">        int h2 = a2.hashCode();</span>
+<span class="fc" id="L135">        assertEquals(h1, h2);</span>
+<span class="fc" id="L136">    }</span>
+
+    /**
+     * Confirm that cloning works.
+     */
+    @Test
+    public void testCloning() throws CloneNotSupportedException {
+<span class="fc" id="L143">        XYShapeAnnotation a1 = new XYShapeAnnotation(</span>
+<span class="fc" id="L144">                new Rectangle2D.Double(1.0, 2.0, 3.0, 4.0),</span>
+<span class="fc" id="L145">                new BasicStroke(1.2f), Color.RED, Color.BLUE);</span>
+<span class="fc" id="L146">        XYShapeAnnotation a2 = (XYShapeAnnotation) a1.clone();</span>
+<span class="fc" id="L147">        assertNotSame(a1, a2);</span>
+<span class="fc" id="L148">        assertSame(a1.getClass(), a2.getClass());</span>
+<span class="fc" id="L149">        assertEquals(a1, a2);</span>
+<span class="fc" id="L150">    }</span>
+
+    /**
+     * Checks that this class implements PublicCloneable.
+     */
+    @Test
+    public void testPublicCloneable() {
+<span class="fc" id="L157">        XYShapeAnnotation a1 = new XYShapeAnnotation(</span>
+<span class="fc" id="L158">                new Rectangle2D.Double(1.0, 2.0, 3.0, 4.0),</span>
+<span class="fc" id="L159">                new BasicStroke(1.2f), Color.RED, Color.BLUE);</span>
+<span class="fc" id="L160">        assertTrue(a1 instanceof PublicCloneable);</span>
+<span class="fc" id="L161">    }</span>
+
+    /**
+     * Serialize an instance, restore it, and check for equality.
+     */
+    @Test
+    public void testSerialization() {
+<span class="fc" id="L168">        XYShapeAnnotation a1 = new XYShapeAnnotation(</span>
+<span class="fc" id="L169">                new Rectangle2D.Double(1.0, 2.0, 3.0, 4.0),</span>
+<span class="fc" id="L170">                new BasicStroke(1.2f), Color.RED, Color.BLUE);</span>
+<span class="fc" id="L171">        XYShapeAnnotation a2 = TestUtils.serialised(a1);</span>
+<span class="fc" id="L172">        assertEquals(a1, a2);</span>
+<span class="fc" id="L173">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (25 Mar 2022 23:00:41)</div></body></html>

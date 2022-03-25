@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>LegendItemEntityTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (25 Mar 2022 23:00:41)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart.entity</a> &gt; <span class="el_source">LegendItemEntityTest.java</span></div><h1>LegendItemEntityTest.java</h1><pre class="source lang-java linenums">/* ===========================================================
+ * JFreeChart : a free chart library for the Java(tm) platform
+ * ===========================================================
+ *
+ * (C) Copyright 2000-2022, by David Gilbert and Contributors.
+ *
+ * Project Info:  http://www.jfree.org/jfreechart/index.html
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ *
+ * [Oracle and Java are registered trademarks of Oracle and/or its affiliates. 
+ * Other names may be trademarks of their respective owners.]
+ *
+ * -------------------------
+ * LegendItemEntityTest.java
+ * -------------------------
+ * (C) Copyright 2004-2022, by David Gilbert and Contributors.
+ *
+ * Original Author:  David Gilbert;
+ * Contributor(s):   -;
+ *
+ */
+
+package org.jfree.chart.entity;
+
+import java.awt.geom.Rectangle2D;
+
+import org.jfree.chart.TestUtils;
+import org.jfree.chart.internal.CloneUtils;
+
+import org.jfree.data.category.DefaultCategoryDataset;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Tests for the {@link LegendItemEntity} class.
+ */
+<span class="fc" id="L52">public class LegendItemEntityTest {</span>
+
+    /**
+     * Confirm that the equals method can distinguish all the required fields.
+     */
+    @Test
+    public void testEquals() {
+<span class="fc" id="L59">        LegendItemEntity&lt;String&gt; e1 = new LegendItemEntity&lt;&gt;(</span>
+<span class="fc" id="L60">                new Rectangle2D.Double(1.0, 2.0, 3.0, 4.0));</span>
+<span class="fc" id="L61">        LegendItemEntity&lt;String&gt; e2 = new LegendItemEntity&lt;&gt;(</span>
+<span class="fc" id="L62">                new Rectangle2D.Double(1.0, 2.0, 3.0, 4.0));</span>
+<span class="fc" id="L63">        assertEquals(e1, e2);</span>
+
+<span class="fc" id="L65">        e1.setArea(new Rectangle2D.Double(4.0, 3.0, 2.0, 1.0));</span>
+<span class="fc" id="L66">        assertNotEquals(e1, e2);</span>
+<span class="fc" id="L67">        e2.setArea(new Rectangle2D.Double(4.0, 3.0, 2.0, 1.0));</span>
+<span class="fc" id="L68">        assertEquals(e1, e2);</span>
+
+<span class="fc" id="L70">        e1.setToolTipText(&quot;New ToolTip&quot;);</span>
+<span class="fc" id="L71">        assertNotEquals(e1, e2);</span>
+<span class="fc" id="L72">        e2.setToolTipText(&quot;New ToolTip&quot;);</span>
+<span class="fc" id="L73">        assertEquals(e1, e2);</span>
+
+<span class="fc" id="L75">        e1.setURLText(&quot;New URL&quot;);</span>
+<span class="fc" id="L76">        assertNotEquals(e1, e2);</span>
+<span class="fc" id="L77">        e2.setURLText(&quot;New URL&quot;);</span>
+<span class="fc" id="L78">        assertEquals(e1, e2);</span>
+
+<span class="fc" id="L80">        e1.setDataset(new DefaultCategoryDataset&lt;String, String&gt;());</span>
+<span class="fc" id="L81">        assertNotEquals(e1, e2);</span>
+<span class="fc" id="L82">        e2.setDataset(new DefaultCategoryDataset&lt;String, String&gt;());</span>
+<span class="fc" id="L83">        assertEquals(e1, e2);</span>
+
+<span class="fc" id="L85">        e1.setSeriesKey(&quot;A&quot;);</span>
+<span class="fc" id="L86">        assertNotEquals(e1, e2);</span>
+<span class="fc" id="L87">        e2.setSeriesKey(&quot;A&quot;);</span>
+<span class="fc" id="L88">        assertEquals(e1, e2);</span>
+
+<span class="fc" id="L90">    }</span>
+
+    /**
+     * Confirm that cloning works.
+     */
+    @Test
+    public void testCloning() throws CloneNotSupportedException {
+<span class="fc" id="L97">        LegendItemEntity&lt;String&gt; e1 = new LegendItemEntity&lt;&gt;(</span>
+<span class="fc" id="L98">                new Rectangle2D.Double(1.0, 2.0, 3.0, 4.0));</span>
+<span class="fc" id="L99">        LegendItemEntity&lt;String&gt; e2 = CloneUtils.clone(e1);</span>
+<span class="fc" id="L100">        assertNotSame(e1, e2);</span>
+<span class="fc" id="L101">        assertSame(e1.getClass(), e2.getClass());</span>
+<span class="fc" id="L102">        assertEquals(e1, e2);</span>
+<span class="fc" id="L103">    }</span>
+
+    /**
+     * Serialize an instance, restore it, and check for equality.
+     */
+    @Test
+    public void testSerialization() {
+<span class="fc" id="L110">        LegendItemEntity&lt;String&gt; e1 = new LegendItemEntity&lt;&gt;(</span>
+<span class="fc" id="L111">                new Rectangle2D.Double(1.0, 2.0, 3.0, 4.0));</span>
+<span class="fc" id="L112">        LegendItemEntity&lt;String&gt; e2 = TestUtils.serialised(e1);</span>
+<span class="fc" id="L113">        assertEquals(e1, e2);</span>
+<span class="fc" id="L114">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (25 Mar 2022 23:00:41)</div></body></html>

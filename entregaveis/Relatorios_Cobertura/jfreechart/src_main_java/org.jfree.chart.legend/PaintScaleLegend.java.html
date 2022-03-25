@@ -1,0 +1,714 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>PaintScaleLegend.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (25 Mar 2022 23:00:41)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart.legend</a> &gt; <span class="el_source">PaintScaleLegend.java</span></div><h1>PaintScaleLegend.java</h1><pre class="source lang-java linenums">/* ===========================================================
+ * JFreeChart : a free chart library for the Java(tm) platform
+ * ===========================================================
+ *
+ * (C) Copyright 2000-2022, by David Gilbert and Contributors.
+ *
+ * Project Info:  http://www.jfree.org/jfreechart/index.html
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ *
+ * [Oracle and Java are registered trademarks of Oracle and/or its affiliates. 
+ * Other names may be trademarks of their respective owners.]
+ *
+ * ---------------------
+ * PaintScaleLegend.java
+ * ---------------------
+ * (C) Copyright 2007-2022, by David Gilbert.
+ *
+ * Original Author:  David Gilbert;
+ * Contributor(s):   Peter Kolb - see patch 2686872;
+ *
+ */
+
+package org.jfree.chart.legend;
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Paint;
+import java.awt.Stroke;
+import java.awt.geom.Rectangle2D;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
+import org.jfree.chart.axis.AxisLocation;
+import org.jfree.chart.axis.AxisSpace;
+import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.block.LengthConstraintType;
+import org.jfree.chart.block.RectangleConstraint;
+import org.jfree.chart.event.AxisChangeEvent;
+import org.jfree.chart.event.AxisChangeListener;
+import org.jfree.chart.event.TitleChangeEvent;
+import org.jfree.chart.plot.Plot;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.renderer.PaintScale;
+import org.jfree.chart.api.RectangleEdge;
+import org.jfree.chart.block.Size2D;
+import org.jfree.chart.internal.PaintUtils;
+import org.jfree.chart.internal.Args;
+import org.jfree.chart.api.PublicCloneable;
+import org.jfree.chart.internal.SerialUtils;
+import org.jfree.chart.title.Title;
+import org.jfree.data.Range;
+
+/**
+ * A legend that shows a range of values and their associated colors, driven
+ * by an underlying {@link PaintScale} implementation.
+ */
+<span class="pc bpc" id="L73" title="1 of 2 branches missed.">public class PaintScaleLegend extends Title implements AxisChangeListener,</span>
+        PublicCloneable {
+
+    /** For serialization. */
+<span class="fc" id="L77">    static final long serialVersionUID = -1365146490993227503L;</span>
+
+    /** The paint scale (never {@code null}). */
+    private PaintScale scale;
+
+    /** The value axis (never {@code null}). */
+    private ValueAxis axis;
+
+    /**
+     * The axis location (handles both orientations, never
+     * {@code null}).
+     */
+    private AxisLocation axisLocation;
+
+    /** The offset between the axis and the paint strip (in Java2D units). */
+    private double axisOffset;
+
+    /** The thickness of the paint strip (in Java2D units). */
+    private double stripWidth;
+
+    /**
+     * A flag that controls whether or not an outline is drawn around the
+     * paint strip.
+     */
+    private boolean stripOutlineVisible;
+
+    /** The paint used to draw an outline around the paint strip. */
+    private transient Paint stripOutlinePaint;
+
+    /** The stroke used to draw an outline around the paint strip. */
+    private transient Stroke stripOutlineStroke;
+
+    /** The background paint (never {@code null}). */
+    private transient Paint backgroundPaint;
+
+    /**
+     * The number of subdivisions for the scale when rendering.
+     */
+    private int subdivisions;
+
+    /**
+     * Creates a new instance.
+     *
+     * @param scale  the scale ({@code null} not permitted).
+     * @param axis  the axis ({@code null} not permitted).
+     */
+<span class="fc" id="L123">    public PaintScaleLegend(PaintScale scale, ValueAxis axis) {</span>
+<span class="fc" id="L124">        Args.nullNotPermitted(axis, &quot;axis&quot;);</span>
+<span class="fc" id="L125">        this.scale = scale;</span>
+<span class="fc" id="L126">        this.axis = axis;</span>
+<span class="fc" id="L127">        this.axis.addChangeListener(this);</span>
+<span class="fc" id="L128">        this.axisLocation = AxisLocation.BOTTOM_OR_LEFT;</span>
+<span class="fc" id="L129">        this.axisOffset = 0.0;</span>
+<span class="fc" id="L130">        this.axis.setRange(scale.getLowerBound(), scale.getUpperBound());</span>
+<span class="fc" id="L131">        this.stripWidth = 15.0;</span>
+<span class="fc" id="L132">        this.stripOutlineVisible = true;</span>
+<span class="fc" id="L133">        this.stripOutlinePaint = Color.GRAY;</span>
+<span class="fc" id="L134">        this.stripOutlineStroke = new BasicStroke(0.5f);</span>
+<span class="fc" id="L135">        this.backgroundPaint = Color.WHITE;</span>
+<span class="fc" id="L136">        this.subdivisions = 100;</span>
+<span class="fc" id="L137">    }</span>
+
+    /**
+     * Returns the scale used to convert values to colors.
+     *
+     * @return The scale (never {@code null}).
+     *
+     * @see #setScale(PaintScale)
+     */
+    public PaintScale getScale() {
+<span class="nc" id="L147">        return this.scale;</span>
+    }
+
+    /**
+     * Sets the scale and sends a {@link TitleChangeEvent} to all registered
+     * listeners.
+     *
+     * @param scale  the scale ({@code null} not permitted).
+     *
+     * @see #getScale()
+     */
+    public void setScale(PaintScale scale) {
+<span class="fc" id="L159">        Args.nullNotPermitted(scale, &quot;scale&quot;);</span>
+<span class="fc" id="L160">        this.scale = scale;</span>
+<span class="fc" id="L161">        notifyListeners(new TitleChangeEvent(this));</span>
+<span class="fc" id="L162">    }</span>
+
+    /**
+     * Returns the axis for the paint scale.
+     *
+     * @return The axis (never {@code null}).
+     *
+     * @see #setAxis(ValueAxis)
+     */
+    public ValueAxis getAxis() {
+<span class="nc" id="L172">        return this.axis;</span>
+    }
+
+    /**
+     * Sets the axis for the paint scale and sends a {@link TitleChangeEvent}
+     * to all registered listeners.
+     *
+     * @param axis  the axis ({@code null} not permitted).
+     *
+     * @see #getAxis()
+     */
+    public void setAxis(ValueAxis axis) {
+<span class="fc" id="L184">        Args.nullNotPermitted(axis, &quot;axis&quot;);</span>
+<span class="fc" id="L185">        this.axis.removeChangeListener(this);</span>
+<span class="fc" id="L186">        this.axis = axis;</span>
+<span class="fc" id="L187">        this.axis.addChangeListener(this);</span>
+<span class="fc" id="L188">        notifyListeners(new TitleChangeEvent(this));</span>
+<span class="fc" id="L189">    }</span>
+
+    /**
+     * Returns the axis location.
+     *
+     * @return The axis location (never {@code null}).
+     *
+     * @see #setAxisLocation(AxisLocation)
+     */
+    public AxisLocation getAxisLocation() {
+<span class="nc" id="L199">        return this.axisLocation;</span>
+    }
+
+    /**
+     * Sets the axis location and sends a {@link TitleChangeEvent} to all
+     * registered listeners.
+     *
+     * @param location  the location ({@code null} not permitted).
+     *
+     * @see #getAxisLocation()
+     */
+    public void setAxisLocation(AxisLocation location) {
+<span class="fc" id="L211">        Args.nullNotPermitted(location, &quot;location&quot;);</span>
+<span class="fc" id="L212">        this.axisLocation = location;</span>
+<span class="fc" id="L213">        notifyListeners(new TitleChangeEvent(this));</span>
+<span class="fc" id="L214">    }</span>
+
+    /**
+     * Returns the offset between the axis and the paint strip.
+     *
+     * @return The offset between the axis and the paint strip.
+     *
+     * @see #setAxisOffset(double)
+     */
+    public double getAxisOffset() {
+<span class="nc" id="L224">        return this.axisOffset;</span>
+    }
+
+    /**
+     * Sets the offset between the axis and the paint strip and sends a
+     * {@link TitleChangeEvent} to all registered listeners.
+     *
+     * @param offset  the offset.
+     */
+    public void setAxisOffset(double offset) {
+<span class="fc" id="L234">        this.axisOffset = offset;</span>
+<span class="fc" id="L235">        notifyListeners(new TitleChangeEvent(this));</span>
+<span class="fc" id="L236">    }</span>
+
+    /**
+     * Returns the width of the paint strip, in Java2D units.
+     *
+     * @return The width of the paint strip.
+     *
+     * @see #setStripWidth(double)
+     */
+    public double getStripWidth() {
+<span class="nc" id="L246">        return this.stripWidth;</span>
+    }
+
+    /**
+     * Sets the width of the paint strip and sends a {@link TitleChangeEvent}
+     * to all registered listeners.
+     *
+     * @param width  the width.
+     *
+     * @see #getStripWidth()
+     */
+    public void setStripWidth(double width) {
+<span class="fc" id="L258">        this.stripWidth = width;</span>
+<span class="fc" id="L259">        notifyListeners(new TitleChangeEvent(this));</span>
+<span class="fc" id="L260">    }</span>
+
+    /**
+     * Returns the flag that controls whether or not an outline is drawn
+     * around the paint strip.
+     *
+     * @return A boolean.
+     *
+     * @see #setStripOutlineVisible(boolean)
+     */
+    public boolean isStripOutlineVisible() {
+<span class="fc" id="L271">        return this.stripOutlineVisible;</span>
+    }
+
+    /**
+     * Sets the flag that controls whether or not an outline is drawn around
+     * the paint strip, and sends a {@link TitleChangeEvent} to all registered
+     * listeners.
+     *
+     * @param visible  the flag.
+     *
+     * @see #isStripOutlineVisible()
+     */
+    public void setStripOutlineVisible(boolean visible) {
+<span class="fc" id="L284">        this.stripOutlineVisible = visible;</span>
+<span class="fc" id="L285">        notifyListeners(new TitleChangeEvent(this));</span>
+<span class="fc" id="L286">    }</span>
+
+    /**
+     * Returns the paint used to draw the outline of the paint strip.
+     *
+     * @return The paint (never {@code null}).
+     *
+     * @see #setStripOutlinePaint(Paint)
+     */
+    public Paint getStripOutlinePaint() {
+<span class="nc" id="L296">        return this.stripOutlinePaint;</span>
+    }
+
+    /**
+     * Sets the paint used to draw the outline of the paint strip, and sends
+     * a {@link TitleChangeEvent} to all registered listeners.
+     *
+     * @param paint  the paint ({@code null} not permitted).
+     *
+     * @see #getStripOutlinePaint()
+     */
+    public void setStripOutlinePaint(Paint paint) {
+<span class="fc" id="L308">        Args.nullNotPermitted(paint, &quot;paint&quot;);</span>
+<span class="fc" id="L309">        this.stripOutlinePaint = paint;</span>
+<span class="fc" id="L310">        notifyListeners(new TitleChangeEvent(this));</span>
+<span class="fc" id="L311">    }</span>
+
+    /**
+     * Returns the stroke used to draw the outline around the paint strip.
+     *
+     * @return The stroke (never {@code null}).
+     *
+     * @see #setStripOutlineStroke(Stroke)
+     */
+    public Stroke getStripOutlineStroke() {
+<span class="nc" id="L321">        return this.stripOutlineStroke;</span>
+    }
+
+    /**
+     * Sets the stroke used to draw the outline around the paint strip and
+     * sends a {@link TitleChangeEvent} to all registered listeners.
+     *
+     * @param stroke  the stroke ({@code null} not permitted).
+     *
+     * @see #getStripOutlineStroke()
+     */
+    public void setStripOutlineStroke(Stroke stroke) {
+<span class="fc" id="L333">        Args.nullNotPermitted(stroke, &quot;stroke&quot;);</span>
+<span class="fc" id="L334">        this.stripOutlineStroke = stroke;</span>
+<span class="fc" id="L335">        notifyListeners(new TitleChangeEvent(this));</span>
+<span class="fc" id="L336">    }</span>
+
+    /**
+     * Returns the background paint.
+     *
+     * @return The background paint.
+     */
+    public Paint getBackgroundPaint() {
+<span class="nc" id="L344">        return this.backgroundPaint;</span>
+    }
+
+    /**
+     * Sets the background paint and sends a {@link TitleChangeEvent} to all
+     * registered listeners.
+     *
+     * @param paint  the paint ({@code null} permitted).
+     */
+    public void setBackgroundPaint(Paint paint) {
+<span class="fc" id="L354">        this.backgroundPaint = paint;</span>
+<span class="fc" id="L355">        notifyListeners(new TitleChangeEvent(this));</span>
+<span class="fc" id="L356">    }</span>
+
+    /**
+     * Returns the number of subdivisions used to draw the scale.
+     *
+     * @return The subdivision count.
+     */
+    public int getSubdivisionCount() {
+<span class="nc" id="L364">        return this.subdivisions;</span>
+    }
+
+    /**
+     * Sets the subdivision count and sends a {@link TitleChangeEvent} to
+     * all registered listeners.
+     *
+     * @param count  the count.
+     */
+    public void setSubdivisionCount(int count) {
+<span class="pc bpc" id="L374" title="1 of 2 branches missed.">        if (count &lt;= 0) {</span>
+<span class="nc" id="L375">            throw new IllegalArgumentException(&quot;Requires 'count' &gt; 0.&quot;);</span>
+        }
+<span class="fc" id="L377">        this.subdivisions = count;</span>
+<span class="fc" id="L378">        notifyListeners(new TitleChangeEvent(this));</span>
+<span class="fc" id="L379">    }</span>
+
+    /**
+     * Receives notification of an axis change event and responds by firing
+     * a title change event.
+     *
+     * @param event  the event.
+     */
+    @Override
+    public void axisChanged(AxisChangeEvent event) {
+<span class="pc bpc" id="L389" title="1 of 2 branches missed.">        if (this.axis == event.getAxis()) {</span>
+<span class="fc" id="L390">            notifyListeners(new TitleChangeEvent(this));</span>
+        }
+<span class="fc" id="L392">    }</span>
+
+    /**
+     * Arranges the contents of the block, within the given constraints, and
+     * returns the block size.
+     *
+     * @param g2  the graphics device.
+     * @param constraint  the constraint ({@code null} not permitted).
+     *
+     * @return The block size (in Java2D units, never {@code null}).
+     */
+    @Override
+    public Size2D arrange(Graphics2D g2, RectangleConstraint constraint) {
+<span class="nc" id="L405">        RectangleConstraint cc = toContentConstraint(constraint);</span>
+<span class="nc" id="L406">        LengthConstraintType w = cc.getWidthConstraintType();</span>
+<span class="nc" id="L407">        LengthConstraintType h = cc.getHeightConstraintType();</span>
+<span class="nc" id="L408">        Size2D contentSize = null;</span>
+<span class="nc bnc" id="L409" title="All 2 branches missed.">        if (w == LengthConstraintType.NONE) {</span>
+<span class="nc bnc" id="L410" title="All 2 branches missed.">            if (h == LengthConstraintType.NONE) {</span>
+<span class="nc" id="L411">                contentSize = new Size2D(getWidth(), getHeight());</span>
+<span class="nc" id="L412">            }</span>
+<span class="nc bnc" id="L413" title="All 2 branches missed.">            else if (h == LengthConstraintType.RANGE) {</span>
+<span class="nc" id="L414">                throw new RuntimeException(&quot;Not yet implemented.&quot;);</span>
+            }
+<span class="nc bnc" id="L416" title="All 2 branches missed.">            else if (h == LengthConstraintType.FIXED) {</span>
+<span class="nc" id="L417">                throw new RuntimeException(&quot;Not yet implemented.&quot;);</span>
+            }
+        }
+<span class="nc bnc" id="L420" title="All 2 branches missed.">        else if (w == LengthConstraintType.RANGE) {</span>
+<span class="nc bnc" id="L421" title="All 2 branches missed.">            if (h == LengthConstraintType.NONE) {</span>
+<span class="nc" id="L422">                throw new RuntimeException(&quot;Not yet implemented.&quot;);</span>
+            }
+<span class="nc bnc" id="L424" title="All 2 branches missed.">            else if (h == LengthConstraintType.RANGE) {</span>
+<span class="nc" id="L425">                contentSize = arrangeRR(g2, cc.getWidthRange(),</span>
+<span class="nc" id="L426">                        cc.getHeightRange());</span>
+<span class="nc" id="L427">            }</span>
+<span class="nc bnc" id="L428" title="All 2 branches missed.">            else if (h == LengthConstraintType.FIXED) {</span>
+<span class="nc" id="L429">                throw new RuntimeException(&quot;Not yet implemented.&quot;);</span>
+            }
+        }
+<span class="nc bnc" id="L432" title="All 2 branches missed.">        else if (w == LengthConstraintType.FIXED) {</span>
+<span class="nc bnc" id="L433" title="All 2 branches missed.">            if (h == LengthConstraintType.NONE) {</span>
+<span class="nc" id="L434">                throw new RuntimeException(&quot;Not yet implemented.&quot;);</span>
+            }
+<span class="nc bnc" id="L436" title="All 2 branches missed.">            else if (h == LengthConstraintType.RANGE) {</span>
+<span class="nc" id="L437">                throw new RuntimeException(&quot;Not yet implemented.&quot;);</span>
+            }
+<span class="nc bnc" id="L439" title="All 2 branches missed.">            else if (h == LengthConstraintType.FIXED) {</span>
+<span class="nc" id="L440">                throw new RuntimeException(&quot;Not yet implemented.&quot;);</span>
+            }
+        }
+<span class="nc bnc" id="L443" title="All 4 branches missed.">        assert contentSize != null; // suppress compiler warning</span>
+<span class="nc" id="L444">        return new Size2D(calculateTotalWidth(contentSize.getWidth()),</span>
+<span class="nc" id="L445">                calculateTotalHeight(contentSize.getHeight()));</span>
+    }
+
+    /**
+     * Returns the content size for the title.  This will reflect the fact that
+     * a text title positioned on the left or right of a chart will be rotated
+     * 90 degrees.
+     *
+     * @param g2  the graphics device.
+     * @param widthRange  the width range.
+     * @param heightRange  the height range.
+     *
+     * @return The content size.
+     */
+    protected Size2D arrangeRR(Graphics2D g2, Range widthRange,
+            Range heightRange) {
+
+<span class="nc" id="L462">        RectangleEdge position = getPosition();</span>
+<span class="nc bnc" id="L463" title="All 4 branches missed.">        if (position == RectangleEdge.TOP || position == RectangleEdge.BOTTOM) {</span>
+
+
+<span class="nc" id="L466">            float maxWidth = (float) widthRange.getUpperBound();</span>
+
+            // determine the space required for the axis
+<span class="nc" id="L469">            AxisSpace space = this.axis.reserveSpace(g2, null,</span>
+<span class="nc" id="L470">                    new Rectangle2D.Double(0, 0, maxWidth, 100),</span>
+<span class="nc" id="L471">                    RectangleEdge.BOTTOM, null);</span>
+
+<span class="nc" id="L473">            return new Size2D(maxWidth, this.stripWidth + this.axisOffset</span>
+<span class="nc" id="L474">                    + space.getTop() + space.getBottom());</span>
+        }
+<span class="nc bnc" id="L476" title="All 2 branches missed.">        else if (position == RectangleEdge.LEFT || position</span>
+<span class="nc bnc" id="L477" title="All 2 branches missed.">                == RectangleEdge.RIGHT) {</span>
+<span class="nc" id="L478">            float maxHeight = (float) heightRange.getUpperBound();</span>
+<span class="nc" id="L479">            AxisSpace space = this.axis.reserveSpace(g2, null,</span>
+<span class="nc" id="L480">                    new Rectangle2D.Double(0, 0, 100, maxHeight),</span>
+<span class="nc" id="L481">                    RectangleEdge.RIGHT, null);</span>
+<span class="nc" id="L482">            return new Size2D(this.stripWidth + this.axisOffset</span>
+<span class="nc" id="L483">                    + space.getLeft() + space.getRight(), maxHeight);</span>
+        }
+        else {
+<span class="nc" id="L486">            throw new RuntimeException(&quot;Unrecognised position.&quot;);</span>
+        }
+    }
+
+    /**
+     * Draws the legend within the specified area.
+     *
+     * @param g2  the graphics target ({@code null} not permitted).
+     * @param area  the drawing area ({@code null} not permitted).
+     */
+    @Override
+    public void draw(Graphics2D g2, Rectangle2D area) {
+<span class="nc" id="L498">        draw(g2, area, null);</span>
+<span class="nc" id="L499">    }</span>
+
+    /**
+     * Draws the legend within the specified area.
+     *
+     * @param g2  the graphics target ({@code null} not permitted).
+     * @param area  the drawing area ({@code null} not permitted).
+     * @param params  drawing parameters (ignored here).
+     *
+     * @return {@code null}.
+     */
+    @Override
+    public Object draw(Graphics2D g2, Rectangle2D area, Object params) {
+<span class="nc" id="L512">        Rectangle2D target = (Rectangle2D) area.clone();</span>
+<span class="nc" id="L513">        target = trimMargin(target);</span>
+<span class="nc bnc" id="L514" title="All 2 branches missed.">        if (this.backgroundPaint != null) {</span>
+<span class="nc" id="L515">            g2.setPaint(this.backgroundPaint);</span>
+<span class="nc" id="L516">            g2.fill(target);</span>
+        }
+<span class="nc" id="L518">        getFrame().draw(g2, target);</span>
+<span class="nc" id="L519">        getFrame().getInsets().trim(target);</span>
+<span class="nc" id="L520">        target = trimPadding(target);</span>
+<span class="nc" id="L521">        double base = this.axis.getLowerBound();</span>
+<span class="nc" id="L522">        double increment = this.axis.getRange().getLength() / this.subdivisions;</span>
+<span class="nc" id="L523">        Rectangle2D r = new Rectangle2D.Double();</span>
+
+<span class="nc bnc" id="L525" title="All 2 branches missed.">        if (RectangleEdge.isTopOrBottom(getPosition())) {</span>
+<span class="nc" id="L526">            RectangleEdge axisEdge = Plot.resolveRangeAxisLocation(</span>
+<span class="nc" id="L527">                    this.axisLocation, PlotOrientation.HORIZONTAL);</span>
+<span class="nc bnc" id="L528" title="All 2 branches missed.">            if (axisEdge == RectangleEdge.TOP) {</span>
+<span class="nc bnc" id="L529" title="All 2 branches missed.">                for (int i = 0; i &lt; this.subdivisions; i++) {</span>
+<span class="nc" id="L530">                    double v = base + (i * increment);</span>
+<span class="nc" id="L531">                    Paint p = this.scale.getPaint(v);</span>
+<span class="nc" id="L532">                    double vv0 = this.axis.valueToJava2D(v, target,</span>
+<span class="nc" id="L533">                            RectangleEdge.TOP);</span>
+<span class="nc" id="L534">                    double vv1 = this.axis.valueToJava2D(v + increment, target,</span>
+<span class="nc" id="L535">                            RectangleEdge.TOP);</span>
+<span class="nc" id="L536">                    double ww = Math.abs(vv1 - vv0) + 1.0;</span>
+<span class="nc" id="L537">                    r.setRect(Math.min(vv0, vv1), target.getMaxY()</span>
+<span class="nc" id="L538">                            - this.stripWidth, ww, this.stripWidth);</span>
+<span class="nc" id="L539">                    g2.setPaint(p);</span>
+<span class="nc" id="L540">                    g2.fill(r);</span>
+                }
+<span class="nc bnc" id="L542" title="All 2 branches missed.">                if (isStripOutlineVisible()) {</span>
+<span class="nc" id="L543">                    g2.setPaint(this.stripOutlinePaint);</span>
+<span class="nc" id="L544">                    g2.setStroke(this.stripOutlineStroke);</span>
+<span class="nc" id="L545">                    g2.draw(new Rectangle2D.Double(target.getMinX(),</span>
+<span class="nc" id="L546">                            target.getMaxY() - this.stripWidth,</span>
+<span class="nc" id="L547">                            target.getWidth(), this.stripWidth));</span>
+                }
+<span class="nc" id="L549">                this.axis.draw(g2, target.getMaxY() - this.stripWidth</span>
+<span class="nc" id="L550">                        - this.axisOffset, target, target, RectangleEdge.TOP,</span>
+<span class="nc" id="L551">                        null);</span>
+<span class="nc" id="L552">            }</span>
+<span class="nc bnc" id="L553" title="All 2 branches missed.">            else if (axisEdge == RectangleEdge.BOTTOM) {</span>
+<span class="nc bnc" id="L554" title="All 2 branches missed.">                for (int i = 0; i &lt; this.subdivisions; i++) {</span>
+<span class="nc" id="L555">                    double v = base + (i * increment);</span>
+<span class="nc" id="L556">                    Paint p = this.scale.getPaint(v);</span>
+<span class="nc" id="L557">                    double vv0 = this.axis.valueToJava2D(v, target,</span>
+<span class="nc" id="L558">                            RectangleEdge.BOTTOM);</span>
+<span class="nc" id="L559">                    double vv1 = this.axis.valueToJava2D(v + increment, target,</span>
+<span class="nc" id="L560">                            RectangleEdge.BOTTOM);</span>
+<span class="nc" id="L561">                    double ww = Math.abs(vv1 - vv0) + 1.0;</span>
+<span class="nc" id="L562">                    r.setRect(Math.min(vv0, vv1), target.getMinY(), ww,</span>
+<span class="nc" id="L563">                            this.stripWidth);</span>
+<span class="nc" id="L564">                    g2.setPaint(p);</span>
+<span class="nc" id="L565">                    g2.fill(r);</span>
+                }
+<span class="nc bnc" id="L567" title="All 2 branches missed.">                if (isStripOutlineVisible()) {</span>
+<span class="nc" id="L568">                    g2.setPaint(this.stripOutlinePaint);</span>
+<span class="nc" id="L569">                    g2.setStroke(this.stripOutlineStroke);</span>
+<span class="nc" id="L570">                    g2.draw(new Rectangle2D.Double(target.getMinX(),</span>
+<span class="nc" id="L571">                            target.getMinY(), target.getWidth(),</span>
+<span class="nc" id="L572">                            this.stripWidth));</span>
+                }
+<span class="nc" id="L574">                this.axis.draw(g2, target.getMinY() + this.stripWidth</span>
+<span class="nc" id="L575">                        + this.axisOffset, target, target,</span>
+<span class="nc" id="L576">                        RectangleEdge.BOTTOM, null);</span>
+            }
+<span class="nc" id="L578">        }</span>
+        else {
+<span class="nc" id="L580">            RectangleEdge axisEdge = Plot.resolveRangeAxisLocation(</span>
+<span class="nc" id="L581">                    this.axisLocation, PlotOrientation.VERTICAL);</span>
+<span class="nc bnc" id="L582" title="All 2 branches missed.">            if (axisEdge == RectangleEdge.LEFT) {</span>
+<span class="nc bnc" id="L583" title="All 2 branches missed.">                for (int i = 0; i &lt; this.subdivisions; i++) {</span>
+<span class="nc" id="L584">                    double v = base + (i * increment);</span>
+<span class="nc" id="L585">                    Paint p = this.scale.getPaint(v);</span>
+<span class="nc" id="L586">                    double vv0 = this.axis.valueToJava2D(v, target,</span>
+<span class="nc" id="L587">                            RectangleEdge.LEFT);</span>
+<span class="nc" id="L588">                    double vv1 = this.axis.valueToJava2D(v + increment, target,</span>
+<span class="nc" id="L589">                            RectangleEdge.LEFT);</span>
+<span class="nc" id="L590">                    double hh = Math.abs(vv1 - vv0) + 1.0;</span>
+<span class="nc" id="L591">                    r.setRect(target.getMaxX() - this.stripWidth,</span>
+<span class="nc" id="L592">                            Math.min(vv0, vv1), this.stripWidth, hh);</span>
+<span class="nc" id="L593">                    g2.setPaint(p);</span>
+<span class="nc" id="L594">                    g2.fill(r);</span>
+                }
+<span class="nc bnc" id="L596" title="All 2 branches missed.">                if (isStripOutlineVisible()) {</span>
+<span class="nc" id="L597">                    g2.setPaint(this.stripOutlinePaint);</span>
+<span class="nc" id="L598">                    g2.setStroke(this.stripOutlineStroke);</span>
+<span class="nc" id="L599">                    g2.draw(new Rectangle2D.Double(target.getMaxX()</span>
+<span class="nc" id="L600">                            - this.stripWidth, target.getMinY(), </span>
+<span class="nc" id="L601">                            this.stripWidth, target.getHeight()));</span>
+                }
+<span class="nc" id="L603">                this.axis.draw(g2, target.getMaxX() - this.stripWidth</span>
+<span class="nc" id="L604">                        - this.axisOffset, target, target, RectangleEdge.LEFT,</span>
+<span class="nc" id="L605">                        null);</span>
+<span class="nc" id="L606">            }</span>
+<span class="nc bnc" id="L607" title="All 2 branches missed.">            else if (axisEdge == RectangleEdge.RIGHT) {</span>
+<span class="nc bnc" id="L608" title="All 2 branches missed.">                for (int i = 0; i &lt; this.subdivisions; i++) {</span>
+<span class="nc" id="L609">                    double v = base + (i * increment);</span>
+<span class="nc" id="L610">                    Paint p = this.scale.getPaint(v);</span>
+<span class="nc" id="L611">                    double vv0 = this.axis.valueToJava2D(v, target,</span>
+<span class="nc" id="L612">                            RectangleEdge.LEFT);</span>
+<span class="nc" id="L613">                    double vv1 = this.axis.valueToJava2D(v + increment, target,</span>
+<span class="nc" id="L614">                            RectangleEdge.LEFT);</span>
+<span class="nc" id="L615">                    double hh = Math.abs(vv1 - vv0) + 1.0;</span>
+<span class="nc" id="L616">                    r.setRect(target.getMinX(), Math.min(vv0, vv1),</span>
+<span class="nc" id="L617">                            this.stripWidth, hh);</span>
+<span class="nc" id="L618">                    g2.setPaint(p);</span>
+<span class="nc" id="L619">                    g2.fill(r);</span>
+                }
+<span class="nc bnc" id="L621" title="All 2 branches missed.">                if (isStripOutlineVisible()) {</span>
+<span class="nc" id="L622">                    g2.setPaint(this.stripOutlinePaint);</span>
+<span class="nc" id="L623">                    g2.setStroke(this.stripOutlineStroke);</span>
+<span class="nc" id="L624">                    g2.draw(new Rectangle2D.Double(target.getMinX(),</span>
+<span class="nc" id="L625">                            target.getMinY(), this.stripWidth,</span>
+<span class="nc" id="L626">                            target.getHeight()));</span>
+                }
+<span class="nc" id="L628">                this.axis.draw(g2, target.getMinX() + this.stripWidth</span>
+<span class="nc" id="L629">                        + this.axisOffset, target, target, RectangleEdge.RIGHT,</span>
+<span class="nc" id="L630">                        null);</span>
+            }
+        }
+<span class="nc" id="L633">        return null;</span>
+    }
+
+    /**
+     * Tests this legend for equality with an arbitrary object.
+     *
+     * @param obj  the object ({@code null} permitted).
+     *
+     * @return A boolean.
+     */
+    @Override
+    public boolean equals(Object obj) {
+<span class="pc bpc" id="L645" title="1 of 2 branches missed.">        if (!(obj instanceof PaintScaleLegend)) {</span>
+<span class="nc" id="L646">            return false;</span>
+        }
+<span class="fc" id="L648">        PaintScaleLegend that = (PaintScaleLegend) obj;</span>
+<span class="fc bfc" id="L649" title="All 2 branches covered.">        if (!this.scale.equals(that.scale)) {</span>
+<span class="fc" id="L650">            return false;</span>
+        }
+<span class="fc bfc" id="L652" title="All 2 branches covered.">        if (!this.axis.equals(that.axis)) {</span>
+<span class="fc" id="L653">            return false;</span>
+        }
+<span class="fc bfc" id="L655" title="All 2 branches covered.">        if (!this.axisLocation.equals(that.axisLocation)) {</span>
+<span class="fc" id="L656">            return false;</span>
+        }
+<span class="fc bfc" id="L658" title="All 2 branches covered.">        if (this.axisOffset != that.axisOffset) {</span>
+<span class="fc" id="L659">            return false;</span>
+        }
+<span class="fc bfc" id="L661" title="All 2 branches covered.">        if (this.stripWidth != that.stripWidth) {</span>
+<span class="fc" id="L662">            return false;</span>
+        }
+<span class="fc bfc" id="L664" title="All 2 branches covered.">        if (this.stripOutlineVisible != that.stripOutlineVisible) {</span>
+<span class="fc" id="L665">            return false;</span>
+        }
+<span class="fc" id="L667">        if (!PaintUtils.equal(this.stripOutlinePaint,</span>
+<span class="fc bfc" id="L668" title="All 2 branches covered.">                that.stripOutlinePaint)) {</span>
+<span class="fc" id="L669">            return false;</span>
+        }
+<span class="fc bfc" id="L671" title="All 2 branches covered.">        if (!this.stripOutlineStroke.equals(that.stripOutlineStroke)) {</span>
+<span class="fc" id="L672">            return false;</span>
+        }
+<span class="fc bfc" id="L674" title="All 2 branches covered.">        if (!PaintUtils.equal(this.backgroundPaint, that.backgroundPaint)) {</span>
+<span class="fc" id="L675">            return false;</span>
+        }
+<span class="fc bfc" id="L677" title="All 2 branches covered.">        if (this.subdivisions != that.subdivisions) {</span>
+<span class="fc" id="L678">            return false;</span>
+        }
+<span class="fc" id="L680">        return super.equals(obj);</span>
+    }
+
+    /**
+     * Provides serialization support.
+     *
+     * @param stream  the output stream.
+     *
+     * @throws IOException  if there is an I/O error.
+     */
+    private void writeObject(ObjectOutputStream stream) throws IOException {
+<span class="fc" id="L691">        stream.defaultWriteObject();</span>
+<span class="fc" id="L692">        SerialUtils.writePaint(this.backgroundPaint, stream);</span>
+<span class="fc" id="L693">        SerialUtils.writePaint(this.stripOutlinePaint, stream);</span>
+<span class="fc" id="L694">        SerialUtils.writeStroke(this.stripOutlineStroke, stream);</span>
+<span class="fc" id="L695">    }</span>
+
+    /**
+     * Provides serialization support.
+     *
+     * @param stream  the input stream.
+     *
+     * @throws IOException  if there is an I/O error.
+     * @throws ClassNotFoundException  if there is a classpath problem.
+     */
+    private void readObject(ObjectInputStream stream)
+            throws IOException, ClassNotFoundException {
+<span class="fc" id="L707">        stream.defaultReadObject();</span>
+<span class="fc" id="L708">        this.backgroundPaint = SerialUtils.readPaint(stream);</span>
+<span class="fc" id="L709">        this.stripOutlinePaint = SerialUtils.readPaint(stream);</span>
+<span class="fc" id="L710">        this.stripOutlineStroke = SerialUtils.readStroke(stream);</span>
+<span class="fc" id="L711">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (25 Mar 2022 23:00:41)</div></body></html>

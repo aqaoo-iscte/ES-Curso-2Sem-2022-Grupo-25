@@ -1,0 +1,2015 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>PolarPlot.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (25 Mar 2022 23:00:41)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart.plot</a> &gt; <span class="el_source">PolarPlot.java</span></div><h1>PolarPlot.java</h1><pre class="source lang-java linenums">/* ===========================================================
+ * JFreeChart : a free chart library for the Java(tm) platform
+ * ===========================================================
+ *
+ * (C) Copyright 2000-2022, by David Gilbert and Contributors.
+ *
+ * Project Info:  http://www.jfree.org/jfreechart/index.html
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ *
+ * [Oracle and Java are registered trademarks of Oracle and/or its affiliates.
+ * Other names may be trademarks of their respective owners.]
+ *
+ * --------------
+ * PolarPlot.java
+ * --------------
+ * (C) Copyright 2004-2021, by Solution Engineering, Inc. and Contributors.
+ *
+ * Original Author:  Daniel Bridenbecker, Solution Engineering, Inc.;
+ * Contributor(s):   David Gilbert;
+ *                   Martin Hoeller (patches 1871902 and 2850344);
+ * 
+ */
+
+package org.jfree.chart.plot;
+
+import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Composite;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
+import java.awt.Paint;
+import java.awt.Point;
+import java.awt.Shape;
+import java.awt.Stroke;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.ResourceBundle;
+import java.util.Set;
+import java.util.TreeMap;
+import org.jfree.chart.ChartElementVisitor;
+
+import org.jfree.chart.legend.LegendItem;
+import org.jfree.chart.legend.LegendItemCollection;
+import org.jfree.chart.axis.Axis;
+import org.jfree.chart.axis.AxisState;
+import org.jfree.chart.axis.NumberTick;
+import org.jfree.chart.axis.NumberTickUnit;
+import org.jfree.chart.axis.TickType;
+import org.jfree.chart.axis.TickUnit;
+import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.axis.ValueTick;
+import org.jfree.chart.event.PlotChangeEvent;
+import org.jfree.chart.event.RendererChangeEvent;
+import org.jfree.chart.event.RendererChangeListener;
+import org.jfree.chart.renderer.PolarItemRenderer;
+import org.jfree.chart.text.TextUtils;
+import org.jfree.chart.api.RectangleEdge;
+import org.jfree.chart.api.RectangleInsets;
+import org.jfree.chart.text.TextAnchor;
+import org.jfree.chart.internal.CloneUtils;
+import org.jfree.chart.internal.PaintUtils;
+import org.jfree.chart.internal.Args;
+import org.jfree.chart.api.PublicCloneable;
+import org.jfree.chart.internal.SerialUtils;
+import org.jfree.data.Range;
+import org.jfree.data.general.Dataset;
+import org.jfree.data.general.DatasetChangeEvent;
+import org.jfree.data.general.DatasetUtils;
+import org.jfree.data.xy.XYDataset;
+
+/**
+ * Plots data that is in (theta, radius) pairs where theta equal to zero is 
+ * due north and increases clockwise.
+ */
+public class PolarPlot extends Plot implements ValueAxisPlot, Zoomable,
+        RendererChangeListener, Cloneable, Serializable {
+
+    /** For serialization. */
+    private static final long serialVersionUID = 3794383185924179525L;
+
+    /** The default margin. */
+    private static final int DEFAULT_MARGIN = 20;
+
+    /** The annotation margin. */
+    private static final double ANNOTATION_MARGIN = 7.0;
+
+    /** The default angle tick unit size. */
+    public static final double DEFAULT_ANGLE_TICK_UNIT_SIZE = 45.0;
+
+    /** The default angle offset. */
+    public static final double DEFAULT_ANGLE_OFFSET = -90.0;
+
+    /** The default grid line stroke. */
+<span class="nc" id="L121">    public static final Stroke DEFAULT_GRIDLINE_STROKE = new BasicStroke(</span>
+<span class="nc" id="L122">            0.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL,</span>
+<span class="nc" id="L123">            0.0f, new float[]{2.0f, 2.0f}, 0.0f);</span>
+
+    /** The default grid line paint. */
+<span class="nc" id="L126">    public static final Paint DEFAULT_GRIDLINE_PAINT = Color.GRAY;</span>
+
+    /** The resourceBundle for the localization. */
+<span class="nc" id="L129">    protected static ResourceBundle localizationResources</span>
+<span class="nc" id="L130">            = ResourceBundle.getBundle(&quot;org.jfree.chart.plot.LocalizationBundle&quot;);</span>
+
+    /** The angles that are marked with gridlines. */
+    private List&lt;ValueTick&gt; angleTicks;
+
+    /** The range axis (used for the y-values). */
+    private Map&lt;Integer, ValueAxis&gt; axes;
+
+    /** The axis locations. */
+    private final Map&lt;Integer, PolarAxisLocation&gt; axisLocations;
+
+    /** Storage for the datasets. */
+    private Map&lt;Integer, XYDataset&gt; datasets;
+
+    /** Storage for the renderers. */
+    private Map&lt;Integer, PolarItemRenderer&gt; renderers;
+
+    /**
+     * The tick unit that controls the spacing between the angular grid lines.
+     */
+    private TickUnit angleTickUnit;
+
+    /**
+     * An offset for the angles, to start with 0 degrees at north, east, south
+     * or west.
+     */
+    private double angleOffset;
+
+    /**
+     * A flag indicating if the angles increase counterclockwise or clockwise.
+     */
+    private boolean counterClockwise;
+
+    /** A flag that controls whether or not the angle labels are visible. */
+<span class="nc" id="L164">    private boolean angleLabelsVisible = true;</span>
+
+    /** The font used to display the angle labels - never null. */
+<span class="nc" id="L167">    private Font angleLabelFont = new Font(&quot;SansSerif&quot;, Font.PLAIN, 12);</span>
+
+    /** The paint used to display the angle labels. */
+<span class="nc" id="L170">    private transient Paint angleLabelPaint = Color.BLACK;</span>
+
+    /** A flag that controls whether the angular grid-lines are visible. */
+    private boolean angleGridlinesVisible;
+
+    /** The stroke used to draw the angular grid-lines. */
+    private transient Stroke angleGridlineStroke;
+
+    /** The paint used to draw the angular grid-lines. */
+    private transient Paint angleGridlinePaint;
+
+    /** A flag that controls whether the radius grid-lines are visible. */
+    private boolean radiusGridlinesVisible;
+
+    /** The stroke used to draw the radius grid-lines. */
+    private transient Stroke radiusGridlineStroke;
+
+    /** The paint used to draw the radius grid-lines. */
+    private transient Paint radiusGridlinePaint;
+
+    /**
+     * A flag that controls whether the radial minor grid-lines are visible.
+     */
+    private boolean radiusMinorGridlinesVisible;
+
+    /** The annotations for the plot. */
+<span class="nc" id="L196">    private List&lt;String&gt; cornerTextItems = new ArrayList&lt;&gt;();</span>
+
+    /**
+     * The actual margin in pixels.
+     */
+    private int margin;
+
+    /**
+     * An optional collection of legend items that can be returned by the
+     * getLegendItems() method.
+     */
+    private LegendItemCollection fixedLegendItems;
+
+    /**
+     * Storage for the mapping between datasets/renderers and range axes.  The
+     * keys in the map are Integer objects, corresponding to the dataset
+     * index.  The values in the map are List&lt;Integer&gt; instances (corresponding 
+     * to the axis indices).  If the map contains no
+     * entry for a dataset, it is assumed to map to the primary domain axis
+     * (index = 0).
+     */
+    private final Map&lt;Integer, List&lt;Integer&gt;&gt; datasetToAxesMap;
+
+    /**
+     * Default constructor.
+     */
+    public PolarPlot() {
+<span class="nc" id="L223">        this(null, null, null);</span>
+<span class="nc" id="L224">    }</span>
+
+   /**
+     * Creates a new plot.
+     *
+     * @param dataset  the dataset ({@code null} permitted).
+     * @param radiusAxis  the radius axis ({@code null} permitted).
+     * @param renderer  the renderer ({@code null} permitted).
+     */
+    public PolarPlot(XYDataset dataset, ValueAxis radiusAxis, PolarItemRenderer renderer) {
+<span class="nc" id="L234">        super();</span>
+<span class="nc" id="L235">        this.datasets = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L236">        this.datasets.put(0, dataset);</span>
+<span class="nc bnc" id="L237" title="All 2 branches missed.">        if (dataset != null) {</span>
+<span class="nc" id="L238">            dataset.addChangeListener(this);</span>
+        }
+<span class="nc" id="L240">        this.angleTickUnit = new NumberTickUnit(DEFAULT_ANGLE_TICK_UNIT_SIZE);</span>
+
+<span class="nc" id="L242">        this.axes = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L243">        this.datasetToAxesMap = new TreeMap&lt;&gt;();</span>
+<span class="nc" id="L244">        this.axes.put(0, radiusAxis);</span>
+<span class="nc bnc" id="L245" title="All 2 branches missed.">        if (radiusAxis != null) {</span>
+<span class="nc" id="L246">            radiusAxis.setPlot(this);</span>
+<span class="nc" id="L247">            radiusAxis.addChangeListener(this);</span>
+        }
+
+        // define the default locations for up to 8 axes...
+<span class="nc" id="L251">        this.axisLocations = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L252">        this.axisLocations.put(0, PolarAxisLocation.EAST_ABOVE);</span>
+<span class="nc" id="L253">        this.axisLocations.put(1, PolarAxisLocation.NORTH_LEFT);</span>
+<span class="nc" id="L254">        this.axisLocations.put(2, PolarAxisLocation.WEST_BELOW);</span>
+<span class="nc" id="L255">        this.axisLocations.put(3, PolarAxisLocation.SOUTH_RIGHT);</span>
+<span class="nc" id="L256">        this.axisLocations.put(4, PolarAxisLocation.EAST_BELOW);</span>
+<span class="nc" id="L257">        this.axisLocations.put(5, PolarAxisLocation.NORTH_RIGHT);</span>
+<span class="nc" id="L258">        this.axisLocations.put(6, PolarAxisLocation.WEST_ABOVE);</span>
+<span class="nc" id="L259">        this.axisLocations.put(7, PolarAxisLocation.SOUTH_LEFT);</span>
+
+<span class="nc" id="L261">        this.renderers = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L262">        this.renderers.put(0, renderer);</span>
+<span class="nc bnc" id="L263" title="All 2 branches missed.">        if (renderer != null) {</span>
+<span class="nc" id="L264">            renderer.setPlot(this);</span>
+<span class="nc" id="L265">            renderer.addChangeListener(this);</span>
+        }
+
+<span class="nc" id="L268">        this.angleOffset = DEFAULT_ANGLE_OFFSET;</span>
+<span class="nc" id="L269">        this.counterClockwise = false;</span>
+<span class="nc" id="L270">        this.angleGridlinesVisible = true;</span>
+<span class="nc" id="L271">        this.angleGridlineStroke = DEFAULT_GRIDLINE_STROKE;</span>
+<span class="nc" id="L272">        this.angleGridlinePaint = DEFAULT_GRIDLINE_PAINT;</span>
+
+<span class="nc" id="L274">        this.radiusGridlinesVisible = true;</span>
+<span class="nc" id="L275">        this.radiusMinorGridlinesVisible = true;</span>
+<span class="nc" id="L276">        this.radiusGridlineStroke = DEFAULT_GRIDLINE_STROKE;</span>
+<span class="nc" id="L277">        this.radiusGridlinePaint = DEFAULT_GRIDLINE_PAINT;</span>
+<span class="nc" id="L278">        this.margin = DEFAULT_MARGIN;</span>
+<span class="nc" id="L279">    }</span>
+
+    /**
+     * Returns the plot type as a string.
+     *
+     * @return A short string describing the type of plot.
+     */
+    @Override
+    public String getPlotType() {
+<span class="nc" id="L288">       return PolarPlot.localizationResources.getString(&quot;Polar_Plot&quot;);</span>
+    }
+
+    /**
+     * Returns the primary axis for the plot.
+     *
+     * @return The primary axis (possibly {@code null}).
+     *
+     * @see #setAxis(ValueAxis)
+     */
+    public ValueAxis getAxis() {
+<span class="nc" id="L299">        return getAxis(0);</span>
+    }
+
+    /**
+     * Returns an axis for the plot.
+     *
+     * @param index  the axis index.
+     *
+     * @return The axis ({@code null} possible).
+     *
+     * @see #setAxis(int, ValueAxis)
+     */
+    public ValueAxis getAxis(int index) {
+<span class="nc" id="L312">        return this.axes.get(index);</span>
+    }
+
+    /**
+     * Sets the primary axis for the plot and sends a {@link PlotChangeEvent}
+     * to all registered listeners.
+     *
+     * @param axis  the new primary axis ({@code null} permitted).
+     */
+    public void setAxis(ValueAxis axis) {
+<span class="nc" id="L322">        setAxis(0, axis);</span>
+<span class="nc" id="L323">    }</span>
+
+    /**
+     * Sets an axis for the plot and sends a {@link PlotChangeEvent} to all
+     * registered listeners.
+     *
+     * @param index  the axis index.
+     * @param axis  the axis ({@code null} permitted).
+     *
+     * @see #getAxis(int)
+     */
+    public void setAxis(int index, ValueAxis axis) {
+<span class="nc" id="L335">        setAxis(index, axis, true);</span>
+<span class="nc" id="L336">    }</span>
+
+    /**
+     * Sets an axis for the plot and, if requested, sends a
+     * {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param index  the axis index.
+     * @param axis  the axis ({@code null} permitted).
+     * @param notify  notify listeners?
+     *
+     * @see #getAxis(int)
+     */
+    public void setAxis(int index, ValueAxis axis, boolean notify) {
+<span class="nc" id="L349">        ValueAxis existing = getAxis(index);</span>
+<span class="nc bnc" id="L350" title="All 2 branches missed.">        if (existing != null) {</span>
+<span class="nc" id="L351">            existing.removeChangeListener(this);</span>
+        }
+<span class="nc bnc" id="L353" title="All 2 branches missed.">        if (axis != null) {</span>
+<span class="nc" id="L354">            axis.setPlot(this);</span>
+        }
+<span class="nc" id="L356">        this.axes.put(index, axis);</span>
+<span class="nc bnc" id="L357" title="All 2 branches missed.">        if (axis != null) {</span>
+<span class="nc" id="L358">            axis.configure();</span>
+<span class="nc" id="L359">            axis.addChangeListener(this);</span>
+        }
+<span class="nc bnc" id="L361" title="All 2 branches missed.">        if (notify) {</span>
+<span class="nc" id="L362">            fireChangeEvent();</span>
+        }
+<span class="nc" id="L364">    }</span>
+
+    /**
+     * Returns the location of the primary axis.
+     *
+     * @return The location (never {@code null}).
+     *
+     * @see #setAxisLocation(PolarAxisLocation)
+     */
+    public PolarAxisLocation getAxisLocation() {
+<span class="nc" id="L374">        return getAxisLocation(0);</span>
+    }
+
+    /**
+     * Returns the location for an axis.
+     *
+     * @param index  the axis index.
+     *
+     * @return The location (possibly {@code null}).
+     *
+     * @see #setAxisLocation(int, PolarAxisLocation)
+     */
+    public PolarAxisLocation getAxisLocation(int index) {
+<span class="nc" id="L387">        return this.axisLocations.get(index);</span>
+    }
+
+    /**
+     * Sets the location of the primary axis and sends a
+     * {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param location  the location ({@code null} not permitted).
+     *
+     * @see #getAxisLocation()
+     */
+    public void setAxisLocation(PolarAxisLocation location) {
+        // delegate argument checks...
+<span class="nc" id="L400">        setAxisLocation(0, location, true);</span>
+<span class="nc" id="L401">    }</span>
+
+    /**
+     * Sets the location of the primary axis and, if requested, sends a
+     * {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param location  the location ({@code null} not permitted).
+     * @param notify  notify listeners?
+     *
+     * @see #getAxisLocation()
+     */
+    public void setAxisLocation(PolarAxisLocation location, boolean notify) {
+        // delegate...
+<span class="nc" id="L414">        setAxisLocation(0, location, notify);</span>
+<span class="nc" id="L415">    }</span>
+
+    /**
+     * Sets the location for an axis and sends a {@link PlotChangeEvent}
+     * to all registered listeners.
+     *
+     * @param index  the axis index.
+     * @param location  the location ({@code null} not permitted).
+     *
+     * @see #getAxisLocation(int)
+     */
+    public void setAxisLocation(int index, PolarAxisLocation location) {
+        // delegate...
+<span class="nc" id="L428">        setAxisLocation(index, location, true);</span>
+<span class="nc" id="L429">    }</span>
+
+    /**
+     * Sets the axis location for an axis and, if requested, sends a
+     * {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param index  the axis index.
+     * @param location  the location ({@code null} not permitted).
+     * @param notify  notify listeners?
+     */
+    public void setAxisLocation(int index, PolarAxisLocation location,
+            boolean notify) {
+<span class="nc" id="L441">        Args.nullNotPermitted(location, &quot;location&quot;);</span>
+<span class="nc" id="L442">        this.axisLocations.put(index, location);</span>
+<span class="nc bnc" id="L443" title="All 2 branches missed.">        if (notify) {</span>
+<span class="nc" id="L444">            fireChangeEvent();</span>
+        }
+<span class="nc" id="L446">    }</span>
+
+    /**
+     * Returns the number of domain axes.
+     *
+     * @return The axis count.
+     **/
+    public int getAxisCount() {
+<span class="nc" id="L454">        return this.axes.size();</span>
+    }
+
+    /**
+     * Returns the primary dataset for the plot.
+     *
+     * @return The primary dataset (possibly {@code null}).
+     *
+     * @see #setDataset(XYDataset)
+     */
+    public XYDataset getDataset() {
+<span class="nc" id="L465">        return getDataset(0);</span>
+    }
+
+    /**
+     * Returns the dataset with the specified index, if any.
+     *
+     * @param index  the dataset index.
+     *
+     * @return The dataset (possibly {@code null}).
+     *
+     * @see #setDataset(int, XYDataset)
+     */
+    public XYDataset getDataset(int index) {
+<span class="nc" id="L478">        return this.datasets.get(index);</span>
+    }
+
+    /**
+     * Sets the primary dataset for the plot, replacing the existing dataset
+     * if there is one, and sends a {@code link PlotChangeEvent} to all
+     * registered listeners.
+     *
+     * @param dataset  the dataset ({@code null} permitted).
+     *
+     * @see #getDataset()
+     */
+    public void setDataset(XYDataset dataset) {
+<span class="nc" id="L491">        setDataset(0, dataset);</span>
+<span class="nc" id="L492">    }</span>
+
+    /**
+     * Sets a dataset for the plot, replacing the existing dataset at the same
+     * index if there is one, and sends a {@code link PlotChangeEvent} to all
+     * registered listeners.
+     *
+     * @param index  the dataset index.
+     * @param dataset  the dataset ({@code null} permitted).
+     *
+     * @see #getDataset(int)
+     */
+    public void setDataset(int index, XYDataset dataset) {
+<span class="nc" id="L505">        XYDataset existing = getDataset(index);</span>
+<span class="nc bnc" id="L506" title="All 2 branches missed.">        if (existing != null) {</span>
+<span class="nc" id="L507">            existing.removeChangeListener(this);</span>
+        }
+<span class="nc" id="L509">        this.datasets.put(index, dataset);</span>
+<span class="nc bnc" id="L510" title="All 2 branches missed.">        if (dataset != null) {</span>
+<span class="nc" id="L511">            dataset.addChangeListener(this);</span>
+        }
+
+        // send a dataset change event to self...
+<span class="nc" id="L515">        DatasetChangeEvent event = new DatasetChangeEvent(this, dataset);</span>
+<span class="nc" id="L516">        datasetChanged(event);</span>
+<span class="nc" id="L517">    }</span>
+
+    /**
+     * Returns the number of datasets.
+     *
+     * @return The number of datasets.
+     */
+    public int getDatasetCount() {
+<span class="nc" id="L525">        return this.datasets.size();</span>
+    }
+
+    /**
+     * Returns the index of the specified dataset, or {@code -1} if the
+     * dataset does not belong to the plot.
+     *
+     * @param dataset  the dataset ({@code null} not permitted).
+     *
+     * @return The index.
+     */
+    public int indexOf(XYDataset dataset) {
+<span class="nc bnc" id="L537" title="All 2 branches missed.">        for (Entry&lt;Integer, XYDataset&gt; entry : this.datasets.entrySet()) {</span>
+<span class="nc bnc" id="L538" title="All 2 branches missed.">            if (entry.getValue() == dataset) {</span>
+<span class="nc" id="L539">                return entry.getKey();</span>
+            }
+        }
+<span class="nc" id="L542">        return -1;</span>
+    }
+
+    /**
+     * Returns the primary renderer.
+     *
+     * @return The renderer (possibly {@code null}).
+     *
+     * @see #setRenderer(PolarItemRenderer)
+     */
+    public PolarItemRenderer getRenderer() {
+<span class="nc" id="L553">        return getRenderer(0);</span>
+    }
+
+    /**
+     * Returns the renderer at the specified index, if there is one.
+     *
+     * @param index  the renderer index.
+     *
+     * @return The renderer (possibly {@code null}).
+     *
+     * @see #setRenderer(int, PolarItemRenderer)
+     */
+    public PolarItemRenderer getRenderer(int index) {
+<span class="nc" id="L566">        return this.renderers.get(index);</span>
+    }
+
+    /**
+     * Sets the primary renderer, and notifies all listeners of a change to the
+     * plot.  If the renderer is set to {@code null}, no data items will
+     * be drawn for the corresponding dataset.
+     *
+     * @param renderer  the new renderer ({@code null} permitted).
+     *
+     * @see #getRenderer()
+     */
+    public void setRenderer(PolarItemRenderer renderer) {
+<span class="nc" id="L579">        setRenderer(0, renderer);</span>
+<span class="nc" id="L580">    }</span>
+
+    /**
+     * Sets a renderer and sends a {@link PlotChangeEvent} to all
+     * registered listeners.
+     *
+     * @param index  the index.
+     * @param renderer  the renderer.
+     *
+     * @see #getRenderer(int)
+     */
+    public void setRenderer(int index, PolarItemRenderer renderer) {
+<span class="nc" id="L592">        setRenderer(index, renderer, true);</span>
+<span class="nc" id="L593">    }</span>
+
+    /**
+     * Sets a renderer and, if requested, sends a {@link PlotChangeEvent} to
+     * all registered listeners.
+     *
+     * @param index  the index.
+     * @param renderer  the renderer.
+     * @param notify  notify listeners?
+     *
+     * @see #getRenderer(int)
+     */
+    public void setRenderer(int index, PolarItemRenderer renderer,
+                            boolean notify) {
+<span class="nc" id="L607">        PolarItemRenderer existing = getRenderer(index);</span>
+<span class="nc bnc" id="L608" title="All 2 branches missed.">        if (existing != null) {</span>
+<span class="nc" id="L609">            existing.removeChangeListener(this);</span>
+        }
+<span class="nc" id="L611">        this.renderers.put(index, renderer);</span>
+<span class="nc bnc" id="L612" title="All 2 branches missed.">        if (renderer != null) {</span>
+<span class="nc" id="L613">            renderer.setPlot(this);</span>
+<span class="nc" id="L614">            renderer.addChangeListener(this);</span>
+        }
+<span class="nc bnc" id="L616" title="All 2 branches missed.">        if (notify) {</span>
+<span class="nc" id="L617">            fireChangeEvent();</span>
+        }
+<span class="nc" id="L619">    }</span>
+
+    /**
+     * Returns the tick unit that controls the spacing of the angular grid
+     * lines.
+     *
+     * @return The tick unit (never {@code null}).
+     */
+    public TickUnit getAngleTickUnit() {
+<span class="nc" id="L628">        return this.angleTickUnit;</span>
+    }
+
+    /**
+     * Sets the tick unit that controls the spacing of the angular grid
+     * lines, and sends a {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param unit  the tick unit ({@code null} not permitted).
+     */
+    public void setAngleTickUnit(TickUnit unit) {
+<span class="nc" id="L638">        Args.nullNotPermitted(unit, &quot;unit&quot;);</span>
+<span class="nc" id="L639">        this.angleTickUnit = unit;</span>
+<span class="nc" id="L640">        fireChangeEvent();</span>
+<span class="nc" id="L641">    }</span>
+
+    /**
+     * Returns the offset that is used for all angles.
+     *
+     * @return The offset for the angles.
+     */
+    public double getAngleOffset() {
+<span class="nc" id="L649">        return this.angleOffset;</span>
+    }
+
+    /**
+     * Sets the offset that is used for all angles and sends a
+     * {@link PlotChangeEvent} to all registered listeners.
+     *
+     * This is useful to let 0 degrees be at the north, east, south or west
+     * side of the chart.
+     *
+     * @param offset The offset
+     */
+    public void setAngleOffset(double offset) {
+<span class="nc" id="L662">        this.angleOffset = offset;</span>
+<span class="nc" id="L663">        fireChangeEvent();</span>
+<span class="nc" id="L664">    }</span>
+
+    /**
+     * Get the direction for growing angle degrees.
+     *
+     * @return {@code true} if angle increases counterclockwise,
+     *         {@code false} otherwise.
+     */
+    public boolean isCounterClockwise() {
+<span class="nc" id="L673">        return this.counterClockwise;</span>
+    }
+
+    /**
+     * Sets the flag for increasing angle degrees direction.
+     *
+     * {@code true} for counterclockwise, {@code false} for
+     * clockwise.
+     *
+     * @param counterClockwise The flag.
+     */
+    public void setCounterClockwise(boolean counterClockwise)
+    {
+<span class="nc" id="L686">        this.counterClockwise = counterClockwise;</span>
+<span class="nc" id="L687">    }</span>
+
+    /**
+     * Returns a flag that controls whether or not the angle labels are visible.
+     *
+     * @return A boolean.
+     *
+     * @see #setAngleLabelsVisible(boolean)
+     */
+    public boolean isAngleLabelsVisible() {
+<span class="nc" id="L697">        return this.angleLabelsVisible;</span>
+    }
+
+    /**
+     * Sets the flag that controls whether or not the angle labels are visible,
+     * and sends a {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param visible  the flag.
+     *
+     * @see #isAngleLabelsVisible()
+     */
+    public void setAngleLabelsVisible(boolean visible) {
+<span class="nc bnc" id="L709" title="All 2 branches missed.">        if (this.angleLabelsVisible != visible) {</span>
+<span class="nc" id="L710">            this.angleLabelsVisible = visible;</span>
+<span class="nc" id="L711">            fireChangeEvent();</span>
+        }
+<span class="nc" id="L713">    }</span>
+
+    /**
+     * Returns the font used to display the angle labels.
+     *
+     * @return A font (never {@code null}).
+     *
+     * @see #setAngleLabelFont(Font)
+     */
+    public Font getAngleLabelFont() {
+<span class="nc" id="L723">        return this.angleLabelFont;</span>
+    }
+
+    /**
+     * Sets the font used to display the angle labels and sends a
+     * {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param font  the font ({@code null} not permitted).
+     *
+     * @see #getAngleLabelFont()
+     */
+    public void setAngleLabelFont(Font font) {
+<span class="nc" id="L735">        Args.nullNotPermitted(font, &quot;font&quot;);</span>
+<span class="nc" id="L736">        this.angleLabelFont = font;</span>
+<span class="nc" id="L737">        fireChangeEvent();</span>
+<span class="nc" id="L738">    }</span>
+
+    /**
+     * Returns the paint used to display the angle labels.
+     *
+     * @return A paint (never {@code null}).
+     *
+     * @see #setAngleLabelPaint(Paint)
+     */
+    public Paint getAngleLabelPaint() {
+<span class="nc" id="L748">        return this.angleLabelPaint;</span>
+    }
+
+    /**
+     * Sets the paint used to display the angle labels and sends a
+     * {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param paint  the paint ({@code null} not permitted).
+     */
+    public void setAngleLabelPaint(Paint paint) {
+<span class="nc" id="L758">        Args.nullNotPermitted(paint, &quot;paint&quot;);</span>
+<span class="nc" id="L759">        this.angleLabelPaint = paint;</span>
+<span class="nc" id="L760">        fireChangeEvent();</span>
+<span class="nc" id="L761">    }</span>
+
+    /**
+     * Returns {@code true} if the angular gridlines are visible, and
+     * {@code false} otherwise.
+     *
+     * @return {@code true} or {@code false}.
+     *
+     * @see #setAngleGridlinesVisible(boolean)
+     */
+    public boolean isAngleGridlinesVisible() {
+<span class="nc" id="L772">        return this.angleGridlinesVisible;</span>
+    }
+
+    /**
+     * Sets the flag that controls whether or not the angular grid-lines are
+     * visible.
+     * &lt;p&gt;
+     * If the flag value is changed, a {@link PlotChangeEvent} is sent to all
+     * registered listeners.
+     *
+     * @param visible  the new value of the flag.
+     *
+     * @see #isAngleGridlinesVisible()
+     */
+    public void setAngleGridlinesVisible(boolean visible) {
+<span class="nc bnc" id="L787" title="All 2 branches missed.">        if (this.angleGridlinesVisible != visible) {</span>
+<span class="nc" id="L788">            this.angleGridlinesVisible = visible;</span>
+<span class="nc" id="L789">            fireChangeEvent();</span>
+        }
+<span class="nc" id="L791">    }</span>
+
+    /**
+     * Returns the stroke for the grid-lines (if any) plotted against the
+     * angular axis.
+     *
+     * @return The stroke (possibly {@code null}).
+     *
+     * @see #setAngleGridlineStroke(Stroke)
+     */
+    public Stroke getAngleGridlineStroke() {
+<span class="nc" id="L802">        return this.angleGridlineStroke;</span>
+    }
+
+    /**
+     * Sets the stroke for the grid lines plotted against the angular axis and
+     * sends a {@link PlotChangeEvent} to all registered listeners.
+     * &lt;p&gt;
+     * If you set this to {@code null}, no grid lines will be drawn.
+     *
+     * @param stroke  the stroke ({@code null} permitted).
+     *
+     * @see #getAngleGridlineStroke()
+     */
+    public void setAngleGridlineStroke(Stroke stroke) {
+<span class="nc" id="L816">        this.angleGridlineStroke = stroke;</span>
+<span class="nc" id="L817">        fireChangeEvent();</span>
+<span class="nc" id="L818">    }</span>
+
+    /**
+     * Returns the paint for the grid lines (if any) plotted against the
+     * angular axis.
+     *
+     * @return The paint (possibly {@code null}).
+     *
+     * @see #setAngleGridlinePaint(Paint)
+     */
+    public Paint getAngleGridlinePaint() {
+<span class="nc" id="L829">        return this.angleGridlinePaint;</span>
+    }
+
+    /**
+     * Sets the paint for the grid lines plotted against the angular axis.
+     * &lt;p&gt;
+     * If you set this to {@code null}, no grid lines will be drawn.
+     *
+     * @param paint  the paint ({@code null} permitted).
+     *
+     * @see #getAngleGridlinePaint()
+     */
+    public void setAngleGridlinePaint(Paint paint) {
+<span class="nc" id="L842">        this.angleGridlinePaint = paint;</span>
+<span class="nc" id="L843">        fireChangeEvent();</span>
+<span class="nc" id="L844">    }</span>
+
+    /**
+     * Returns {@code true} if the radius axis grid is visible, and
+     * {@code false} otherwise.
+     *
+     * @return {@code true} or {@code false}.
+     *
+     * @see #setRadiusGridlinesVisible(boolean)
+     */
+    public boolean isRadiusGridlinesVisible() {
+<span class="nc" id="L855">        return this.radiusGridlinesVisible;</span>
+    }
+
+    /**
+     * Sets the flag that controls whether or not the radius axis grid lines
+     * are visible.
+     * &lt;p&gt;
+     * If the flag value is changed, a {@link PlotChangeEvent} is sent to all
+     * registered listeners.
+     *
+     * @param visible  the new value of the flag.
+     *
+     * @see #isRadiusGridlinesVisible()
+     */
+    public void setRadiusGridlinesVisible(boolean visible) {
+<span class="nc bnc" id="L870" title="All 2 branches missed.">        if (this.radiusGridlinesVisible != visible) {</span>
+<span class="nc" id="L871">            this.radiusGridlinesVisible = visible;</span>
+<span class="nc" id="L872">            fireChangeEvent();</span>
+        }
+<span class="nc" id="L874">    }</span>
+
+    /**
+     * Returns the stroke for the grid lines (if any) plotted against the
+     * radius axis.
+     *
+     * @return The stroke (possibly {@code null}).
+     *
+     * @see #setRadiusGridlineStroke(Stroke)
+     */
+    public Stroke getRadiusGridlineStroke() {
+<span class="nc" id="L885">        return this.radiusGridlineStroke;</span>
+    }
+
+    /**
+     * Sets the stroke for the grid lines plotted against the radius axis and
+     * sends a {@link PlotChangeEvent} to all registered listeners.
+     * &lt;p&gt;
+     * If you set this to {@code null}, no grid lines will be drawn.
+     *
+     * @param stroke  the stroke ({@code null} permitted).
+     *
+     * @see #getRadiusGridlineStroke()
+     */
+    public void setRadiusGridlineStroke(Stroke stroke) {
+<span class="nc" id="L899">        this.radiusGridlineStroke = stroke;</span>
+<span class="nc" id="L900">        fireChangeEvent();</span>
+<span class="nc" id="L901">    }</span>
+
+    /**
+     * Returns the paint for the grid lines (if any) plotted against the radius
+     * axis.
+     *
+     * @return The paint (possibly {@code null}).
+     *
+     * @see #setRadiusGridlinePaint(Paint)
+     */
+    public Paint getRadiusGridlinePaint() {
+<span class="nc" id="L912">        return this.radiusGridlinePaint;</span>
+    }
+
+    /**
+     * Sets the paint for the grid lines plotted against the radius axis and
+     * sends a {@link PlotChangeEvent} to all registered listeners.
+     * &lt;p&gt;
+     * If you set this to {@code null}, no grid lines will be drawn.
+     *
+     * @param paint  the paint ({@code null} permitted).
+     *
+     * @see #getRadiusGridlinePaint()
+     */
+    public void setRadiusGridlinePaint(Paint paint) {
+<span class="nc" id="L926">        this.radiusGridlinePaint = paint;</span>
+<span class="nc" id="L927">        fireChangeEvent();</span>
+<span class="nc" id="L928">    }</span>
+
+    /**
+     * Return the current value of the flag indicating if radial minor
+     * grid-lines will be drawn or not.
+     *
+     * @return Returns {@code true} if radial minor grid-lines are drawn.
+     */
+    public boolean isRadiusMinorGridlinesVisible() {
+<span class="nc" id="L937">        return this.radiusMinorGridlinesVisible;</span>
+    }
+
+    /**
+     * Set the flag that determines if radial minor grid-lines will be drawn,
+     * and sends a {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param flag {@code true} to draw the radial minor grid-lines,
+     *             {@code false} to hide them.
+     */
+    public void setRadiusMinorGridlinesVisible(boolean flag) {
+<span class="nc" id="L948">        this.radiusMinorGridlinesVisible = flag;</span>
+<span class="nc" id="L949">        fireChangeEvent();</span>
+<span class="nc" id="L950">    }</span>
+
+    /**
+     * Returns the margin around the plot area.
+     *
+     * @return The actual margin in pixels.
+     */
+    public int getMargin() {
+<span class="nc" id="L958">        return this.margin;</span>
+    }
+
+    /**
+     * Set the margin around the plot area and sends a
+     * {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param margin The new margin in pixels.
+     */
+    public void setMargin(int margin) {
+<span class="nc" id="L968">        this.margin = margin;</span>
+<span class="nc" id="L969">        fireChangeEvent();</span>
+<span class="nc" id="L970">    }</span>
+
+    /**
+     * Returns the fixed legend items, if any.
+     *
+     * @return The legend items (possibly {@code null}).
+     *
+     * @see #setFixedLegendItems(LegendItemCollection)
+     */
+    public LegendItemCollection getFixedLegendItems() {
+<span class="nc" id="L980">        return this.fixedLegendItems;</span>
+    }
+
+    /**
+     * Sets the fixed legend items for the plot.  Leave this set to
+     * {@code null} if you prefer the legend items to be created
+     * automatically.
+     *
+     * @param items  the legend items ({@code null} permitted).
+     *
+     * @see #getFixedLegendItems()
+     */
+    public void setFixedLegendItems(LegendItemCollection items) {
+<span class="nc" id="L993">        this.fixedLegendItems = items;</span>
+<span class="nc" id="L994">        fireChangeEvent();</span>
+<span class="nc" id="L995">    }</span>
+
+    /**
+     * Add text to be displayed in the lower right hand corner and sends a
+     * {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param text  the text to display ({@code null} not permitted).
+     *
+     * @see #removeCornerTextItem(String)
+     */
+    public void addCornerTextItem(String text) {
+<span class="nc" id="L1006">        Args.nullNotPermitted(text, &quot;text&quot;);</span>
+<span class="nc" id="L1007">        this.cornerTextItems.add(text);</span>
+<span class="nc" id="L1008">        fireChangeEvent();</span>
+<span class="nc" id="L1009">    }</span>
+
+    /**
+     * Remove the given text from the list of corner text items and
+     * sends a {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param text  the text to remove ({@code null} ignored).
+     *
+     * @see #addCornerTextItem(String)
+     */
+    public void removeCornerTextItem(String text) {
+<span class="nc" id="L1020">        boolean removed = this.cornerTextItems.remove(text);</span>
+<span class="nc bnc" id="L1021" title="All 2 branches missed.">        if (removed) {</span>
+<span class="nc" id="L1022">            fireChangeEvent();</span>
+        }
+<span class="nc" id="L1024">    }</span>
+
+    /**
+     * Clear the list of corner text items and sends a {@link PlotChangeEvent}
+     * to all registered listeners.
+     *
+     * @see #addCornerTextItem(String)
+     * @see #removeCornerTextItem(String)
+     */
+    public void clearCornerTextItems() {
+<span class="nc bnc" id="L1034" title="All 2 branches missed.">        if (!this.cornerTextItems.isEmpty()) {</span>
+<span class="nc" id="L1035">            this.cornerTextItems.clear();</span>
+<span class="nc" id="L1036">            fireChangeEvent();</span>
+        }
+<span class="nc" id="L1038">    }</span>
+
+    /**
+     * Generates a list of tick values for the angular tick marks.
+     *
+     * @return A list of {@link NumberTick} instances.
+     */
+    protected List&lt;ValueTick&gt; refreshAngleTicks() {
+<span class="nc" id="L1046">        List&lt;ValueTick&gt; ticks = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L1047" title="All 2 branches missed.">        for (double currentTickVal = 0.0; currentTickVal &lt; 360.0;</span>
+<span class="nc" id="L1048">                currentTickVal += this.angleTickUnit.getSize()) {</span>
+<span class="nc" id="L1049">            TextAnchor ta = calculateTextAnchor(currentTickVal);</span>
+<span class="nc" id="L1050">            NumberTick tick = new NumberTick(currentTickVal,</span>
+<span class="nc" id="L1051">                this.angleTickUnit.valueToString(currentTickVal),</span>
+<span class="nc" id="L1052">                ta, TextAnchor.CENTER, 0.0);</span>
+<span class="nc" id="L1053">            ticks.add(tick);</span>
+        }
+<span class="nc" id="L1055">        return ticks;</span>
+    }
+
+    /**
+     * Calculate the text position for the given degrees.
+     *
+     * @param angleDegrees  the angle in degrees.
+     * 
+     * @return The optimal text anchor.
+     */
+    protected TextAnchor calculateTextAnchor(double angleDegrees) {
+<span class="nc" id="L1066">        TextAnchor ta = TextAnchor.CENTER;</span>
+
+        // normalize angle
+<span class="nc" id="L1069">        double offset = this.angleOffset;</span>
+<span class="nc bnc" id="L1070" title="All 2 branches missed.">        while (offset &lt; 0.0) {</span>
+<span class="nc" id="L1071">            offset += 360.0;</span>
+        }
+<span class="nc bnc" id="L1073" title="All 2 branches missed.">        double normalizedAngle = (((this.counterClockwise ? -1 : 1)</span>
+<span class="nc" id="L1074">                * angleDegrees) + offset) % 360;</span>
+<span class="nc bnc" id="L1075" title="All 4 branches missed.">        while (this.counterClockwise &amp;&amp; (normalizedAngle &lt; 0.0)) {</span>
+<span class="nc" id="L1076">            normalizedAngle += 360.0;</span>
+        }
+
+<span class="nc bnc" id="L1079" title="All 2 branches missed.">        if (normalizedAngle == 0.0) {</span>
+<span class="nc" id="L1080">            ta = TextAnchor.CENTER_LEFT;</span>
+<span class="nc bnc" id="L1081" title="All 4 branches missed.">        } else if (normalizedAngle &gt; 0.0 &amp;&amp; normalizedAngle &lt; 90.0) {</span>
+<span class="nc" id="L1082">            ta = TextAnchor.TOP_LEFT;</span>
+<span class="nc bnc" id="L1083" title="All 2 branches missed.">        } else if (normalizedAngle == 90.0) {</span>
+<span class="nc" id="L1084">            ta = TextAnchor.TOP_CENTER;</span>
+<span class="nc bnc" id="L1085" title="All 4 branches missed.">        } else if (normalizedAngle &gt; 90.0 &amp;&amp; normalizedAngle &lt; 180.0) {</span>
+<span class="nc" id="L1086">            ta = TextAnchor.TOP_RIGHT;</span>
+<span class="nc bnc" id="L1087" title="All 2 branches missed.">        } else if (normalizedAngle == 180) {</span>
+<span class="nc" id="L1088">            ta = TextAnchor.CENTER_RIGHT;</span>
+<span class="nc bnc" id="L1089" title="All 4 branches missed.">        } else if (normalizedAngle &gt; 180.0 &amp;&amp; normalizedAngle &lt; 270.0) {</span>
+<span class="nc" id="L1090">            ta = TextAnchor.BOTTOM_RIGHT;</span>
+<span class="nc bnc" id="L1091" title="All 2 branches missed.">        } else if (normalizedAngle == 270) {</span>
+<span class="nc" id="L1092">            ta = TextAnchor.BOTTOM_CENTER;</span>
+<span class="nc bnc" id="L1093" title="All 4 branches missed.">        } else if (normalizedAngle &gt; 270.0 &amp;&amp; normalizedAngle &lt; 360.0) {</span>
+<span class="nc" id="L1094">            ta = TextAnchor.BOTTOM_LEFT;</span>
+        }
+<span class="nc" id="L1096">        return ta;</span>
+    }
+
+    /**
+     * Maps a dataset to a particular axis.  All data will be plotted
+     * against axis zero by default, no mapping is required for this case.
+     *
+     * @param index  the dataset index (zero-based).
+     * @param axisIndex  the axis index.
+     */
+    public void mapDatasetToAxis(int index, int axisIndex) {
+<span class="nc" id="L1107">        List&lt;Integer&gt; axisIndices = new ArrayList&lt;&gt;(1);</span>
+<span class="nc" id="L1108">        axisIndices.add(axisIndex);</span>
+<span class="nc" id="L1109">        mapDatasetToAxes(index, axisIndices);</span>
+<span class="nc" id="L1110">    }</span>
+
+    /**
+     * Maps the specified dataset to the axes in the list.  Note that the
+     * conversion of data values into Java2D space is always performed using
+     * the first axis in the list.
+     *
+     * @param index  the dataset index (zero-based).
+     * @param axisIndices  the axis indices ({@code null} permitted).
+     */
+    public void mapDatasetToAxes(int index, List&lt;Integer&gt; axisIndices) {
+<span class="nc bnc" id="L1121" title="All 2 branches missed.">        if (index &lt; 0) {</span>
+<span class="nc" id="L1122">            throw new IllegalArgumentException(&quot;Requires 'index' &gt;= 0.&quot;);</span>
+        }
+<span class="nc" id="L1124">        checkAxisIndices(axisIndices);</span>
+<span class="nc" id="L1125">        Integer key = index;</span>
+<span class="nc" id="L1126">        this.datasetToAxesMap.put(key, new ArrayList&lt;&gt;(axisIndices));</span>
+        // fake a dataset change event to update axes...
+<span class="nc" id="L1128">        datasetChanged(new DatasetChangeEvent(this, getDataset(index)));</span>
+<span class="nc" id="L1129">    }</span>
+
+    /**
+     * This method is used to perform argument checking on the list of
+     * axis indices passed to mapDatasetToAxes().
+     *
+     * @param indices  the list of indices ({@code null} permitted).
+     */
+    private void checkAxisIndices(List&lt;Integer&gt; indices) {
+        // axisIndices can be:
+        // 1.  null;
+        // 2.  non-empty, containing only Integer objects that are unique.
+<span class="nc bnc" id="L1141" title="All 2 branches missed.">        if (indices == null) {</span>
+<span class="nc" id="L1142">            return;  // OK</span>
+        }
+<span class="nc bnc" id="L1144" title="All 2 branches missed.">        if (indices.isEmpty()) {</span>
+<span class="nc" id="L1145">            throw new IllegalArgumentException(&quot;Empty list not permitted.&quot;);</span>
+        }
+<span class="nc" id="L1147">        Set&lt;Integer&gt; set = new HashSet&lt;&gt;();</span>
+<span class="nc bnc" id="L1148" title="All 2 branches missed.">        for (Integer i : indices) {</span>
+<span class="nc bnc" id="L1149" title="All 2 branches missed.">            if (set.contains(i)) {</span>
+<span class="nc" id="L1150">                throw new IllegalArgumentException(&quot;Indices must be unique.&quot;);</span>
+            }
+<span class="nc" id="L1152">            set.add(i);</span>
+        }
+<span class="nc" id="L1154">    }</span>
+
+    /**
+     * Returns the axis for a dataset.
+     *
+     * @param index  the dataset index.
+     *
+     * @return The axis.
+     */
+    public ValueAxis getAxisForDataset(int index) {
+        ValueAxis valueAxis;
+<span class="nc" id="L1165">        List&lt;Integer&gt; axisIndices = this.datasetToAxesMap.get(index);</span>
+<span class="nc bnc" id="L1166" title="All 2 branches missed.">        if (axisIndices != null) {</span>
+            // the first axis in the list is used for data &lt;--&gt; Java2D
+<span class="nc" id="L1168">            Integer axisIndex = axisIndices.get(0);</span>
+<span class="nc" id="L1169">            valueAxis = getAxis(axisIndex);</span>
+<span class="nc" id="L1170">        }</span>
+        else {
+<span class="nc" id="L1172">            valueAxis = getAxis(0);</span>
+        }
+<span class="nc" id="L1174">        return valueAxis;</span>
+    }
+
+    /**
+     * Returns the index of the given axis.
+     *
+     * @param axis  the axis.
+     *
+     * @return The axis index or -1 if axis is not used in this plot.
+     */
+    public int getAxisIndex(ValueAxis axis) {
+<span class="nc bnc" id="L1185" title="All 2 branches missed.">        for (Entry&lt;Integer, ValueAxis&gt; entry : this.axes.entrySet()) {</span>
+<span class="nc bnc" id="L1186" title="All 2 branches missed.">            if (axis.equals(entry.getValue())) {</span>
+<span class="nc" id="L1187">                return entry.getKey();</span>
+            }
+        }
+        // try the parent plot
+<span class="nc" id="L1191">        Plot parent = getParent();</span>
+<span class="nc bnc" id="L1192" title="All 2 branches missed.">        if (parent instanceof PolarPlot) {</span>
+<span class="nc" id="L1193">            PolarPlot p = (PolarPlot) parent;</span>
+<span class="nc" id="L1194">            return p.getAxisIndex(axis);</span>
+        }
+<span class="nc" id="L1196">        return -1;</span>
+    }
+
+    /**
+     * Returns the index of the specified renderer, or {@code -1} if the
+     * renderer is not assigned to this plot.
+     *
+     * @param renderer  the renderer ({@code null} not permitted).
+     *
+     * @return The renderer index.
+     */
+    public int getIndexOf(PolarItemRenderer renderer) {
+<span class="nc" id="L1208">        Args.nullNotPermitted(renderer, &quot;renderer&quot;);</span>
+<span class="nc bnc" id="L1209" title="All 2 branches missed.">        for (Entry&lt;Integer, PolarItemRenderer&gt; entry : this.renderers.entrySet()) {</span>
+<span class="nc bnc" id="L1210" title="All 2 branches missed.">            if (renderer.equals(entry.getValue())) {</span>
+<span class="nc" id="L1211">                return entry.getKey();</span>
+            }
+        }
+<span class="nc" id="L1214">        return -1;</span>
+    }
+
+    /**
+     * Receives a chart element visitor.  Many plot subclasses will override
+     * this method to handle their subcomponents.
+     * 
+     * @param visitor  the visitor ({@code null} not permitted).
+     */
+    @Override
+    public void receive(ChartElementVisitor visitor) {
+        // FIXME: handle axes and renderers
+<span class="nc" id="L1226">        visitor.visit(this);</span>
+<span class="nc" id="L1227">    }</span>
+
+    /**
+     * Draws the plot on a Java 2D graphics device (such as the screen or a
+     * printer).
+     * &lt;P&gt;
+     * This plot relies on a {@link PolarItemRenderer} to draw each
+     * item in the plot.  This allows the visual representation of the data to
+     * be changed easily.
+     * &lt;P&gt;
+     * The optional info argument collects information about the rendering of
+     * the plot (dimensions, tooltip information etc).  Just pass in
+     * {@code null} if you do not need this information.
+     *
+     * @param g2  the graphics device.
+     * @param area  the area within which the plot (including axes and
+     *              labels) should be drawn.
+     * @param anchor  the anchor point ({@code null} permitted).
+     * @param parentState  ignored.
+     * @param info  collects chart drawing information ({@code null}
+     *              permitted).
+     */
+    @Override
+    public void draw(Graphics2D g2, Rectangle2D area, Point2D anchor,
+            PlotState parentState, PlotRenderingInfo info) {
+
+        // if the plot area is too small, just return...
+<span class="nc bnc" id="L1254" title="All 2 branches missed.">        boolean b1 = (area.getWidth() &lt;= MINIMUM_WIDTH_TO_DRAW);</span>
+<span class="nc bnc" id="L1255" title="All 2 branches missed.">        boolean b2 = (area.getHeight() &lt;= MINIMUM_HEIGHT_TO_DRAW);</span>
+<span class="nc bnc" id="L1256" title="All 4 branches missed.">        if (b1 || b2) {</span>
+<span class="nc" id="L1257">            return;</span>
+        }
+
+        // record the plot area...
+<span class="nc bnc" id="L1261" title="All 2 branches missed.">        if (info != null) {</span>
+<span class="nc" id="L1262">            info.setPlotArea(area);</span>
+        }
+
+        // adjust the drawing area for the plot insets (if any)...
+<span class="nc" id="L1266">        RectangleInsets insets = getInsets();</span>
+<span class="nc" id="L1267">        insets.trim(area);</span>
+
+<span class="nc" id="L1269">        Rectangle2D dataArea = area;</span>
+<span class="nc bnc" id="L1270" title="All 2 branches missed.">        if (info != null) {</span>
+<span class="nc" id="L1271">            info.setDataArea(dataArea);</span>
+        }
+
+        // draw the plot background and axes...
+<span class="nc" id="L1275">        drawBackground(g2, dataArea);</span>
+<span class="nc" id="L1276">        int axisCount = this.axes.size();</span>
+<span class="nc" id="L1277">        AxisState state = null;</span>
+<span class="nc bnc" id="L1278" title="All 2 branches missed.">        for (int i = 0; i &lt; axisCount; i++) {</span>
+<span class="nc" id="L1279">            ValueAxis axis = getAxis(i);</span>
+<span class="nc bnc" id="L1280" title="All 2 branches missed.">            if (axis != null) {</span>
+<span class="nc" id="L1281">                PolarAxisLocation location = this.axisLocations.get(i);</span>
+<span class="nc" id="L1282">                AxisState s = drawAxis(axis, location, g2, dataArea);</span>
+<span class="nc bnc" id="L1283" title="All 2 branches missed.">                if (i == 0) {</span>
+<span class="nc" id="L1284">                    state = s;</span>
+                }
+            }
+        }
+
+        // now for each dataset, get the renderer and the appropriate axis
+        // and render the dataset...
+<span class="nc" id="L1291">        Shape originalClip = g2.getClip();</span>
+<span class="nc" id="L1292">        Composite originalComposite = g2.getComposite();</span>
+
+<span class="nc" id="L1294">        g2.clip(dataArea);</span>
+<span class="nc" id="L1295">        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER,</span>
+<span class="nc" id="L1296">                getForegroundAlpha()));</span>
+<span class="nc" id="L1297">        this.angleTicks = refreshAngleTicks();</span>
+<span class="nc" id="L1298">        drawGridlines(g2, dataArea, this.angleTicks, state.getTicks());</span>
+<span class="nc" id="L1299">        render(g2, dataArea, info);</span>
+<span class="nc" id="L1300">        g2.setClip(originalClip);</span>
+<span class="nc" id="L1301">        g2.setComposite(originalComposite);</span>
+<span class="nc" id="L1302">        drawOutline(g2, dataArea);</span>
+<span class="nc" id="L1303">        drawCornerTextItems(g2, dataArea);</span>
+<span class="nc" id="L1304">    }</span>
+
+    /**
+     * Draws the corner text items.
+     *
+     * @param g2  the drawing surface.
+     * @param area  the area.
+     */
+    protected void drawCornerTextItems(Graphics2D g2, Rectangle2D area) {
+<span class="nc bnc" id="L1313" title="All 2 branches missed.">        if (this.cornerTextItems.isEmpty()) {</span>
+<span class="nc" id="L1314">            return;</span>
+        }
+
+<span class="nc" id="L1317">        g2.setColor(Color.BLACK);</span>
+<span class="nc" id="L1318">        double width = 0.0;</span>
+<span class="nc" id="L1319">        double height = 0.0;</span>
+<span class="nc bnc" id="L1320" title="All 2 branches missed.">        for (String msg : this.cornerTextItems) {</span>
+<span class="nc" id="L1321">            FontMetrics fm = g2.getFontMetrics();</span>
+<span class="nc" id="L1322">            Rectangle2D bounds = TextUtils.getTextBounds(msg, g2, fm);</span>
+<span class="nc" id="L1323">            width = Math.max(width, bounds.getWidth());</span>
+<span class="nc" id="L1324">            height += bounds.getHeight();</span>
+        }
+
+<span class="nc" id="L1327">        double xadj = ANNOTATION_MARGIN * 2.0;</span>
+<span class="nc" id="L1328">        double yadj = ANNOTATION_MARGIN;</span>
+<span class="nc" id="L1329">        width += xadj;</span>
+<span class="nc" id="L1330">        height += yadj;</span>
+
+<span class="nc" id="L1332">        double x = area.getMaxX() - width;</span>
+<span class="nc" id="L1333">        double y = area.getMaxY() - height;</span>
+<span class="nc" id="L1334">        g2.drawRect((int) x, (int) y, (int) width, (int) height);</span>
+<span class="nc" id="L1335">        x += ANNOTATION_MARGIN;</span>
+<span class="nc bnc" id="L1336" title="All 2 branches missed.">        for (String msg : this.cornerTextItems) {</span>
+<span class="nc" id="L1337">            Rectangle2D bounds = TextUtils.getTextBounds(msg, g2,</span>
+<span class="nc" id="L1338">                    g2.getFontMetrics());</span>
+<span class="nc" id="L1339">            y += bounds.getHeight();</span>
+<span class="nc" id="L1340">            g2.drawString(msg, (int) x, (int) y);</span>
+        }
+<span class="nc" id="L1342">    }</span>
+
+    /**
+     * Draws the axis with the specified index.
+     *
+     * @param axis  the axis.
+     * @param location  the axis location.
+     * @param g2  the graphics target.
+     * @param plotArea  the plot area.
+     *
+     * @return The axis state.
+     */
+    protected AxisState drawAxis(ValueAxis axis, PolarAxisLocation location,
+            Graphics2D g2, Rectangle2D plotArea) {
+
+<span class="nc" id="L1357">        double centerX = plotArea.getCenterX();</span>
+<span class="nc" id="L1358">        double centerY = plotArea.getCenterY();</span>
+<span class="nc" id="L1359">        double r = Math.min(plotArea.getWidth() / 2.0,</span>
+<span class="nc" id="L1360">                plotArea.getHeight() / 2.0) - this.margin;</span>
+<span class="nc" id="L1361">        double x = centerX - r;</span>
+<span class="nc" id="L1362">        double y = centerY - r;</span>
+
+<span class="nc" id="L1364">        Rectangle2D dataArea = null;</span>
+<span class="nc" id="L1365">        AxisState result = null;</span>
+<span class="nc bnc" id="L1366" title="All 2 branches missed.">        if (location == PolarAxisLocation.NORTH_RIGHT) {</span>
+<span class="nc" id="L1367">            dataArea = new Rectangle2D.Double(x, y, r, r);</span>
+<span class="nc" id="L1368">            result = axis.draw(g2, centerX, plotArea, dataArea,</span>
+<span class="nc" id="L1369">                    RectangleEdge.RIGHT, null);</span>
+<span class="nc" id="L1370">        }</span>
+<span class="nc bnc" id="L1371" title="All 2 branches missed.">        else if (location == PolarAxisLocation.NORTH_LEFT) {</span>
+<span class="nc" id="L1372">            dataArea = new Rectangle2D.Double(centerX, y, r, r);</span>
+<span class="nc" id="L1373">            result = axis.draw(g2, centerX, plotArea, dataArea,</span>
+<span class="nc" id="L1374">                    RectangleEdge.LEFT, null);</span>
+<span class="nc" id="L1375">        }</span>
+<span class="nc bnc" id="L1376" title="All 2 branches missed.">        else if (location == PolarAxisLocation.SOUTH_LEFT) {</span>
+<span class="nc" id="L1377">            dataArea = new Rectangle2D.Double(centerX, centerY, r, r);</span>
+<span class="nc" id="L1378">            result = axis.draw(g2, centerX, plotArea, dataArea,</span>
+<span class="nc" id="L1379">                    RectangleEdge.LEFT, null);</span>
+<span class="nc" id="L1380">        }</span>
+<span class="nc bnc" id="L1381" title="All 2 branches missed.">        else if (location == PolarAxisLocation.SOUTH_RIGHT) {</span>
+<span class="nc" id="L1382">            dataArea = new Rectangle2D.Double(x, centerY, r, r);</span>
+<span class="nc" id="L1383">            result = axis.draw(g2, centerX, plotArea, dataArea,</span>
+<span class="nc" id="L1384">                    RectangleEdge.RIGHT, null);</span>
+<span class="nc" id="L1385">        }</span>
+<span class="nc bnc" id="L1386" title="All 2 branches missed.">        else if (location == PolarAxisLocation.EAST_ABOVE) {</span>
+<span class="nc" id="L1387">            dataArea = new Rectangle2D.Double(centerX, centerY, r, r);</span>
+<span class="nc" id="L1388">            result = axis.draw(g2, centerY, plotArea, dataArea,</span>
+<span class="nc" id="L1389">                    RectangleEdge.TOP, null);</span>
+<span class="nc" id="L1390">        }</span>
+<span class="nc bnc" id="L1391" title="All 2 branches missed.">        else if (location == PolarAxisLocation.EAST_BELOW) {</span>
+<span class="nc" id="L1392">            dataArea = new Rectangle2D.Double(centerX, y, r, r);</span>
+<span class="nc" id="L1393">            result = axis.draw(g2, centerY, plotArea, dataArea,</span>
+<span class="nc" id="L1394">                    RectangleEdge.BOTTOM, null);</span>
+<span class="nc" id="L1395">        }</span>
+<span class="nc bnc" id="L1396" title="All 2 branches missed.">        else if (location == PolarAxisLocation.WEST_ABOVE) {</span>
+<span class="nc" id="L1397">            dataArea = new Rectangle2D.Double(x, centerY, r, r);</span>
+<span class="nc" id="L1398">            result = axis.draw(g2, centerY, plotArea, dataArea,</span>
+<span class="nc" id="L1399">                    RectangleEdge.TOP, null);</span>
+<span class="nc" id="L1400">        }</span>
+<span class="nc bnc" id="L1401" title="All 2 branches missed.">        else if (location == PolarAxisLocation.WEST_BELOW) {</span>
+<span class="nc" id="L1402">            dataArea = new Rectangle2D.Double(x, y, r, r);</span>
+<span class="nc" id="L1403">            result = axis.draw(g2, centerY, plotArea, dataArea,</span>
+<span class="nc" id="L1404">                    RectangleEdge.BOTTOM, null);</span>
+        }
+
+<span class="nc" id="L1407">        return result;</span>
+    }
+
+    /**
+     * Draws a representation of the data within the dataArea region, using the
+     * current m_Renderer.
+     *
+     * @param g2  the graphics device.
+     * @param dataArea  the region in which the data is to be drawn.
+     * @param info  an optional object for collection dimension
+     *              information ({@code null} permitted).
+     */
+    protected void render(Graphics2D g2, Rectangle2D dataArea,
+            PlotRenderingInfo info) {
+
+        // now get the data and plot it (the visual representation will depend
+        // on the m_Renderer that has been set)...
+<span class="nc" id="L1424">        boolean hasData = false;</span>
+<span class="nc" id="L1425">        int datasetCount = this.datasets.size();</span>
+<span class="nc bnc" id="L1426" title="All 2 branches missed.">        for (int i = datasetCount - 1; i &gt;= 0; i--) {</span>
+<span class="nc" id="L1427">            XYDataset dataset = getDataset(i);</span>
+<span class="nc bnc" id="L1428" title="All 2 branches missed.">            if (dataset == null) {</span>
+<span class="nc" id="L1429">                continue;</span>
+            }
+<span class="nc" id="L1431">            PolarItemRenderer renderer = getRenderer(i);</span>
+<span class="nc bnc" id="L1432" title="All 2 branches missed.">            if (renderer == null) {</span>
+<span class="nc" id="L1433">                continue;</span>
+            }
+<span class="nc bnc" id="L1435" title="All 2 branches missed.">            if (!DatasetUtils.isEmptyOrNull(dataset)) {</span>
+<span class="nc" id="L1436">                hasData = true;</span>
+<span class="nc" id="L1437">                int seriesCount = dataset.getSeriesCount();</span>
+<span class="nc bnc" id="L1438" title="All 2 branches missed.">                for (int series = 0; series &lt; seriesCount; series++) {</span>
+<span class="nc" id="L1439">                    renderer.drawSeries(g2, dataArea, info, this, dataset,</span>
+<span class="nc" id="L1440">                            series);</span>
+                }
+            }
+        }
+<span class="nc bnc" id="L1444" title="All 2 branches missed.">        if (!hasData) {</span>
+<span class="nc" id="L1445">            drawNoDataMessage(g2, dataArea);</span>
+        }
+<span class="nc" id="L1447">    }</span>
+
+    /**
+     * Draws the gridlines for the plot, if they are visible.
+     *
+     * @param g2  the graphics device.
+     * @param dataArea  the data area.
+     * @param angularTicks  the ticks for the angular axis.
+     * @param radialTicks  the ticks for the radial axis.
+     */
+    protected void drawGridlines(Graphics2D g2, Rectangle2D dataArea,
+            List&lt;ValueTick&gt; angularTicks, List&lt;ValueTick&gt; radialTicks) {
+
+<span class="nc" id="L1460">        PolarItemRenderer renderer = getRenderer();</span>
+        // no renderer, no gridlines...
+<span class="nc bnc" id="L1462" title="All 2 branches missed.">        if (renderer == null) {</span>
+<span class="nc" id="L1463">            return;</span>
+        }
+
+        // draw the domain grid lines, if any...
+<span class="nc bnc" id="L1467" title="All 2 branches missed.">        if (isAngleGridlinesVisible()) {</span>
+<span class="nc" id="L1468">            Stroke gridStroke = getAngleGridlineStroke();</span>
+<span class="nc" id="L1469">            Paint gridPaint = getAngleGridlinePaint();</span>
+<span class="nc bnc" id="L1470" title="All 4 branches missed.">            if ((gridStroke != null) &amp;&amp; (gridPaint != null)) {</span>
+<span class="nc" id="L1471">                renderer.drawAngularGridLines(g2, this, angularTicks,</span>
+<span class="nc" id="L1472">                        dataArea);</span>
+            }
+        }
+
+        // draw the radius grid lines, if any...
+<span class="nc bnc" id="L1477" title="All 2 branches missed.">        if (isRadiusGridlinesVisible()) {</span>
+<span class="nc" id="L1478">            Stroke gridStroke = getRadiusGridlineStroke();</span>
+<span class="nc" id="L1479">            Paint gridPaint = getRadiusGridlinePaint();</span>
+<span class="nc bnc" id="L1480" title="All 4 branches missed.">            if ((gridStroke != null) &amp;&amp; (gridPaint != null)) {</span>
+<span class="nc" id="L1481">                List&lt;ValueTick&gt; ticks = buildRadialTicks(radialTicks);</span>
+<span class="nc" id="L1482">                renderer.drawRadialGridLines(g2, this, getAxis(), ticks, dataArea);</span>
+            }
+        }
+<span class="nc" id="L1485">    }</span>
+
+    /**
+     * Create a list of ticks based on the given list and plot properties.
+     * Only ticks of a specific type may be in the result list.
+     *
+     * @param allTicks A list of all available ticks for the primary axis.
+     *        {@code null} not permitted.
+     * @return Ticks to use for radial gridlines.
+     */
+    protected List&lt;ValueTick&gt; buildRadialTicks(List&lt;ValueTick&gt; allTicks) {
+<span class="nc" id="L1496">        List&lt;ValueTick&gt; ticks = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L1497" title="All 2 branches missed.">        for (ValueTick tick : allTicks) {</span>
+<span class="nc bnc" id="L1498" title="All 4 branches missed.">            if (isRadiusMinorGridlinesVisible() || TickType.MAJOR.equals(tick.getTickType())) {</span>
+<span class="nc" id="L1499">                ticks.add(tick);</span>
+            }
+        }
+<span class="nc" id="L1502">        return ticks;</span>
+    }
+
+    /**
+     * Zooms the axis ranges by the specified percentage about the anchor point.
+     *
+     * @param percent  the amount of the zoom.
+     */
+    @Override
+    public void zoom(double percent) {
+<span class="nc bnc" id="L1512" title="All 2 branches missed.">        for (int axisIdx = 0; axisIdx &lt; getAxisCount(); axisIdx++) {</span>
+<span class="nc" id="L1513">            final ValueAxis axis = getAxis(axisIdx);</span>
+<span class="nc bnc" id="L1514" title="All 2 branches missed.">            if (axis != null) {</span>
+<span class="nc bnc" id="L1515" title="All 2 branches missed.">                if (percent &gt; 0.0) {</span>
+<span class="nc" id="L1516">                    double radius = axis.getUpperBound();</span>
+<span class="nc" id="L1517">                    double scaledRadius = radius * percent;</span>
+<span class="nc" id="L1518">                    axis.setUpperBound(scaledRadius);</span>
+<span class="nc" id="L1519">                    axis.setAutoRange(false);</span>
+<span class="nc" id="L1520">                } else {</span>
+<span class="nc" id="L1521">                    axis.setAutoRange(true);</span>
+                }
+            }
+        }
+<span class="nc" id="L1525">    }</span>
+
+    /**
+     * A utility method that returns a list of datasets that are mapped to a
+     * particular axis.
+     *
+     * @param axisIndex  the axis index ({@code null} not permitted).
+     *
+     * @return A list of datasets.
+     */
+    private List&lt;XYDataset&gt; getDatasetsMappedToAxis(Integer axisIndex) { 
+<span class="nc" id="L1536">        Args.nullNotPermitted(axisIndex, &quot;axisIndex&quot;);</span>
+<span class="nc" id="L1537">        List&lt;XYDataset&gt; result = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L1538" title="All 2 branches missed.">       for (Entry&lt;Integer, XYDataset&gt; entry : this.datasets.entrySet()) {</span>
+<span class="nc" id="L1539">            List&lt;Integer&gt; mappedAxes = this.datasetToAxesMap.get(entry.getKey());</span>
+<span class="nc bnc" id="L1540" title="All 2 branches missed.">            if (mappedAxes == null) {</span>
+<span class="nc bnc" id="L1541" title="All 2 branches missed.">                if (axisIndex.equals(ZERO)) {</span>
+<span class="nc" id="L1542">                    result.add(getDataset(entry.getKey()));</span>
+                }
+<span class="nc" id="L1544">            } else {</span>
+<span class="nc bnc" id="L1545" title="All 2 branches missed.">                if (mappedAxes.contains(axisIndex)) {</span>
+<span class="nc" id="L1546">                    result.add(getDataset(entry.getKey()));</span>
+                }
+            }
+        }
+<span class="nc" id="L1550">        return result;</span>
+    }
+
+    /**
+     * Returns the range for the specified axis.
+     *
+     * @param axis  the axis.
+     *
+     * @return The range.
+     */
+    @Override
+    public Range getDataRange(ValueAxis axis) {
+<span class="nc" id="L1562">        Range result = null;</span>
+<span class="nc" id="L1563">        List&lt;XYDataset&gt; mappedDatasets = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L1564">        int axisIndex = getAxisIndex(axis);</span>
+<span class="nc bnc" id="L1565" title="All 2 branches missed.">        if (axisIndex &gt;= 0) {</span>
+<span class="nc" id="L1566">            mappedDatasets = getDatasetsMappedToAxis(axisIndex);</span>
+        }
+
+        // iterate through the datasets that map to the axis and get the union
+        // of the ranges.
+<span class="nc bnc" id="L1571" title="All 2 branches missed.">        for (XYDataset dataset : mappedDatasets) {</span>
+<span class="nc bnc" id="L1572" title="All 2 branches missed.">            if (dataset != null) {</span>
+                // FIXME better ask the renderer instead of DatasetUtilities
+<span class="nc" id="L1574">                result = Range.combine(result, DatasetUtils.findRangeBounds(dataset));</span>
+            }
+        }
+
+<span class="nc" id="L1578">        return result;</span>
+    }
+
+    /**
+     * Receives notification of a change to the plot's m_Dataset.
+     * &lt;P&gt;
+     * The axis ranges are updated if necessary.
+     *
+     * @param event  information about the event (not used here).
+     */
+    @Override
+    public void datasetChanged(DatasetChangeEvent event) {
+<span class="nc bnc" id="L1590" title="All 2 branches missed.">        for (int i = 0; i &lt; this.axes.size(); i++) {</span>
+<span class="nc" id="L1591">            final ValueAxis axis = (ValueAxis) this.axes.get(i);</span>
+<span class="nc bnc" id="L1592" title="All 2 branches missed.">            if (axis != null) {</span>
+<span class="nc" id="L1593">                axis.configure();</span>
+            }
+        }
+<span class="nc bnc" id="L1596" title="All 2 branches missed.">        if (getParent() != null) {</span>
+<span class="nc" id="L1597">            getParent().datasetChanged(event);</span>
+<span class="nc" id="L1598">        }</span>
+        else {
+<span class="nc" id="L1600">            super.datasetChanged(event);</span>
+        }
+<span class="nc" id="L1602">    }</span>
+
+    /**
+     * Notifies all registered listeners of a property change.
+     * &lt;P&gt;
+     * One source of property change events is the plot's m_Renderer.
+     *
+     * @param event  information about the property change.
+     */
+    @Override
+    public void rendererChanged(RendererChangeEvent event) {
+<span class="nc" id="L1613">        fireChangeEvent();</span>
+<span class="nc" id="L1614">    }</span>
+
+    /**
+     * Returns the legend items for the plot.  Each legend item is generated by
+     * the plot's m_Renderer, since the m_Renderer is responsible for the visual
+     * representation of the data.
+     *
+     * @return The legend items.
+     */
+    @Override
+    public LegendItemCollection getLegendItems() {
+<span class="nc bnc" id="L1625" title="All 2 branches missed.">        if (this.fixedLegendItems != null) {</span>
+<span class="nc" id="L1626">            return this.fixedLegendItems;</span>
+        }
+<span class="nc" id="L1628">        LegendItemCollection result = new LegendItemCollection();</span>
+<span class="nc" id="L1629">        int count = this.datasets.size();</span>
+<span class="nc bnc" id="L1630" title="All 2 branches missed.">        for (int datasetIndex = 0; datasetIndex &lt; count; datasetIndex++) {</span>
+<span class="nc" id="L1631">            XYDataset dataset = getDataset(datasetIndex);</span>
+<span class="nc" id="L1632">            PolarItemRenderer renderer = getRenderer(datasetIndex);</span>
+<span class="nc bnc" id="L1633" title="All 4 branches missed.">            if (dataset != null &amp;&amp; renderer != null) {</span>
+<span class="nc" id="L1634">                int seriesCount = dataset.getSeriesCount();</span>
+<span class="nc bnc" id="L1635" title="All 2 branches missed.">                for (int i = 0; i &lt; seriesCount; i++) {</span>
+<span class="nc" id="L1636">                    LegendItem item = renderer.getLegendItem(i);</span>
+<span class="nc" id="L1637">                    result.add(item);</span>
+                }
+            }
+        }
+<span class="nc" id="L1641">        return result;</span>
+    }
+
+    /**
+     * Tests this plot for equality with another object.
+     *
+     * @param obj  the object ({@code null} permitted).
+     *
+     * @return {@code true} or {@code false}.
+     */
+    @Override
+    public boolean equals(Object obj) {
+<span class="nc bnc" id="L1653" title="All 2 branches missed.">        if (obj == this) {</span>
+<span class="nc" id="L1654">            return true;</span>
+        }
+<span class="nc bnc" id="L1656" title="All 2 branches missed.">        if (!(obj instanceof PolarPlot)) {</span>
+<span class="nc" id="L1657">            return false;</span>
+        }
+<span class="nc" id="L1659">        PolarPlot that = (PolarPlot) obj;</span>
+<span class="nc bnc" id="L1660" title="All 2 branches missed.">        if (!this.axes.equals(that.axes)) {</span>
+<span class="nc" id="L1661">            return false;</span>
+        }
+<span class="nc bnc" id="L1663" title="All 2 branches missed.">        if (!this.axisLocations.equals(that.axisLocations)) {</span>
+<span class="nc" id="L1664">            return false;</span>
+        }
+<span class="nc bnc" id="L1666" title="All 2 branches missed.">        if (!this.renderers.equals(that.renderers)) {</span>
+<span class="nc" id="L1667">            return false;</span>
+        }
+<span class="nc bnc" id="L1669" title="All 2 branches missed.">        if (!this.angleTickUnit.equals(that.angleTickUnit)) {</span>
+<span class="nc" id="L1670">            return false;</span>
+        }
+<span class="nc bnc" id="L1672" title="All 2 branches missed.">        if (this.angleGridlinesVisible != that.angleGridlinesVisible) {</span>
+<span class="nc" id="L1673">            return false;</span>
+        }
+<span class="nc bnc" id="L1675" title="All 2 branches missed.">        if (this.angleOffset != that.angleOffset)</span>
+        {
+<span class="nc" id="L1677">            return false;</span>
+        }
+<span class="nc bnc" id="L1679" title="All 2 branches missed.">        if (this.counterClockwise != that.counterClockwise)</span>
+        {
+<span class="nc" id="L1681">            return false;</span>
+        }
+<span class="nc bnc" id="L1683" title="All 2 branches missed.">        if (this.angleLabelsVisible != that.angleLabelsVisible) {</span>
+<span class="nc" id="L1684">            return false;</span>
+        }
+<span class="nc bnc" id="L1686" title="All 2 branches missed.">        if (!this.angleLabelFont.equals(that.angleLabelFont)) {</span>
+<span class="nc" id="L1687">            return false;</span>
+        }
+<span class="nc bnc" id="L1689" title="All 2 branches missed.">        if (!PaintUtils.equal(this.angleLabelPaint, that.angleLabelPaint)) {</span>
+<span class="nc" id="L1690">            return false;</span>
+        }
+<span class="nc bnc" id="L1692" title="All 2 branches missed.">        if (!Objects.equals(this.angleGridlineStroke, that.angleGridlineStroke)) {</span>
+<span class="nc" id="L1693">            return false;</span>
+        }
+<span class="nc" id="L1695">        if (!PaintUtils.equal(</span>
+<span class="nc" id="L1696">            this.angleGridlinePaint, that.angleGridlinePaint</span>
+<span class="nc bnc" id="L1697" title="All 2 branches missed.">        )) {</span>
+<span class="nc" id="L1698">            return false;</span>
+        }
+<span class="nc bnc" id="L1700" title="All 2 branches missed.">        if (this.radiusGridlinesVisible != that.radiusGridlinesVisible) {</span>
+<span class="nc" id="L1701">            return false;</span>
+        }
+<span class="nc bnc" id="L1703" title="All 2 branches missed.">        if (!Objects.equals(this.radiusGridlineStroke, that.radiusGridlineStroke)) {</span>
+<span class="nc" id="L1704">            return false;</span>
+        }
+<span class="nc" id="L1706">        if (!PaintUtils.equal(this.radiusGridlinePaint,</span>
+<span class="nc bnc" id="L1707" title="All 2 branches missed.">                that.radiusGridlinePaint)) {</span>
+<span class="nc" id="L1708">            return false;</span>
+        }
+<span class="nc" id="L1710">        if (this.radiusMinorGridlinesVisible !=</span>
+<span class="nc bnc" id="L1711" title="All 2 branches missed.">            that.radiusMinorGridlinesVisible) {</span>
+<span class="nc" id="L1712">            return false;</span>
+        }
+<span class="nc bnc" id="L1714" title="All 2 branches missed.">        if (!this.cornerTextItems.equals(that.cornerTextItems)) {</span>
+<span class="nc" id="L1715">            return false;</span>
+        }
+<span class="nc bnc" id="L1717" title="All 2 branches missed.">        if (this.margin != that.margin) {</span>
+<span class="nc" id="L1718">            return false;</span>
+        }
+<span class="nc bnc" id="L1720" title="All 2 branches missed.">        if (!Objects.equals(this.fixedLegendItems, that.fixedLegendItems)) {</span>
+<span class="nc" id="L1721">            return false;</span>
+        }
+<span class="nc" id="L1723">        return super.equals(obj);</span>
+    }
+
+    /**
+     * Returns a clone of the plot.
+     *
+     * @return A clone.
+     *
+     * @throws CloneNotSupportedException  this can occur if some component of
+     *         the plot cannot be cloned.
+     */
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+<span class="nc" id="L1736">        PolarPlot clone = (PolarPlot) super.clone();</span>
+<span class="nc" id="L1737">        clone.axes = CloneUtils.clone(this.axes);</span>
+<span class="nc bnc" id="L1738" title="All 2 branches missed.">        for (int i = 0; i &lt; this.axes.size(); i++) {</span>
+<span class="nc" id="L1739">            ValueAxis axis = (ValueAxis) this.axes.get(i);</span>
+<span class="nc bnc" id="L1740" title="All 2 branches missed.">            if (axis != null) {</span>
+<span class="nc" id="L1741">                ValueAxis clonedAxis = (ValueAxis) axis.clone();</span>
+<span class="nc" id="L1742">                clone.axes.put(i, clonedAxis);</span>
+<span class="nc" id="L1743">                clonedAxis.setPlot(clone);</span>
+<span class="nc" id="L1744">                clonedAxis.addChangeListener(clone);</span>
+            }
+        }
+
+        // the datasets are not cloned, but listeners need to be added...
+<span class="nc" id="L1749">        clone.datasets = CloneUtils.clone(this.datasets);</span>
+<span class="nc bnc" id="L1750" title="All 2 branches missed.">        for (int i = 0; i &lt; clone.datasets.size(); ++i) {</span>
+<span class="nc" id="L1751">            XYDataset d = getDataset(i);</span>
+<span class="nc bnc" id="L1752" title="All 2 branches missed.">            if (d != null) {</span>
+<span class="nc" id="L1753">                d.addChangeListener(clone);</span>
+            }
+        }
+
+<span class="nc" id="L1757">        clone.renderers = CloneUtils.clone(this.renderers);</span>
+<span class="nc bnc" id="L1758" title="All 2 branches missed.">        for (int i = 0; i &lt; this.renderers.size(); i++) {</span>
+<span class="nc" id="L1759">            PolarItemRenderer renderer2 = (PolarItemRenderer) this.renderers.get(i);</span>
+<span class="nc bnc" id="L1760" title="All 2 branches missed.">            if (renderer2 instanceof PublicCloneable) {</span>
+<span class="nc" id="L1761">                PublicCloneable pc = (PublicCloneable) renderer2;</span>
+<span class="nc" id="L1762">                PolarItemRenderer rc = (PolarItemRenderer) pc.clone();</span>
+<span class="nc" id="L1763">                clone.renderers.put(i, rc);</span>
+<span class="nc" id="L1764">                rc.setPlot(clone);</span>
+<span class="nc" id="L1765">                rc.addChangeListener(clone);</span>
+            }
+        }
+
+<span class="nc" id="L1769">        clone.cornerTextItems = new ArrayList&lt;&gt;(this.cornerTextItems);</span>
+
+<span class="nc" id="L1771">        return clone;</span>
+    }
+
+    /**
+     * Provides serialization support.
+     *
+     * @param stream  the output stream.
+     *
+     * @throws IOException  if there is an I/O error.
+     */
+    private void writeObject(ObjectOutputStream stream) throws IOException {
+<span class="nc" id="L1782">        stream.defaultWriteObject();</span>
+<span class="nc" id="L1783">        SerialUtils.writeStroke(this.angleGridlineStroke, stream);</span>
+<span class="nc" id="L1784">        SerialUtils.writePaint(this.angleGridlinePaint, stream);</span>
+<span class="nc" id="L1785">        SerialUtils.writeStroke(this.radiusGridlineStroke, stream);</span>
+<span class="nc" id="L1786">        SerialUtils.writePaint(this.radiusGridlinePaint, stream);</span>
+<span class="nc" id="L1787">        SerialUtils.writePaint(this.angleLabelPaint, stream);</span>
+<span class="nc" id="L1788">    }</span>
+
+    /**
+     * Provides serialization support.
+     *
+     * @param stream  the input stream.
+     *
+     * @throws IOException  if there is an I/O error.
+     * @throws ClassNotFoundException  if there is a classpath problem.
+     */
+    private void readObject(ObjectInputStream stream)
+        throws IOException, ClassNotFoundException {
+
+<span class="nc" id="L1801">        stream.defaultReadObject();</span>
+<span class="nc" id="L1802">        this.angleGridlineStroke = SerialUtils.readStroke(stream);</span>
+<span class="nc" id="L1803">        this.angleGridlinePaint = SerialUtils.readPaint(stream);</span>
+<span class="nc" id="L1804">        this.radiusGridlineStroke = SerialUtils.readStroke(stream);</span>
+<span class="nc" id="L1805">        this.radiusGridlinePaint = SerialUtils.readPaint(stream);</span>
+<span class="nc" id="L1806">        this.angleLabelPaint = SerialUtils.readPaint(stream);</span>
+
+<span class="nc" id="L1808">        int rangeAxisCount = this.axes.size();</span>
+<span class="nc bnc" id="L1809" title="All 2 branches missed.">        for (int i = 0; i &lt; rangeAxisCount; i++) {</span>
+<span class="nc" id="L1810">            Axis axis = (Axis) this.axes.get(i);</span>
+<span class="nc bnc" id="L1811" title="All 2 branches missed.">            if (axis != null) {</span>
+<span class="nc" id="L1812">                axis.setPlot(this);</span>
+<span class="nc" id="L1813">                axis.addChangeListener(this);</span>
+            }
+        }
+<span class="nc" id="L1816">        int datasetCount = this.datasets.size();</span>
+<span class="nc bnc" id="L1817" title="All 2 branches missed.">        for (int i = 0; i &lt; datasetCount; i++) {</span>
+<span class="nc" id="L1818">            Dataset dataset = (Dataset) this.datasets.get(i);</span>
+<span class="nc bnc" id="L1819" title="All 2 branches missed.">            if (dataset != null) {</span>
+<span class="nc" id="L1820">                dataset.addChangeListener(this);</span>
+            }
+        }
+<span class="nc" id="L1823">        int rendererCount = this.renderers.size();</span>
+<span class="nc bnc" id="L1824" title="All 2 branches missed.">        for (int i = 0; i &lt; rendererCount; i++) {</span>
+<span class="nc" id="L1825">            PolarItemRenderer renderer = (PolarItemRenderer) this.renderers.get(i);</span>
+<span class="nc bnc" id="L1826" title="All 2 branches missed.">            if (renderer != null) {</span>
+<span class="nc" id="L1827">                renderer.addChangeListener(this);</span>
+            }
+        }
+<span class="nc" id="L1830">    }</span>
+
+    /**
+     * This method is required by the {@link Zoomable} interface, but since
+     * the plot does not have any domain axes, it does nothing.
+     *
+     * @param factor  the zoom factor.
+     * @param state  the plot state.
+     * @param source  the source point (in Java2D coordinates).
+     */
+    @Override
+    public void zoomDomainAxes(double factor, PlotRenderingInfo state,
+                               Point2D source) {
+        // do nothing
+<span class="nc" id="L1844">    }</span>
+
+    /**
+     * This method is required by the {@link Zoomable} interface, but since
+     * the plot does not have any domain axes, it does nothing.
+     *
+     * @param factor  the zoom factor.
+     * @param state  the plot state.
+     * @param source  the source point (in Java2D coordinates).
+     * @param useAnchor  use source point as zoom anchor?
+     */
+    @Override
+    public void zoomDomainAxes(double factor, PlotRenderingInfo state,
+                               Point2D source, boolean useAnchor) {
+        // do nothing
+<span class="nc" id="L1859">    }</span>
+
+    /**
+     * This method is required by the {@link Zoomable} interface, but since
+     * the plot does not have any domain axes, it does nothing.
+     *
+     * @param lowerPercent  the new lower bound.
+     * @param upperPercent  the new upper bound.
+     * @param state  the plot state.
+     * @param source  the source point (in Java2D coordinates).
+     */
+    @Override
+    public void zoomDomainAxes(double lowerPercent, double upperPercent,
+                               PlotRenderingInfo state, Point2D source) {
+        // do nothing
+<span class="nc" id="L1874">    }</span>
+
+    /**
+     * Multiplies the range on the range axis/axes by the specified factor.
+     *
+     * @param factor  the zoom factor.
+     * @param state  the plot state.
+     * @param source  the source point (in Java2D coordinates).
+     */
+    @Override
+    public void zoomRangeAxes(double factor, PlotRenderingInfo state,
+                              Point2D source) {
+<span class="nc" id="L1886">        zoom(factor);</span>
+<span class="nc" id="L1887">    }</span>
+
+    /**
+     * Multiplies the range on the range axis by the specified factor.
+     *
+     * @param factor  the zoom factor.
+     * @param info  the plot rendering info.
+     * @param source  the source point (in Java2D space).
+     * @param useAnchor  use source point as zoom anchor?
+     *
+     * @see #zoomDomainAxes(double, PlotRenderingInfo, Point2D, boolean)
+     */
+    @Override
+    public void zoomRangeAxes(double factor, PlotRenderingInfo info,
+                              Point2D source, boolean useAnchor) {
+        // get the source coordinate - this plot has always a VERTICAL
+        // orientation
+<span class="nc" id="L1904">        final double sourceX = source.getX();</span>
+
+<span class="nc bnc" id="L1906" title="All 2 branches missed.">        for (int axisIdx = 0; axisIdx &lt; getAxisCount(); axisIdx++) {</span>
+<span class="nc" id="L1907">            final ValueAxis axis = getAxis(axisIdx);</span>
+<span class="nc bnc" id="L1908" title="All 2 branches missed.">            if (axis != null) {</span>
+<span class="nc bnc" id="L1909" title="All 2 branches missed.">                if (useAnchor) {</span>
+<span class="nc" id="L1910">                    double anchorX = axis.java2DToValue(sourceX,</span>
+<span class="nc" id="L1911">                            info.getDataArea(), RectangleEdge.BOTTOM);</span>
+<span class="nc" id="L1912">                    axis.resizeRange(factor, anchorX);</span>
+<span class="nc" id="L1913">                }</span>
+                else {
+<span class="nc" id="L1915">                    axis.resizeRange(factor);</span>
+                }
+            }
+        }
+<span class="nc" id="L1919">    }</span>
+
+    /**
+     * Zooms in on the range axes.
+     *
+     * @param lowerPercent  the new lower bound.
+     * @param upperPercent  the new upper bound.
+     * @param state  the plot state.
+     * @param source  the source point (in Java2D coordinates).
+     */
+    @Override
+    public void zoomRangeAxes(double lowerPercent, double upperPercent,
+                              PlotRenderingInfo state, Point2D source) {
+<span class="nc" id="L1932">        zoom((upperPercent + lowerPercent) / 2.0);</span>
+<span class="nc" id="L1933">    }</span>
+
+    /**
+     * Returns {@code false} always.
+     *
+     * @return {@code false} always.
+     */
+    @Override
+    public boolean isDomainZoomable() {
+<span class="nc" id="L1942">        return false;</span>
+    }
+
+    /**
+     * Returns {@code true} to indicate that the range axis is zoomable.
+     *
+     * @return {@code true}.
+     */
+    @Override
+    public boolean isRangeZoomable() {
+<span class="nc" id="L1952">        return true;</span>
+    }
+
+    /**
+     * Returns the orientation of the plot.
+     *
+     * @return The orientation.
+     */
+    @Override
+    public PlotOrientation getOrientation() {
+<span class="nc" id="L1962">        return PlotOrientation.HORIZONTAL;</span>
+    }
+
+    /**
+     * Translates a (theta, radius) pair into Java2D coordinates.  If
+     * {@code radius} is less than the lower bound of the axis, then
+     * this method returns the centre point.
+     *
+     * @param angleDegrees  the angle in degrees.
+     * @param radius  the radius.
+     * @param axis  the axis.
+     * @param dataArea  the data area.
+     *
+     * @return A point in Java2D space.
+     */
+    public Point translateToJava2D(double angleDegrees, double radius,
+            ValueAxis axis, Rectangle2D dataArea) {
+
+<span class="nc bnc" id="L1980" title="All 2 branches missed.">        if (counterClockwise) {</span>
+<span class="nc" id="L1981">            angleDegrees = -angleDegrees;</span>
+        }
+<span class="nc" id="L1983">        double radians = Math.toRadians(angleDegrees + this.angleOffset);</span>
+
+<span class="nc" id="L1985">        double minx = dataArea.getMinX() + this.margin;</span>
+<span class="nc" id="L1986">        double maxx = dataArea.getMaxX() - this.margin;</span>
+<span class="nc" id="L1987">        double miny = dataArea.getMinY() + this.margin;</span>
+<span class="nc" id="L1988">        double maxy = dataArea.getMaxY() - this.margin;</span>
+
+<span class="nc" id="L1990">        double halfWidth = (maxx - minx) / 2.0;</span>
+<span class="nc" id="L1991">        double halfHeight = (maxy - miny) / 2.0;</span>
+
+<span class="nc" id="L1993">        double midX = minx + halfWidth;</span>
+<span class="nc" id="L1994">        double midY = miny + halfHeight;</span>
+
+<span class="nc" id="L1996">        double l = Math.min(halfWidth, halfHeight);</span>
+<span class="nc" id="L1997">        Rectangle2D quadrant = new Rectangle2D.Double(midX, midY, l, l);</span>
+
+<span class="nc" id="L1999">        double axisMin = axis.getLowerBound();</span>
+<span class="nc" id="L2000">        double adjustedRadius = Math.max(radius, axisMin);</span>
+
+<span class="nc" id="L2002">        double length = axis.valueToJava2D(adjustedRadius, quadrant, RectangleEdge.BOTTOM) - midX;</span>
+<span class="nc" id="L2003">        float x = (float) (midX + Math.cos(radians) * length);</span>
+<span class="nc" id="L2004">        float y = (float) (midY + Math.sin(radians) * length);</span>
+
+<span class="nc" id="L2006">        int ix = Math.round(x);</span>
+<span class="nc" id="L2007">        int iy = Math.round(y);</span>
+
+<span class="nc" id="L2009">        Point p = new Point(ix, iy);</span>
+<span class="nc" id="L2010">        return p;</span>
+
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (25 Mar 2022 23:00:41)</div></body></html>

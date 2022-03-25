@@ -7,11 +7,17 @@ module org.jfree.chart {
     exports org.jfree.chart.annotations;
     exports org.jfree.chart.api;
     exports org.jfree.chart.axis;
+    exports org.jfree.chart.block;
     exports org.jfree.chart.date;
+    exports org.jfree.chart.encoders;
     exports org.jfree.chart.entity;
     exports org.jfree.chart.event;
     exports org.jfree.chart.imagemap;
+    exports org.jfree.chart.internal;
     exports org.jfree.chart.labels;
+    exports org.jfree.chart.legend;
+    
+    /*
     exports org.jfree.chart.plot.compass;
     exports org.jfree.chart.plot;
     exports org.jfree.chart.plot.dial;
@@ -40,4 +46,5 @@ module org.jfree.chart {
     exports org.jfree.data.time.ohlc;
     exports org.jfree.data.xml;
     exports org.jfree.data.xy;
+    */
 }

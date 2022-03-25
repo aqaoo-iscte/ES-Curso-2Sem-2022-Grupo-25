@@ -1,7 +1,9 @@
 # ES-Curso-2Sem-2022-Grupo-25
 
 Grupo 25 
+
 Aplicação: jfreechart
+
 GitHub: https://github.com/jfree/jfreechart
 
 Constituintes do Grupo:
@@ -15,4 +17,4 @@ Constituintes do Grupo:
 Identificação e descrição de erros:
 
 
-Funcionades não implementadas: (nós somos bons não vamos deixar nada por fazerr RECEBAAAAA)
+Funcionades não implementadas:

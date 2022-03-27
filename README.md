@@ -17,4 +17,4 @@ Constituintes do Grupo:
 Identificação e descrição de erros:
 
 
-Funcionades não implementadas:
+Funcionalidades não implementadas:

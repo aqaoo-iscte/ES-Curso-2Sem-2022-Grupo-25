@@ -1,0 +1,867 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>CompassPlot.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (27/03/2022 17:50:40)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">ignore</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart.plot.compass</a> &gt; <span class="el_source">CompassPlot.java</span></div><h1>CompassPlot.java</h1><pre class="source lang-java linenums">/* ===========================================================
+ * JFreeChart : a free chart library for the Java(tm) platform
+ * ===========================================================
+ *
+ * (C) Copyright 2000-2022, by David Gilbert and Contributors.
+ *
+ * Project Info:  http://www.jfree.org/jfreechart/index.html
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ *
+ * [Oracle and Java are registered trademarks of Oracle and/or its affiliates. 
+ * Other names may be trademarks of their respective owners.]
+ *
+ * ----------------
+ * CompassPlot.java
+ * ----------------
+ * (C) Copyright 2002-2021, by the Australian Antarctic Division and
+ * Contributors.
+ *
+ * Original Author:  Bryan Scott (for the Australian Antarctic Division);
+ * Contributor(s):   David Gilbert;
+ *                   Arnaud Lelievre;
+ *                   Martin Hoeller;
+ *
+ */
+
+package org.jfree.chart.plot.compass;
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics2D;
+import java.awt.Paint;
+import java.awt.Polygon;
+import java.awt.Stroke;
+import java.awt.geom.Area;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.ResourceBundle;
+import org.jfree.chart.ChartElementVisitor;
+
+import org.jfree.chart.legend.LegendItemCollection;
+import org.jfree.chart.event.PlotChangeEvent;
+import org.jfree.chart.api.RectangleInsets;
+import org.jfree.chart.internal.PaintUtils;
+import org.jfree.chart.internal.Args;
+import org.jfree.chart.internal.SerialUtils;
+import org.jfree.chart.plot.Plot;
+import org.jfree.chart.plot.PlotRenderingInfo;
+import org.jfree.chart.plot.PlotState;
+import org.jfree.data.general.DefaultValueDataset;
+import org.jfree.data.general.ValueDataset;
+
+/**
+ * A specialised plot that draws a compass to indicate a direction based on the
+ * value from a {@link ValueDataset}.
+ */
+public class CompassPlot extends Plot implements Cloneable, Serializable {
+
+    /** For serialization. */
+    private static final long serialVersionUID = 6924382802125527395L;
+
+    /** The default label font. */
+<span class="nc" id="L84">    public static final Font DEFAULT_LABEL_FONT = new Font(&quot;SansSerif&quot;,</span>
+<span class="nc" id="L85">            Font.BOLD, 10);</span>
+
+    /** A constant for the label type. */
+    public static final int NO_LABELS = 0;
+
+    /** A constant for the label type. */
+    public static final int VALUE_LABELS = 1;
+
+    /** The label type (NO_LABELS, VALUE_LABELS). */
+    private int labelType;
+
+    /** The label font. */
+    private Font labelFont;
+
+    /** A flag that controls whether or not a border is drawn. */
+<span class="nc" id="L100">    private boolean drawBorder = false;</span>
+
+    /** The rose highlight paint. */
+<span class="nc" id="L103">    private transient Paint roseHighlightPaint = Color.BLACK;</span>
+
+    /** The rose paint. */
+<span class="nc" id="L106">    private transient Paint rosePaint = Color.YELLOW;</span>
+
+    /** The rose center paint. */
+<span class="nc" id="L109">    private transient Paint roseCenterPaint = Color.WHITE;</span>
+
+    /** The compass font. */
+<span class="nc" id="L112">    private Font compassFont = new Font(&quot;Arial&quot;, Font.PLAIN, 10);</span>
+
+    /** A working shape. */
+    private transient Ellipse2D circle1;
+
+    /** A working shape. */
+    private transient Ellipse2D circle2;
+
+    /** A working area. */
+    private transient Area a1;
+
+    /** A working area. */
+    private transient Area a2;
+
+    /** A working shape. */
+    private transient Rectangle2D rect1;
+
+    /** An array of value datasets. */
+<span class="nc" id="L130">    private ValueDataset[] datasets = new ValueDataset[1];</span>
+
+    /** An array of needles. */
+<span class="nc" id="L133">    private MeterNeedle[] seriesNeedle = new MeterNeedle[1];</span>
+
+    /** The resourceBundle for the localization. */
+<span class="nc" id="L136">    protected static ResourceBundle localizationResources</span>
+<span class="nc" id="L137">            = ResourceBundle.getBundle(&quot;org.jfree.chart.plot.LocalizationBundle&quot;);</span>
+
+    /**
+     * The count to complete one revolution.  Can be arbitrarily set
+     * For degrees (the default) it is 360, for radians this is 2*Pi, etc
+     */
+<span class="nc" id="L143">    protected double revolutionDistance = 360;</span>
+
+    /**
+     * Default constructor.
+     */
+    public CompassPlot() {
+<span class="nc" id="L149">        this(new DefaultValueDataset());</span>
+<span class="nc" id="L150">    }</span>
+
+    /**
+     * Constructs a new compass plot.
+     *
+     * @param dataset  the dataset for the plot ({@code null} permitted).
+     */
+    public CompassPlot(ValueDataset dataset) {
+<span class="nc" id="L158">        super();</span>
+<span class="nc bnc" id="L159" title="All 2 branches missed.">        if (dataset != null) {</span>
+<span class="nc" id="L160">            this.datasets[0] = dataset;</span>
+<span class="nc" id="L161">            dataset.addChangeListener(this);</span>
+        }
+<span class="nc" id="L163">        this.circle1 = new Ellipse2D.Double();</span>
+<span class="nc" id="L164">        this.circle2 = new Ellipse2D.Double();</span>
+<span class="nc" id="L165">        this.rect1   = new Rectangle2D.Double();</span>
+<span class="nc" id="L166">        setSeriesNeedle(0);</span>
+<span class="nc" id="L167">    }</span>
+
+    /**
+     * Returns the label type.  Defined by the constants: {@link #NO_LABELS}
+     * and {@link #VALUE_LABELS}.
+     *
+     * @return The label type.
+     *
+     * @see #setLabelType(int)
+     */
+    public int getLabelType() {
+        // FIXME: this attribute is never used - deprecate?
+<span class="nc" id="L179">        return this.labelType;</span>
+    }
+
+    /**
+     * Sets the label type (either {@link #NO_LABELS} or {@link #VALUE_LABELS}.
+     *
+     * @param type  the type.
+     *
+     * @see #getLabelType()
+     */
+    public void setLabelType(int type) {
+        // FIXME: this attribute is never used - deprecate?
+<span class="nc bnc" id="L191" title="All 4 branches missed.">        if ((type != NO_LABELS) &amp;&amp; (type != VALUE_LABELS)) {</span>
+<span class="nc" id="L192">            throw new IllegalArgumentException(</span>
+<span class="nc" id="L193">                    &quot;MeterPlot.setLabelType(int): unrecognised type.&quot;);</span>
+        }
+<span class="nc bnc" id="L195" title="All 2 branches missed.">        if (this.labelType != type) {</span>
+<span class="nc" id="L196">            this.labelType = type;</span>
+<span class="nc" id="L197">            fireChangeEvent();</span>
+        }
+<span class="nc" id="L199">    }</span>
+
+    /**
+     * Returns the label font.
+     *
+     * @return The label font.
+     *
+     * @see #setLabelFont(Font)
+     */
+    public Font getLabelFont() {
+        // FIXME: this attribute is not used - deprecate?
+<span class="nc" id="L210">        return this.labelFont;</span>
+    }
+
+    /**
+     * Sets the label font and sends a {@link PlotChangeEvent} to all
+     * registered listeners.
+     *
+     * @param font  the new label font.
+     *
+     * @see #getLabelFont()
+     */
+    public void setLabelFont(Font font) {
+        // FIXME: this attribute is not used - deprecate?
+<span class="nc" id="L223">        Args.nullNotPermitted(font, &quot;font&quot;);</span>
+<span class="nc" id="L224">        this.labelFont = font;</span>
+<span class="nc" id="L225">        fireChangeEvent();</span>
+<span class="nc" id="L226">    }</span>
+
+    /**
+     * Returns the paint used to fill the outer circle of the compass.
+     *
+     * @return The paint (never {@code null}).
+     *
+     * @see #setRosePaint(Paint)
+     */
+    public Paint getRosePaint() {
+<span class="nc" id="L236">        return this.rosePaint;</span>
+    }
+
+    /**
+     * Sets the paint used to fill the outer circle of the compass,
+     * and sends a {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param paint  the paint ({@code null} not permitted).
+     *
+     * @see #getRosePaint()
+     */
+    public void setRosePaint(Paint paint) {
+<span class="nc" id="L248">        Args.nullNotPermitted(paint, &quot;paint&quot;);</span>
+<span class="nc" id="L249">        this.rosePaint = paint;</span>
+<span class="nc" id="L250">        fireChangeEvent();</span>
+<span class="nc" id="L251">    }</span>
+
+    /**
+     * Returns the paint used to fill the inner background area of the
+     * compass.
+     *
+     * @return The paint (never {@code null}).
+     *
+     * @see #setRoseCenterPaint(Paint)
+     */
+    public Paint getRoseCenterPaint() {
+<span class="nc" id="L262">        return this.roseCenterPaint;</span>
+    }
+
+    /**
+     * Sets the paint used to fill the inner background area of the compass,
+     * and sends a {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param paint  the paint ({@code null} not permitted).
+     *
+     * @see #getRoseCenterPaint()
+     */
+    public void setRoseCenterPaint(Paint paint) {
+<span class="nc" id="L274">        Args.nullNotPermitted(paint, &quot;paint&quot;);</span>
+<span class="nc" id="L275">        this.roseCenterPaint = paint;</span>
+<span class="nc" id="L276">        fireChangeEvent();</span>
+<span class="nc" id="L277">    }</span>
+
+    /**
+     * Returns the paint used to draw the circles, symbols and labels on the
+     * compass.
+     *
+     * @return The paint (never {@code null}).
+     *
+     * @see #setRoseHighlightPaint(Paint)
+     */
+    public Paint getRoseHighlightPaint() {
+<span class="nc" id="L288">        return this.roseHighlightPaint;</span>
+    }
+
+    /**
+     * Sets the paint used to draw the circles, symbols and labels of the
+     * compass, and sends a {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param paint  the paint ({@code null} not permitted).
+     *
+     * @see #getRoseHighlightPaint()
+     */
+    public void setRoseHighlightPaint(Paint paint) {
+<span class="nc" id="L300">        Args.nullNotPermitted(paint, &quot;paint&quot;);</span>
+<span class="nc" id="L301">        this.roseHighlightPaint = paint;</span>
+<span class="nc" id="L302">        fireChangeEvent();</span>
+<span class="nc" id="L303">    }</span>
+
+    /**
+     * Returns a flag that controls whether or not a border is drawn.
+     *
+     * @return The flag.
+     *
+     * @see #setDrawBorder(boolean)
+     */
+    public boolean getDrawBorder() {
+<span class="nc" id="L313">        return this.drawBorder;</span>
+    }
+
+    /**
+     * Sets a flag that controls whether or not a border is drawn.
+     *
+     * @param status  the flag status.
+     *
+     * @see #getDrawBorder()
+     */
+    public void setDrawBorder(boolean status) {
+<span class="nc" id="L324">        this.drawBorder = status;</span>
+<span class="nc" id="L325">        fireChangeEvent();</span>
+<span class="nc" id="L326">    }</span>
+
+    /**
+     * Sets the series paint.
+     *
+     * @param series  the series index.
+     * @param paint  the paint.
+     *
+     * @see #setSeriesOutlinePaint(int, Paint)
+     */
+    public void setSeriesPaint(int series, Paint paint) {
+       // super.setSeriesPaint(series, paint);
+<span class="nc bnc" id="L338" title="All 4 branches missed.">        if ((series &gt;= 0) &amp;&amp; (series &lt; this.seriesNeedle.length)) {</span>
+<span class="nc" id="L339">            this.seriesNeedle[series].setFillPaint(paint);</span>
+        }
+<span class="nc" id="L341">    }</span>
+
+    /**
+     * Sets the series outline paint.
+     *
+     * @param series  the series index.
+     * @param p  the paint.
+     *
+     * @see #setSeriesPaint(int, Paint)
+     */
+    public void setSeriesOutlinePaint(int series, Paint p) {
+
+<span class="nc bnc" id="L353" title="All 4 branches missed.">        if ((series &gt;= 0) &amp;&amp; (series &lt; this.seriesNeedle.length)) {</span>
+<span class="nc" id="L354">            this.seriesNeedle[series].setOutlinePaint(p);</span>
+        }
+
+<span class="nc" id="L357">    }</span>
+
+    /**
+     * Sets the series outline stroke.
+     *
+     * @param series  the series index.
+     * @param stroke  the stroke.
+     *
+     * @see #setSeriesOutlinePaint(int, Paint)
+     */
+    public void setSeriesOutlineStroke(int series, Stroke stroke) {
+
+<span class="nc bnc" id="L369" title="All 4 branches missed.">        if ((series &gt;= 0) &amp;&amp; (series &lt; this.seriesNeedle.length)) {</span>
+<span class="nc" id="L370">            this.seriesNeedle[series].setOutlineStroke(stroke);</span>
+        }
+
+<span class="nc" id="L373">    }</span>
+
+    /**
+     * Sets the needle type.
+     *
+     * @param type  the type.
+     *
+     * @see #setSeriesNeedle(int, int)
+     */
+    public void setSeriesNeedle(int type) {
+<span class="nc" id="L383">        setSeriesNeedle(0, type);</span>
+<span class="nc" id="L384">    }</span>
+
+    /**
+     * Sets the needle for a series.  The needle type is one of the following:
+     * &lt;ul&gt;
+     * &lt;li&gt;0 = {@link ArrowNeedle};&lt;/li&gt;
+     * &lt;li&gt;1 = {@link LineNeedle};&lt;/li&gt;
+     * &lt;li&gt;2 = {@link LongNeedle};&lt;/li&gt;
+     * &lt;li&gt;3 = {@link PinNeedle};&lt;/li&gt;
+     * &lt;li&gt;4 = {@link PlumNeedle};&lt;/li&gt;
+     * &lt;li&gt;5 = {@link PointerNeedle};&lt;/li&gt;
+     * &lt;li&gt;6 = {@link ShipNeedle};&lt;/li&gt;
+     * &lt;li&gt;7 = {@link WindNeedle};&lt;/li&gt;
+     * &lt;li&gt;8 = {@link ArrowNeedle};&lt;/li&gt;
+     * &lt;li&gt;9 = {@link MiddlePinNeedle};&lt;/li&gt;
+     * &lt;/ul&gt;
+     * @param index  the series index.
+     * @param type  the needle type.
+     *
+     * @see #setSeriesNeedle(int)
+     */
+    public void setSeriesNeedle(int index, int type) {
+<span class="nc bnc" id="L406" title="All 11 branches missed.">        switch (type) {</span>
+            case 0:
+<span class="nc" id="L408">                setSeriesNeedle(index, new ArrowNeedle(true));</span>
+<span class="nc" id="L409">                setSeriesPaint(index, Color.RED);</span>
+<span class="nc" id="L410">                this.seriesNeedle[index].setHighlightPaint(Color.WHITE);</span>
+<span class="nc" id="L411">                break;</span>
+            case 1:
+<span class="nc" id="L413">                setSeriesNeedle(index, new LineNeedle());</span>
+<span class="nc" id="L414">                break;</span>
+            case 2:
+<span class="nc" id="L416">                MeterNeedle longNeedle = new LongNeedle();</span>
+<span class="nc" id="L417">                longNeedle.setRotateY(0.5);</span>
+<span class="nc" id="L418">                setSeriesNeedle(index, longNeedle);</span>
+<span class="nc" id="L419">                break;</span>
+            case 3:
+<span class="nc" id="L421">                setSeriesNeedle(index, new PinNeedle());</span>
+<span class="nc" id="L422">                break;</span>
+            case 4:
+<span class="nc" id="L424">                setSeriesNeedle(index, new PlumNeedle());</span>
+<span class="nc" id="L425">                break;</span>
+            case 5:
+<span class="nc" id="L427">                setSeriesNeedle(index, new PointerNeedle());</span>
+<span class="nc" id="L428">                break;</span>
+            case 6:
+<span class="nc" id="L430">                setSeriesPaint(index, null);</span>
+<span class="nc" id="L431">                setSeriesOutlineStroke(index, new BasicStroke(3));</span>
+<span class="nc" id="L432">                setSeriesNeedle(index, new ShipNeedle());</span>
+<span class="nc" id="L433">                break;</span>
+            case 7:
+<span class="nc" id="L435">                setSeriesPaint(index, Color.BLUE);</span>
+<span class="nc" id="L436">                setSeriesNeedle(index, new WindNeedle());</span>
+<span class="nc" id="L437">                break;</span>
+            case 8:
+<span class="nc" id="L439">                setSeriesNeedle(index, new ArrowNeedle(true));</span>
+<span class="nc" id="L440">                break;</span>
+            case 9:
+<span class="nc" id="L442">                setSeriesNeedle(index, new MiddlePinNeedle());</span>
+<span class="nc" id="L443">                break;</span>
+
+            default:
+<span class="nc" id="L446">                throw new IllegalArgumentException(&quot;Unrecognised type.&quot;);</span>
+        }
+
+<span class="nc" id="L449">    }</span>
+
+    /**
+     * Sets the needle for a series and sends a {@link PlotChangeEvent} to all
+     * registered listeners.
+     *
+     * @param index  the series index.
+     * @param needle  the needle.
+     */
+    public void setSeriesNeedle(int index, MeterNeedle needle) {
+<span class="nc bnc" id="L459" title="All 4 branches missed.">        if ((needle != null) &amp;&amp; (index &lt; this.seriesNeedle.length)) {</span>
+<span class="nc" id="L460">            this.seriesNeedle[index] = needle;</span>
+        }
+<span class="nc" id="L462">        fireChangeEvent();</span>
+<span class="nc" id="L463">    }</span>
+
+    /**
+     * Returns an array of dataset references for the plot.
+     *
+     * @return The dataset for the plot, cast as a ValueDataset.
+     *
+     * @see #addDataset(ValueDataset)
+     */
+    public ValueDataset[] getDatasets() {
+<span class="nc" id="L473">        return this.datasets;</span>
+    }
+
+    /**
+     * Adds a dataset to the compass.
+     *
+     * @param dataset  the new dataset ({@code null} ignored).
+     *
+     * @see #addDataset(ValueDataset, MeterNeedle)
+     */
+    public void addDataset(ValueDataset dataset) {
+<span class="nc" id="L484">        addDataset(dataset, null);</span>
+<span class="nc" id="L485">    }</span>
+
+    /**
+     * Adds a dataset to the compass.
+     *
+     * @param dataset  the new dataset ({@code null} ignored).
+     * @param needle  the needle ({@code null} permitted).
+     */
+    public void addDataset(ValueDataset dataset, MeterNeedle needle) {
+
+<span class="nc bnc" id="L495" title="All 2 branches missed.">        if (dataset != null) {</span>
+<span class="nc" id="L496">            int i = this.datasets.length + 1;</span>
+<span class="nc" id="L497">            ValueDataset[] t = new ValueDataset[i];</span>
+<span class="nc" id="L498">            MeterNeedle[] p = new MeterNeedle[i];</span>
+<span class="nc" id="L499">            i = i - 2;</span>
+<span class="nc bnc" id="L500" title="All 2 branches missed.">            for (; i &gt;= 0; --i) {</span>
+<span class="nc" id="L501">                t[i] = this.datasets[i];</span>
+<span class="nc" id="L502">                p[i] = this.seriesNeedle[i];</span>
+            }
+<span class="nc" id="L504">            i = this.datasets.length;</span>
+<span class="nc" id="L505">            t[i] = dataset;</span>
+<span class="nc bnc" id="L506" title="All 2 branches missed.">            p[i] = ((needle != null) ? needle : p[i - 1]);</span>
+
+<span class="nc" id="L508">            ValueDataset[] a = this.datasets;</span>
+<span class="nc" id="L509">            MeterNeedle[] b = this.seriesNeedle;</span>
+<span class="nc" id="L510">            this.datasets = t;</span>
+<span class="nc" id="L511">            this.seriesNeedle = p;</span>
+
+<span class="nc bnc" id="L513" title="All 2 branches missed.">            for (--i; i &gt;= 0; --i) {</span>
+<span class="nc" id="L514">                a[i] = null;</span>
+<span class="nc" id="L515">                b[i] = null;</span>
+            }
+<span class="nc" id="L517">            dataset.addChangeListener(this);</span>
+        }
+<span class="nc" id="L519">    }</span>
+
+    /**
+     * Receives a chart element visitor.  Many plot subclasses will override
+     * this method to handle their subcomponents.
+     * 
+     * @param visitor  the visitor ({@code null} not permitted).
+     */
+    @Override
+    public void receive(ChartElementVisitor visitor) {
+        // FIXME : handle the needles
+<span class="nc" id="L530">        super.receive(visitor);</span>
+<span class="nc" id="L531">    }</span>
+
+    /**
+     * Draws the plot on a Java 2D graphics device (such as the screen or a
+     * printer).
+     *
+     * @param g2  the graphics device.
+     * @param area  the area within which the plot should be drawn.
+     * @param anchor  the anchor point ({@code null} permitted).
+     * @param parentState  the state from the parent plot, if there is one.
+     * @param info  collects info about the drawing.
+     */
+    @Override
+    public void draw(Graphics2D g2, Rectangle2D area, Point2D anchor,
+                     PlotState parentState, PlotRenderingInfo info) {
+
+        int outerRadius, innerRadius;
+        int x1, y1, x2, y2;
+        double a;
+
+<span class="nc bnc" id="L551" title="All 2 branches missed.">        if (info != null) {</span>
+<span class="nc" id="L552">            info.setPlotArea(area);</span>
+        }
+
+        // adjust for insets...
+<span class="nc" id="L556">        RectangleInsets insets = getInsets();</span>
+<span class="nc" id="L557">        insets.trim(area);</span>
+
+        // draw the background
+<span class="nc bnc" id="L560" title="All 2 branches missed.">        if (this.drawBorder) {</span>
+<span class="nc" id="L561">            drawBackground(g2, area);</span>
+        }
+
+<span class="nc" id="L564">        int midX = (int) (area.getWidth() / 2);</span>
+<span class="nc" id="L565">        int midY = (int) (area.getHeight() / 2);</span>
+<span class="nc" id="L566">        int radius = midX;</span>
+<span class="nc bnc" id="L567" title="All 2 branches missed.">        if (midY &lt; midX) {</span>
+<span class="nc" id="L568">            radius = midY;</span>
+        }
+<span class="nc" id="L570">        --radius;</span>
+<span class="nc" id="L571">        int diameter = 2 * radius;</span>
+
+<span class="nc" id="L573">        midX += (int) area.getMinX();</span>
+<span class="nc" id="L574">        midY += (int) area.getMinY();</span>
+
+<span class="nc" id="L576">        this.circle1.setFrame(midX - radius, midY - radius, diameter, diameter);</span>
+<span class="nc" id="L577">        this.circle2.setFrame(</span>
+<span class="nc" id="L578">            midX - radius + 15, midY - radius + 15,</span>
+<span class="nc" id="L579">            diameter - 30, diameter - 30</span>
+        );
+<span class="nc" id="L581">        g2.setPaint(this.rosePaint);</span>
+<span class="nc" id="L582">        this.a1 = new Area(this.circle1);</span>
+<span class="nc" id="L583">        this.a2 = new Area(this.circle2);</span>
+<span class="nc" id="L584">        this.a1.subtract(this.a2);</span>
+<span class="nc" id="L585">        g2.fill(this.a1);</span>
+
+<span class="nc" id="L587">        g2.setPaint(this.roseCenterPaint);</span>
+<span class="nc" id="L588">        x1 = diameter - 30;</span>
+<span class="nc" id="L589">        g2.fillOval(midX - radius + 15, midY - radius + 15, x1, x1);</span>
+<span class="nc" id="L590">        g2.setPaint(this.roseHighlightPaint);</span>
+<span class="nc" id="L591">        g2.drawOval(midX - radius, midY - radius, diameter, diameter);</span>
+<span class="nc" id="L592">        x1 = diameter - 20;</span>
+<span class="nc" id="L593">        g2.drawOval(midX - radius + 10, midY - radius + 10, x1, x1);</span>
+<span class="nc" id="L594">        x1 = diameter - 30;</span>
+<span class="nc" id="L595">        g2.drawOval(midX - radius + 15, midY - radius + 15, x1, x1);</span>
+<span class="nc" id="L596">        x1 = diameter - 80;</span>
+<span class="nc" id="L597">        g2.drawOval(midX - radius + 40, midY - radius + 40, x1, x1);</span>
+
+<span class="nc" id="L599">        outerRadius = radius - 20;</span>
+<span class="nc" id="L600">        innerRadius = radius - 32;</span>
+<span class="nc bnc" id="L601" title="All 2 branches missed.">        for (int w = 0; w &lt; 360; w += 15) {</span>
+<span class="nc" id="L602">            a = Math.toRadians(w);</span>
+<span class="nc" id="L603">            x1 = midX - ((int) (Math.sin(a) * innerRadius));</span>
+<span class="nc" id="L604">            x2 = midX - ((int) (Math.sin(a) * outerRadius));</span>
+<span class="nc" id="L605">            y1 = midY - ((int) (Math.cos(a) * innerRadius));</span>
+<span class="nc" id="L606">            y2 = midY - ((int) (Math.cos(a) * outerRadius));</span>
+<span class="nc" id="L607">            g2.drawLine(x1, y1, x2, y2);</span>
+        }
+
+<span class="nc" id="L610">        g2.setPaint(this.roseHighlightPaint);</span>
+<span class="nc" id="L611">        innerRadius = radius - 26;</span>
+<span class="nc" id="L612">        outerRadius = 7;</span>
+<span class="nc bnc" id="L613" title="All 2 branches missed.">        for (int w = 45; w &lt; 360; w += 90) {</span>
+<span class="nc" id="L614">            a = Math.toRadians(w);</span>
+<span class="nc" id="L615">            x1 = midX - ((int) (Math.sin(a) * innerRadius));</span>
+<span class="nc" id="L616">            y1 = midY - ((int) (Math.cos(a) * innerRadius));</span>
+<span class="nc" id="L617">            g2.fillOval(x1 - outerRadius, y1 - outerRadius, 2 * outerRadius,</span>
+<span class="nc" id="L618">                    2 * outerRadius);</span>
+        }
+
+        /// Squares
+<span class="nc bnc" id="L622" title="All 2 branches missed.">        for (int w = 0; w &lt; 360; w += 90) {</span>
+<span class="nc" id="L623">            a = Math.toRadians(w);</span>
+<span class="nc" id="L624">            x1 = midX - ((int) (Math.sin(a) * innerRadius));</span>
+<span class="nc" id="L625">            y1 = midY - ((int) (Math.cos(a) * innerRadius));</span>
+
+<span class="nc" id="L627">            Polygon p = new Polygon();</span>
+<span class="nc" id="L628">            p.addPoint(x1 - outerRadius, y1);</span>
+<span class="nc" id="L629">            p.addPoint(x1, y1 + outerRadius);</span>
+<span class="nc" id="L630">            p.addPoint(x1 + outerRadius, y1);</span>
+<span class="nc" id="L631">            p.addPoint(x1, y1 - outerRadius);</span>
+<span class="nc" id="L632">            g2.fillPolygon(p);</span>
+        }
+
+        /// Draw N, S, E, W
+<span class="nc" id="L636">        innerRadius = radius - 42;</span>
+<span class="nc" id="L637">        Font f = getCompassFont(radius);</span>
+<span class="nc" id="L638">        g2.setFont(f);</span>
+<span class="nc" id="L639">        g2.drawString(localizationResources.getString(&quot;N&quot;), midX - 5, midY - innerRadius + f.getSize());</span>
+<span class="nc" id="L640">        g2.drawString(localizationResources.getString(&quot;S&quot;), midX - 5, midY + innerRadius - 5);</span>
+<span class="nc" id="L641">        g2.drawString(localizationResources.getString(&quot;W&quot;), midX - innerRadius + 5, midY + 5);</span>
+<span class="nc" id="L642">        g2.drawString(localizationResources.getString(&quot;E&quot;), midX + innerRadius - f.getSize(), midY + 5);</span>
+
+        // plot the data (unless the dataset is null)...
+<span class="nc" id="L645">        y1 = radius / 2;</span>
+<span class="nc" id="L646">        x1 = radius / 6;</span>
+<span class="nc" id="L647">        Rectangle2D needleArea = new Rectangle2D.Double(</span>
+<span class="nc" id="L648">            (midX - x1), (midY - y1), (2 * x1), (2 * y1)</span>
+        );
+<span class="nc" id="L650">        int x = this.seriesNeedle.length;</span>
+        int current;
+        double value;
+<span class="nc" id="L653">        int i = (this.datasets.length - 1);</span>
+<span class="nc bnc" id="L654" title="All 2 branches missed.">        for (; i &gt;= 0; --i) {</span>
+<span class="nc" id="L655">            ValueDataset data = this.datasets[i];</span>
+
+<span class="nc bnc" id="L657" title="All 4 branches missed.">            if (data != null &amp;&amp; data.getValue() != null) {</span>
+<span class="nc" id="L658">                value = (data.getValue().doubleValue())</span>
+<span class="nc" id="L659">                    % this.revolutionDistance;</span>
+<span class="nc" id="L660">                value = value / this.revolutionDistance * 360;</span>
+<span class="nc" id="L661">                current = i % x;</span>
+<span class="nc" id="L662">                this.seriesNeedle[current].draw(g2, needleArea, value);</span>
+            }
+        }
+
+<span class="nc bnc" id="L666" title="All 2 branches missed.">        if (this.drawBorder) {</span>
+<span class="nc" id="L667">            drawOutline(g2, area);</span>
+        }
+
+<span class="nc" id="L670">    }</span>
+
+    /**
+     * Returns a short string describing the type of plot.
+     *
+     * @return A string describing the plot.
+     */
+    @Override
+    public String getPlotType() {
+<span class="nc" id="L679">        return localizationResources.getString(&quot;Compass_Plot&quot;);</span>
+    }
+
+    /**
+     * Returns the legend items for the plot.  For now, no legend is available
+     * - this method returns null.
+     *
+     * @return The legend items.
+     */
+    @Override
+    public LegendItemCollection getLegendItems() {
+<span class="nc" id="L690">        return null;</span>
+    }
+
+    /**
+     * No zooming is implemented for compass plot, so this method is empty.
+     *
+     * @param percent  the zoom amount.
+     */
+    @Override
+    public void zoom(double percent) {
+        // no zooming possible
+<span class="nc" id="L701">    }</span>
+
+    /**
+     * Returns the font for the compass, adjusted for the size of the plot.
+     *
+     * @param radius the radius.
+     *
+     * @return The font.
+     */
+    protected Font getCompassFont(int radius) {
+<span class="nc" id="L711">        float fontSize = radius / 10.0f;</span>
+<span class="nc bnc" id="L712" title="All 2 branches missed.">        if (fontSize &lt; 8) {</span>
+<span class="nc" id="L713">            fontSize = 8;</span>
+        }
+<span class="nc" id="L715">        Font newFont = this.compassFont.deriveFont(fontSize);</span>
+<span class="nc" id="L716">        return newFont;</span>
+    }
+
+    /**
+     * Tests an object for equality with this plot.
+     *
+     * @param obj  the object ({@code null} permitted).
+     *
+     * @return A boolean.
+     */
+    @Override
+    public boolean equals(Object obj) {
+<span class="nc bnc" id="L728" title="All 2 branches missed.">        if (obj == this) {</span>
+<span class="nc" id="L729">            return true;</span>
+        }
+<span class="nc bnc" id="L731" title="All 2 branches missed.">        if (!(obj instanceof CompassPlot)) {</span>
+<span class="nc" id="L732">            return false;</span>
+        }
+<span class="nc bnc" id="L734" title="All 2 branches missed.">        if (!super.equals(obj)) {</span>
+<span class="nc" id="L735">            return false;</span>
+        }
+<span class="nc" id="L737">        CompassPlot that = (CompassPlot) obj;</span>
+<span class="nc bnc" id="L738" title="All 2 branches missed.">        if (this.labelType != that.labelType) {</span>
+<span class="nc" id="L739">            return false;</span>
+        }
+<span class="nc bnc" id="L741" title="All 2 branches missed.">        if (!Objects.equals(this.labelFont, that.labelFont)) {</span>
+<span class="nc" id="L742">            return false;</span>
+        }
+<span class="nc bnc" id="L744" title="All 2 branches missed.">        if (this.drawBorder != that.drawBorder) {</span>
+<span class="nc" id="L745">            return false;</span>
+        }
+<span class="nc" id="L747">        if (!PaintUtils.equal(this.roseHighlightPaint,</span>
+<span class="nc bnc" id="L748" title="All 2 branches missed.">                that.roseHighlightPaint)) {</span>
+<span class="nc" id="L749">            return false;</span>
+        }
+<span class="nc bnc" id="L751" title="All 2 branches missed.">        if (!PaintUtils.equal(this.rosePaint, that.rosePaint)) {</span>
+<span class="nc" id="L752">            return false;</span>
+        }
+<span class="nc" id="L754">        if (!PaintUtils.equal(this.roseCenterPaint,</span>
+<span class="nc bnc" id="L755" title="All 2 branches missed.">                that.roseCenterPaint)) {</span>
+<span class="nc" id="L756">            return false;</span>
+        }
+<span class="nc bnc" id="L758" title="All 2 branches missed.">        if (!Objects.equals(this.compassFont, that.compassFont)) {</span>
+<span class="nc" id="L759">            return false;</span>
+        }
+<span class="nc bnc" id="L761" title="All 2 branches missed.">        if (!Arrays.equals(this.seriesNeedle, that.seriesNeedle)) {</span>
+<span class="nc" id="L762">            return false;</span>
+        }
+<span class="nc bnc" id="L764" title="All 2 branches missed.">        if (getRevolutionDistance() != that.getRevolutionDistance()) {</span>
+<span class="nc" id="L765">            return false;</span>
+        }
+<span class="nc" id="L767">        return true;</span>
+
+    }
+
+    /**
+     * Returns a clone of the plot.
+     *
+     * @return A clone.
+     *
+     * @throws CloneNotSupportedException  this class will not throw this
+     *         exception, but subclasses (if any) might.
+     */
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+
+<span class="nc" id="L782">        CompassPlot clone = (CompassPlot) super.clone();</span>
+<span class="nc bnc" id="L783" title="All 2 branches missed.">        if (this.circle1 != null) {</span>
+<span class="nc" id="L784">            clone.circle1 = (Ellipse2D) this.circle1.clone();</span>
+        }
+<span class="nc bnc" id="L786" title="All 2 branches missed.">        if (this.circle2 != null) {</span>
+<span class="nc" id="L787">            clone.circle2 = (Ellipse2D) this.circle2.clone();</span>
+        }
+<span class="nc bnc" id="L789" title="All 2 branches missed.">        if (this.a1 != null) {</span>
+<span class="nc" id="L790">            clone.a1 = (Area) this.a1.clone();</span>
+        }
+<span class="nc bnc" id="L792" title="All 2 branches missed.">        if (this.a2 != null) {</span>
+<span class="nc" id="L793">            clone.a2 = (Area) this.a2.clone();</span>
+        }
+<span class="nc bnc" id="L795" title="All 2 branches missed.">        if (this.rect1 != null) {</span>
+<span class="nc" id="L796">            clone.rect1 = (Rectangle2D) this.rect1.clone();</span>
+        }
+<span class="nc" id="L798">        clone.datasets = (ValueDataset[]) this.datasets.clone();</span>
+<span class="nc" id="L799">        clone.seriesNeedle = (MeterNeedle[]) this.seriesNeedle.clone();</span>
+
+        // clone share data sets =&gt; add the clone as listener to the dataset
+<span class="nc bnc" id="L802" title="All 2 branches missed.">        for (int i = 0; i &lt; this.datasets.length; ++i) {</span>
+<span class="nc bnc" id="L803" title="All 2 branches missed.">            if (clone.datasets[i] != null) {</span>
+<span class="nc" id="L804">                clone.datasets[i].addChangeListener(clone);</span>
+            }
+        }
+<span class="nc" id="L807">        return clone;</span>
+
+    }
+
+    /**
+     * Sets the count to complete one revolution.  Can be arbitrarily set
+     * For degrees (the default) it is 360, for radians this is 2*Pi, etc
+     *
+     * @param size the count to complete one revolution.
+     *
+     * @see #getRevolutionDistance()
+     */
+    public void setRevolutionDistance(double size) {
+<span class="nc bnc" id="L820" title="All 2 branches missed.">        if (size &gt; 0) {</span>
+<span class="nc" id="L821">            this.revolutionDistance = size;</span>
+        }
+<span class="nc" id="L823">    }</span>
+
+    /**
+     * Gets the count to complete one revolution.
+     *
+     * @return The count to complete one revolution.
+     *
+     * @see #setRevolutionDistance(double)
+     */
+    public double getRevolutionDistance() {
+<span class="nc" id="L833">        return this.revolutionDistance;</span>
+    }
+
+    /**
+     * Provides serialization support.
+     *
+     * @param stream  the output stream.
+     *
+     * @throws IOException  if there is an I/O error.
+     */
+    private void writeObject(ObjectOutputStream stream) throws IOException {
+<span class="nc" id="L844">        stream.defaultWriteObject();</span>
+<span class="nc" id="L845">        SerialUtils.writePaint(this.rosePaint, stream);</span>
+<span class="nc" id="L846">        SerialUtils.writePaint(this.roseCenterPaint, stream);</span>
+<span class="nc" id="L847">        SerialUtils.writePaint(this.roseHighlightPaint, stream);</span>
+<span class="nc" id="L848">    }</span>
+
+    /**
+     * Provides serialization support.
+     *
+     * @param stream  the input stream.
+     *
+     * @throws IOException  if there is an I/O error.
+     * @throws ClassNotFoundException  if there is a classpath problem.
+     */
+    private void readObject(ObjectInputStream stream)
+        throws IOException, ClassNotFoundException {
+<span class="nc" id="L860">        stream.defaultReadObject();</span>
+<span class="nc" id="L861">        this.rosePaint = SerialUtils.readPaint(stream);</span>
+<span class="nc" id="L862">        this.roseCenterPaint = SerialUtils.readPaint(stream);</span>
+<span class="nc" id="L863">        this.roseHighlightPaint = SerialUtils.readPaint(stream);</span>
+<span class="nc" id="L864">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (27/03/2022 17:50:40)</div></body></html>

@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>NumberAxisTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (27/03/2022 17:50:40)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart.axis</a> &gt; <span class="el_source">NumberAxisTest.java</span></div><h1>NumberAxisTest.java</h1><pre class="source lang-java linenums">/* ===========================================================
+ * JFreeChart : a free chart library for the Java(tm) platform
+ * ===========================================================
+ *
+ * (C) Copyright 2000-2022, by David Gilbert and Contributors.
+ *
+ * Project Info:  http://www.jfree.org/jfreechart/index.html
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ *
+ * [Oracle and Java are registered trademarks of Oracle and/or its affiliates. 
+ * Other names may be trademarks of their respective owners.]
+ *
+ * -------------------
+ * NumberAxisTest.java
+ * -------------------
+ * (C) Copyright 2003-2022, by David Gilbert and Contributors.
+ *
+ * Original Author:  David Gilbert;
+ * Contributor(s):   -;
+ *
+ */
+
+package org.jfree.chart.axis;
+
+import java.awt.geom.Rectangle2D;
+import java.text.DecimalFormat;
+
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.TestUtils;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.category.BarRenderer;
+import org.jfree.chart.api.RectangleEdge;
+import org.jfree.chart.internal.CloneUtils;
+import org.jfree.data.RangeType;
+import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Tests for the {@link NumberAxis} class.
+ */
+<span class="fc" id="L62">public class NumberAxisTest {</span>
+
+    /**
+     * Confirm that cloning works.
+     * 
+     * @throws java.lang.CloneNotSupportedException
+     */
+    @Test
+    public void testCloning() throws CloneNotSupportedException {
+<span class="fc" id="L71">        NumberAxis a1 = new NumberAxis(&quot;Test&quot;);</span>
+<span class="fc" id="L72">        NumberAxis a2 = CloneUtils.clone(a1);</span>
+<span class="fc" id="L73">        assertNotSame(a1, a2);</span>
+<span class="fc" id="L74">        assertSame(a1.getClass(), a2.getClass());</span>
+<span class="fc" id="L75">        assertEquals(a1, a2);</span>
+<span class="fc" id="L76">    }</span>
+
+    /**
+     * Confirm that the equals method can distinguish all the required fields.
+     */
+    @Test
+    public void testEquals() {
+
+<span class="fc" id="L84">        NumberAxis a1 = new NumberAxis(&quot;Test&quot;);</span>
+<span class="fc" id="L85">        NumberAxis a2 = new NumberAxis(&quot;Test&quot;);</span>
+<span class="fc" id="L86">        assertEquals(a1, a2);</span>
+
+        //private boolean autoRangeIncludesZero;
+<span class="fc" id="L89">        a1.setAutoRangeIncludesZero(false);</span>
+<span class="fc" id="L90">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L91">        a2.setAutoRangeIncludesZero(false);</span>
+<span class="fc" id="L92">        assertEquals(a1, a2);</span>
+
+        //private boolean autoRangeStickyZero;
+<span class="fc" id="L95">        a1.setAutoRangeStickyZero(false);</span>
+<span class="fc" id="L96">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L97">        a2.setAutoRangeStickyZero(false);</span>
+<span class="fc" id="L98">        assertEquals(a1, a2);</span>
+
+        //private NumberTickUnit tickUnit;
+<span class="fc" id="L101">        a1.setTickUnit(new NumberTickUnit(25.0));</span>
+<span class="fc" id="L102">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L103">        a2.setTickUnit(new NumberTickUnit(25.0));</span>
+<span class="fc" id="L104">        assertEquals(a1, a2);</span>
+
+        //private NumberFormat numberFormatOverride;
+<span class="fc" id="L107">        a1.setNumberFormatOverride(new DecimalFormat(&quot;0.00&quot;));</span>
+<span class="fc" id="L108">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L109">        a2.setNumberFormatOverride(new DecimalFormat(&quot;0.00&quot;));</span>
+<span class="fc" id="L110">        assertEquals(a1, a2);</span>
+
+<span class="fc" id="L112">        a1.setRangeType(RangeType.POSITIVE);</span>
+<span class="fc" id="L113">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L114">        a2.setRangeType(RangeType.POSITIVE);</span>
+<span class="fc" id="L115">        assertEquals(a1, a2);</span>
+
+<span class="fc" id="L117">    }</span>
+
+    /**
+     * Two objects that are equal are required to return the same hashCode.
+     */
+    @Test
+    public void testHashCode() {
+<span class="fc" id="L124">        NumberAxis a1 = new NumberAxis(&quot;Test&quot;);</span>
+<span class="fc" id="L125">        NumberAxis a2 = new NumberAxis(&quot;Test&quot;);</span>
+<span class="fc" id="L126">        assertEquals(a1, a2);</span>
+<span class="fc" id="L127">        int h1 = a1.hashCode();</span>
+<span class="fc" id="L128">        int h2 = a2.hashCode();</span>
+<span class="fc" id="L129">        assertEquals(h1, h2);</span>
+<span class="fc" id="L130">    }</span>
+
+    private static final double EPSILON = 0.0000001;
+
+    /**
+     * Test the translation of Java2D values to data values.
+     */
+    @Test
+    public void testTranslateJava2DToValue() {
+<span class="fc" id="L139">        NumberAxis axis = new NumberAxis();</span>
+<span class="fc" id="L140">        axis.setRange(50.0, 100.0);</span>
+<span class="fc" id="L141">        Rectangle2D dataArea = new Rectangle2D.Double(10.0, 50.0, 400.0, 300.0);</span>
+<span class="fc" id="L142">        double y1 = axis.java2DToValue(75.0, dataArea, RectangleEdge.LEFT);</span>
+<span class="fc" id="L143">        assertEquals(y1, 95.8333333, EPSILON);</span>
+<span class="fc" id="L144">        double y2 = axis.java2DToValue(75.0, dataArea, RectangleEdge.RIGHT);</span>
+<span class="fc" id="L145">        assertEquals(y2, 95.8333333, EPSILON);</span>
+<span class="fc" id="L146">        double x1 = axis.java2DToValue(75.0, dataArea, RectangleEdge.TOP);</span>
+<span class="fc" id="L147">        assertEquals(x1, 58.125, EPSILON);</span>
+<span class="fc" id="L148">        double x2 = axis.java2DToValue(75.0, dataArea, RectangleEdge.BOTTOM);</span>
+<span class="fc" id="L149">        assertEquals(x2, 58.125, EPSILON);</span>
+<span class="fc" id="L150">        axis.setInverted(true);</span>
+<span class="fc" id="L151">        double y3 = axis.java2DToValue(75.0, dataArea, RectangleEdge.LEFT);</span>
+<span class="fc" id="L152">        assertEquals(y3, 54.1666667, EPSILON);</span>
+<span class="fc" id="L153">        double y4 = axis.java2DToValue(75.0, dataArea, RectangleEdge.RIGHT);</span>
+<span class="fc" id="L154">        assertEquals(y4, 54.1666667, EPSILON);</span>
+<span class="fc" id="L155">        double x3 = axis.java2DToValue(75.0, dataArea, RectangleEdge.TOP);</span>
+<span class="fc" id="L156">        assertEquals(x3, 91.875, EPSILON);</span>
+<span class="fc" id="L157">        double x4 = axis.java2DToValue(75.0, dataArea, RectangleEdge.BOTTOM);</span>
+<span class="fc" id="L158">        assertEquals(x4, 91.875, EPSILON);</span>
+<span class="fc" id="L159">    }</span>
+
+    /**
+     * Serialize an instance, restore it, and check for equality.
+     */
+    @Test
+    public void testSerialization() {
+<span class="fc" id="L166">        NumberAxis a1 = new NumberAxis(&quot;Test Axis&quot;);</span>
+<span class="fc" id="L167">        NumberAxis a2 = TestUtils.serialised(a1);</span>
+<span class="fc" id="L168">        assertEquals(a1, a2);</span>
+<span class="fc" id="L169">    }</span>
+
+    /**
+     * A simple test for the auto-range calculation looking at a
+     * NumberAxis used as the range axis for a CategoryPlot.
+     */
+    @Test
+    public void testAutoRange1() {
+<span class="fc" id="L177">        DefaultCategoryDataset&lt;String, String&gt; dataset = new DefaultCategoryDataset&lt;&gt;();</span>
+<span class="fc" id="L178">        dataset.setValue(100.0, &quot;Row 1&quot;, &quot;Column 1&quot;);</span>
+<span class="fc" id="L179">        dataset.setValue(200.0, &quot;Row 1&quot;, &quot;Column 2&quot;);</span>
+<span class="fc" id="L180">        JFreeChart chart = ChartFactory.createBarChart(&quot;Test&quot;, &quot;Categories&quot;,</span>
+<span class="fc" id="L181">                &quot;Value&quot;, dataset);</span>
+<span class="fc" id="L182">        CategoryPlot&lt;?, ?&gt; plot = (CategoryPlot) chart.getPlot();</span>
+<span class="fc" id="L183">        NumberAxis axis = (NumberAxis) plot.getRangeAxis();</span>
+<span class="fc" id="L184">        assertEquals(axis.getLowerBound(), 0.0, EPSILON);</span>
+<span class="fc" id="L185">        assertEquals(axis.getUpperBound(), 210.0, EPSILON);</span>
+<span class="fc" id="L186">    }</span>
+
+    /**
+     * A simple test for the auto-range calculation looking at a
+     * NumberAxis used as the range axis for a CategoryPlot.  In this
+     * case, the 'autoRangeIncludesZero' flag is set to false.
+     */
+    @Test
+    public void testAutoRange2() {
+<span class="fc" id="L195">        DefaultCategoryDataset&lt;String,String&gt; dataset = new DefaultCategoryDataset&lt;&gt;();</span>
+<span class="fc" id="L196">        dataset.setValue(100.0, &quot;Row 1&quot;, &quot;Column 1&quot;);</span>
+<span class="fc" id="L197">        dataset.setValue(200.0, &quot;Row 1&quot;, &quot;Column 2&quot;);</span>
+<span class="fc" id="L198">        JFreeChart chart = ChartFactory.createLineChart(&quot;Test&quot;, &quot;Categories&quot;,</span>
+<span class="fc" id="L199">                &quot;Value&quot;, dataset, PlotOrientation.VERTICAL, false, false,</span>
+<span class="fc" id="L200">                false);</span>
+<span class="fc" id="L201">        CategoryPlot&lt;?, ?&gt; plot = (CategoryPlot) chart.getPlot();</span>
+<span class="fc" id="L202">        NumberAxis axis = (NumberAxis) plot.getRangeAxis();</span>
+<span class="fc" id="L203">        axis.setAutoRangeIncludesZero(false);</span>
+<span class="fc" id="L204">        assertEquals(axis.getLowerBound(), 95.0, EPSILON);</span>
+<span class="fc" id="L205">        assertEquals(axis.getUpperBound(), 205.0, EPSILON);</span>
+<span class="fc" id="L206">    }</span>
+
+    /**
+     * A simple test for the auto-range calculation looking at a
+     * NumberAxis used as the range axis for a CategoryPlot.  In this
+     * case, the 'autoRangeIncludesZero' flag is set to false AND the
+     * original dataset is replaced with a new dataset.
+     */
+    @Test
+    public void testAutoRange3() {
+<span class="fc" id="L216">        DefaultCategoryDataset&lt;String,String&gt; dataset = new DefaultCategoryDataset&lt;&gt;();</span>
+<span class="fc" id="L217">        dataset.setValue(100.0, &quot;Row 1&quot;, &quot;Column 1&quot;);</span>
+<span class="fc" id="L218">        dataset.setValue(200.0, &quot;Row 1&quot;, &quot;Column 2&quot;);</span>
+<span class="fc" id="L219">        JFreeChart chart = ChartFactory.createLineChart(&quot;Test&quot;, &quot;Categories&quot;,</span>
+<span class="fc" id="L220">                &quot;Value&quot;, dataset, PlotOrientation.VERTICAL, false, false,</span>
+<span class="fc" id="L221">                false);</span>
+        @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L223">        CategoryPlot&lt;String, String&gt; plot = (CategoryPlot) chart.getPlot();</span>
+<span class="fc" id="L224">        NumberAxis axis = (NumberAxis) plot.getRangeAxis();</span>
+<span class="fc" id="L225">        axis.setAutoRangeIncludesZero(false);</span>
+<span class="fc" id="L226">        assertEquals(axis.getLowerBound(), 95.0, EPSILON);</span>
+<span class="fc" id="L227">        assertEquals(axis.getUpperBound(), 205.0, EPSILON);</span>
+
+        // now replacing the dataset should update the axis range...
+<span class="fc" id="L230">        DefaultCategoryDataset&lt;String,String&gt; dataset2 = new DefaultCategoryDataset&lt;&gt;();</span>
+<span class="fc" id="L231">        dataset2.setValue(900.0, &quot;Row 1&quot;, &quot;Column 1&quot;);</span>
+<span class="fc" id="L232">        dataset2.setValue(1000.0, &quot;Row 1&quot;, &quot;Column 2&quot;);</span>
+<span class="fc" id="L233">        plot.setDataset(dataset2);</span>
+<span class="fc" id="L234">        assertEquals(axis.getLowerBound(), 895.0, EPSILON);</span>
+<span class="fc" id="L235">        assertEquals(axis.getUpperBound(), 1005.0, EPSILON);</span>
+<span class="fc" id="L236">    }</span>
+
+    /**
+     * A check for the interaction between the 'autoRangeIncludesZero' flag
+     * and the base setting in the BarRenderer.
+     */
+    @Test
+    public void testAutoRange4() {
+<span class="fc" id="L244">        DefaultCategoryDataset&lt;String,String&gt; dataset = new DefaultCategoryDataset&lt;&gt;();</span>
+<span class="fc" id="L245">        dataset.setValue(100.0, &quot;Row 1&quot;, &quot;Column 1&quot;);</span>
+<span class="fc" id="L246">        dataset.setValue(200.0, &quot;Row 1&quot;, &quot;Column 2&quot;);</span>
+<span class="fc" id="L247">        JFreeChart chart = ChartFactory.createBarChart(&quot;Test&quot;, &quot;Categories&quot;,</span>
+<span class="fc" id="L248">                &quot;Value&quot;, dataset, PlotOrientation.VERTICAL, false, false,</span>
+<span class="fc" id="L249">                false);</span>
+        @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L251">        CategoryPlot&lt;String, String&gt; plot = (CategoryPlot) chart.getPlot(); </span>
+<span class="fc" id="L252">        NumberAxis axis = (NumberAxis) plot.getRangeAxis();</span>
+<span class="fc" id="L253">        axis.setAutoRangeIncludesZero(false);</span>
+<span class="fc" id="L254">        BarRenderer br = (BarRenderer) plot.getRenderer();</span>
+<span class="fc" id="L255">        br.setIncludeBaseInRange(false);</span>
+<span class="fc" id="L256">        assertEquals(95.0, axis.getLowerBound(), EPSILON);</span>
+<span class="fc" id="L257">        assertEquals(205.0, axis.getUpperBound(), EPSILON);</span>
+
+<span class="fc" id="L259">        br.setIncludeBaseInRange(true);</span>
+<span class="fc" id="L260">        assertEquals(0.0, axis.getLowerBound(), EPSILON);</span>
+<span class="fc" id="L261">        assertEquals(210.0, axis.getUpperBound(), EPSILON);</span>
+
+<span class="fc" id="L263">        axis.setAutoRangeIncludesZero(true);</span>
+<span class="fc" id="L264">        assertEquals(0.0, axis.getLowerBound(), EPSILON);</span>
+<span class="fc" id="L265">        assertEquals(210.0, axis.getUpperBound(), EPSILON);</span>
+
+<span class="fc" id="L267">        br.setIncludeBaseInRange(true);</span>
+<span class="fc" id="L268">        assertEquals(0.0, axis.getLowerBound(), EPSILON);</span>
+<span class="fc" id="L269">        assertEquals(210.0, axis.getUpperBound(), EPSILON);</span>
+
+        // now replacing the dataset should update the axis range...
+<span class="fc" id="L272">        DefaultCategoryDataset&lt;String,String&gt; dataset2 = new DefaultCategoryDataset&lt;&gt;();</span>
+<span class="fc" id="L273">        dataset2.setValue(900.0, &quot;Row 1&quot;, &quot;Column 1&quot;);</span>
+<span class="fc" id="L274">        dataset2.setValue(1000.0, &quot;Row 1&quot;, &quot;Column 2&quot;);</span>
+<span class="fc" id="L275">        plot.setDataset(dataset2);</span>
+<span class="fc" id="L276">        assertEquals(0.0, axis.getLowerBound(), EPSILON);</span>
+<span class="fc" id="L277">        assertEquals(1050.0, axis.getUpperBound(), EPSILON);</span>
+
+<span class="fc" id="L279">        br.setIncludeBaseInRange(false);</span>
+<span class="fc" id="L280">        assertEquals(0.0, axis.getLowerBound(), EPSILON);</span>
+<span class="fc" id="L281">        assertEquals(1050.0, axis.getUpperBound(), EPSILON);</span>
+
+<span class="fc" id="L283">        axis.setAutoRangeIncludesZero(false);</span>
+<span class="fc" id="L284">        assertEquals(895.0, axis.getLowerBound(), EPSILON);</span>
+<span class="fc" id="L285">        assertEquals(1005.0, axis.getUpperBound(), EPSILON);</span>
+<span class="fc" id="L286">    }</span>
+
+    /**
+     * Checks that the auto-range for the domain axis on an XYPlot is
+     * working as expected.
+     */
+    @Test
+    public void testXYAutoRange1() {
+<span class="fc" id="L294">        XYSeries&lt;String&gt; series = new XYSeries&lt;&gt;(&quot;Series 1&quot;);</span>
+<span class="fc" id="L295">        series.add(1.0, 1.0);</span>
+<span class="fc" id="L296">        series.add(2.0, 2.0);</span>
+<span class="fc" id="L297">        series.add(3.0, 3.0);</span>
+<span class="fc" id="L298">        XYSeriesCollection&lt;String&gt; dataset = new XYSeriesCollection&lt;&gt;();</span>
+<span class="fc" id="L299">        dataset.addSeries(series);</span>
+<span class="fc" id="L300">        JFreeChart chart = ChartFactory.createScatterPlot(&quot;Test&quot;, &quot;X&quot;, &quot;Y&quot;,</span>
+<span class="fc" id="L301">                dataset);</span>
+<span class="fc" id="L302">        XYPlot&lt;?&gt; plot = (XYPlot) chart.getPlot();</span>
+<span class="fc" id="L303">        NumberAxis axis = (NumberAxis) plot.getDomainAxis();</span>
+<span class="fc" id="L304">        axis.setAutoRangeIncludesZero(false);</span>
+<span class="fc" id="L305">        assertEquals(0.9, axis.getLowerBound(), EPSILON);</span>
+<span class="fc" id="L306">        assertEquals(3.1, axis.getUpperBound(), EPSILON);</span>
+<span class="fc" id="L307">    }</span>
+
+    /**
+     * Checks that the auto-range for the range axis on an XYPlot is
+     * working as expected.
+     */
+    @Test
+    public void testXYAutoRange2() {
+<span class="fc" id="L315">        XYSeries&lt;String&gt; series = new XYSeries&lt;&gt;(&quot;Series 1&quot;);</span>
+<span class="fc" id="L316">        series.add(1.0, 1.0);</span>
+<span class="fc" id="L317">        series.add(2.0, 2.0);</span>
+<span class="fc" id="L318">        series.add(3.0, 3.0);</span>
+<span class="fc" id="L319">        XYSeriesCollection&lt;String&gt; dataset = new XYSeriesCollection&lt;&gt;();</span>
+<span class="fc" id="L320">        dataset.addSeries(series);</span>
+<span class="fc" id="L321">        JFreeChart chart = ChartFactory.createScatterPlot(&quot;Test&quot;, &quot;X&quot;, &quot;Y&quot;,</span>
+<span class="fc" id="L322">                dataset);</span>
+<span class="fc" id="L323">        XYPlot&lt;?&gt; plot = (XYPlot) chart.getPlot();</span>
+<span class="fc" id="L324">        NumberAxis axis = (NumberAxis) plot.getRangeAxis();</span>
+<span class="fc" id="L325">        axis.setAutoRangeIncludesZero(false);</span>
+<span class="fc" id="L326">        assertEquals(0.9, axis.getLowerBound(), EPSILON);</span>
+<span class="fc" id="L327">        assertEquals(3.1, axis.getUpperBound(), EPSILON);</span>
+<span class="fc" id="L328">    }</span>
+
+//    /**
+//     * Some checks for the setRangeType() method.
+//     */
+//    public void testSetRangeType() {
+//
+//        NumberAxis axis = new NumberAxis(&quot;X&quot;);
+//        axis.setRangeType(RangeType.POSITIVE);
+//        assertEquals(RangeType.POSITIVE, axis.getRangeType());
+//
+//        // test a change to RangeType.POSITIVE
+//        axis.setRangeType(RangeType.FULL);
+//        axis.setRange(-5.0, 5.0);
+//        axis.setRangeType(RangeType.POSITIVE);
+//        assertEquals(new Range(0.0, 5.0), axis.getRange());
+//
+//        axis.setRangeType(RangeType.FULL);
+//        axis.setRange(-10.0, -5.0);
+//        axis.setRangeType(RangeType.POSITIVE);
+//        assertEquals(new Range(0.0, axis.getAutoRangeMinimumSize()),
+//                axis.getRange());
+//
+//        // test a change to RangeType.NEGATIVE
+//        axis.setRangeType(RangeType.FULL);
+//        axis.setRange(-5.0, 5.0);
+//        axis.setRangeType(RangeType.NEGATIVE);
+//        assertEquals(new Range(-5.0, 0.0), axis.getRange());
+//
+//        axis.setRangeType(RangeType.FULL);
+//        axis.setRange(5.0, 10.0);
+//        axis.setRangeType(RangeType.NEGATIVE);
+//        assertEquals(new Range(-axis.getAutoRangeMinimumSize(), 0.0),
+//                axis.getRange());
+//
+//        // try null
+//        boolean pass = false;
+//        try {
+//            axis.setRangeType(null);
+//        }
+//        catch (IllegalArgumentException e) {
+//            pass = true;
+//        }
+//        assertTrue(pass);
+//    }
+
+    /**
+     * Some checks for the setLowerBound() method.
+     */
+    @Test
+    public void testSetLowerBound() {
+<span class="fc" id="L379">        NumberAxis axis = new NumberAxis(&quot;X&quot;);</span>
+<span class="fc" id="L380">        axis.setRange(0.0, 10.0);</span>
+<span class="fc" id="L381">        axis.setLowerBound(5.0);</span>
+<span class="fc" id="L382">        assertEquals(5.0, axis.getLowerBound(), EPSILON);</span>
+<span class="fc" id="L383">        axis.setLowerBound(10.0);</span>
+<span class="fc" id="L384">        assertEquals(10.0, axis.getLowerBound(), EPSILON);</span>
+<span class="fc" id="L385">        assertEquals(11.0, axis.getUpperBound(), EPSILON);</span>
+
+        //axis.setRangeType(RangeType.POSITIVE);
+        //axis.setLowerBound(-5.0);
+        //assertEquals(0.0, axis.getLowerBound(), EPSILON);
+<span class="fc" id="L390">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (27/03/2022 17:50:40)</div></body></html>

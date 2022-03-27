@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>CategoryTickTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (27/03/2022 17:50:40)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart.axis</a> &gt; <span class="el_source">CategoryTickTest.java</span></div><h1>CategoryTickTest.java</h1><pre class="source lang-java linenums">/* ===========================================================
+ * JFreeChart : a free chart library for the Java(tm) platform
+ * ===========================================================
+ *
+ * (C) Copyright 2000-2022, by David Gilbert and Contributors.
+ *
+ * Project Info:  http://www.jfree.org/jfreechart/index.html
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ *
+ * [Oracle and Java are registered trademarks of Oracle and/or its affiliates. 
+ * Other names may be trademarks of their respective owners.]
+ *
+ * ---------------------
+ * CategoryTickTest.java
+ * ---------------------
+ * (C) Copyright 2004-2022, by David Gilbert and Contributors.
+ *
+ * Original Author:  David Gilbert;
+ * Contributor(s):   -;
+ *
+ */
+
+package org.jfree.chart.axis;
+
+import org.jfree.chart.TestUtils;
+import org.jfree.chart.text.TextBlock;
+import org.jfree.chart.text.TextBlockAnchor;
+import org.jfree.chart.text.TextLine;
+import org.jfree.chart.text.TextAnchor;
+
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Tests for the {@link CategoryTick} class.
+ */
+<span class="fc" id="L52">public class CategoryTickTest {</span>
+
+    /**
+     * Confirm that the equals method can distinguish all the required fields.
+     */
+    @Test
+    public void testEquals() {
+<span class="fc" id="L59">        Comparable&lt;String&gt; c1 = &quot;C1&quot;;</span>
+<span class="fc" id="L60">        Comparable&lt;String&gt; c2 = &quot;C2&quot;;</span>
+<span class="fc" id="L61">        TextBlock tb1 = new TextBlock();</span>
+<span class="fc" id="L62">        tb1.addLine(new TextLine(&quot;Block 1&quot;));</span>
+<span class="fc" id="L63">        TextBlock tb2 = new TextBlock();</span>
+<span class="fc" id="L64">        tb1.addLine(new TextLine(&quot;Block 2&quot;));</span>
+<span class="fc" id="L65">        TextBlockAnchor tba1 = TextBlockAnchor.CENTER;</span>
+<span class="fc" id="L66">        TextBlockAnchor tba2 = TextBlockAnchor.BOTTOM_CENTER;</span>
+<span class="fc" id="L67">        TextAnchor ta1 = TextAnchor.CENTER;</span>
+<span class="fc" id="L68">        TextAnchor ta2 = TextAnchor.BASELINE_LEFT;</span>
+
+<span class="fc" id="L70">        CategoryTick t1 = new CategoryTick(c1, tb1, tba1, ta1, 1.0f);</span>
+<span class="fc" id="L71">        CategoryTick t2 = new CategoryTick(c1, tb1, tba1, ta1, 1.0f);</span>
+<span class="fc" id="L72">        assertEquals(t1, t2);</span>
+
+<span class="fc" id="L74">        t1 = new CategoryTick(c2, tb1, tba1, ta1, 1.0f);</span>
+<span class="fc" id="L75">        assertNotEquals(t1, t2);</span>
+<span class="fc" id="L76">        t2 = new CategoryTick(c2, tb1, tba1, ta1, 1.0f);</span>
+<span class="fc" id="L77">        assertEquals(t1, t2);</span>
+
+<span class="fc" id="L79">        t1 = new CategoryTick(c2, tb2, tba1, ta1, 1.0f);</span>
+<span class="fc" id="L80">        assertNotEquals(t1, t2);</span>
+<span class="fc" id="L81">        t2 = new CategoryTick(c2, tb2, tba1, ta1, 1.0f);</span>
+<span class="fc" id="L82">        assertEquals(t1, t2);</span>
+
+<span class="fc" id="L84">        t1 = new CategoryTick(c2, tb2, tba2, ta1, 1.0f);</span>
+<span class="fc" id="L85">        assertNotEquals(t1, t2);</span>
+<span class="fc" id="L86">        t2 = new CategoryTick(c2, tb2, tba2, ta1, 1.0f);</span>
+<span class="fc" id="L87">        assertEquals(t1, t2);</span>
+
+<span class="fc" id="L89">        t1 = new CategoryTick(c2, tb2, tba2, ta2, 1.0f);</span>
+<span class="fc" id="L90">        assertNotEquals(t1, t2);</span>
+<span class="fc" id="L91">        t2 = new CategoryTick(c2, tb2, tba2, ta2, 1.0f);</span>
+<span class="fc" id="L92">        assertEquals(t1, t2);</span>
+
+<span class="fc" id="L94">        t1 = new CategoryTick(c2, tb2, tba2, ta2, 2.0f);</span>
+<span class="fc" id="L95">        assertNotEquals(t1, t2);</span>
+<span class="fc" id="L96">        t2 = new CategoryTick(c2, tb2, tba2, ta2, 2.0f);</span>
+<span class="fc" id="L97">        assertEquals(t1, t2);</span>
+
+<span class="fc" id="L99">    }</span>
+
+    /**
+     * Two objects that are equal are required to return the same hashCode.
+     */
+    @Test
+    public void testHashCode() {
+<span class="fc" id="L106">        Comparable&lt;String&gt; c1 = &quot;C1&quot;;</span>
+<span class="fc" id="L107">        TextBlock tb1 = new TextBlock();</span>
+<span class="fc" id="L108">        tb1.addLine(new TextLine(&quot;Block 1&quot;));</span>
+<span class="fc" id="L109">        tb1.addLine(new TextLine(&quot;Block 2&quot;));</span>
+<span class="fc" id="L110">        TextBlockAnchor tba1 = TextBlockAnchor.CENTER;</span>
+<span class="fc" id="L111">        TextAnchor ta1 = TextAnchor.CENTER;</span>
+
+<span class="fc" id="L113">        CategoryTick t1 = new CategoryTick(c1, tb1, tba1, ta1, 1.0f);</span>
+<span class="fc" id="L114">        CategoryTick t2 = new CategoryTick(c1, tb1, tba1, ta1, 1.0f);</span>
+<span class="fc" id="L115">        assertEquals(t1, t2);</span>
+<span class="fc" id="L116">        int h1 = t1.hashCode();</span>
+<span class="fc" id="L117">        int h2 = t2.hashCode();</span>
+<span class="fc" id="L118">        assertEquals(h1, h2);</span>
+<span class="fc" id="L119">    }</span>
+
+    /**
+     * Confirm that cloning works.
+     */
+    @Test
+    public void testCloning() throws CloneNotSupportedException {
+<span class="fc" id="L126">        CategoryTick t1 = new CategoryTick(&quot;C1&quot;, new TextBlock(), </span>
+<span class="fc" id="L127">                TextBlockAnchor.CENTER, TextAnchor.CENTER, 1.5f);</span>
+<span class="fc" id="L128">        CategoryTick t2 = (CategoryTick) t1.clone();</span>
+<span class="fc" id="L129">        assertNotSame(t1, t2);</span>
+<span class="fc" id="L130">        assertSame(t1.getClass(), t2.getClass());</span>
+<span class="fc" id="L131">        assertEquals(t1, t2);</span>
+<span class="fc" id="L132">    }</span>
+
+    /**
+     * Serialize an instance, restore it, and check for equality.
+     */
+    @Test
+    public void testSerialization() {
+<span class="fc" id="L139">        CategoryTick t1 = new CategoryTick(&quot;C1&quot;, new TextBlock(),</span>
+<span class="fc" id="L140">                TextBlockAnchor.CENTER, TextAnchor.CENTER, 1.5f);</span>
+<span class="fc" id="L141">        CategoryTick t2 = TestUtils.serialised(t1);</span>
+<span class="fc" id="L142">        assertEquals(t1, t2);</span>
+<span class="fc" id="L143">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (27/03/2022 17:50:40)</div></body></html>

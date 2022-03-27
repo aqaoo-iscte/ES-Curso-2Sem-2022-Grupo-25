@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>SerialUtilsTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (27/03/2022 17:50:40)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart.internal</a> &gt; <span class="el_source">SerialUtilsTest.java</span></div><h1>SerialUtilsTest.java</h1><pre class="source lang-java linenums">/* ===========================================================
+ * JFreeChart : a free chart library for the Java(tm) platform
+ * ===========================================================
+ *
+ * (C) Copyright 2000-2022, by David Gilbert and Contributors.
+ *
+ * Project Info:  http://www.jfree.org/jfreechart/index.html
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ *
+ * [Oracle and Java are registered trademarks of Oracle and/or its affiliates.
+ * Other names may be trademarks of their respective owners.]
+ *
+ * --------------------
+ * SerialUtilsTest.java
+ * --------------------
+ * (C) Copyright 2021-2022, by David Gilbert and Contributors.
+ *
+ * Original Author:  David Gilbert;
+ * Contributor(s):   -;
+ *
+ */
+
+package org.jfree.chart.internal;
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.GradientPaint;
+import java.awt.Paint;
+import java.awt.Stroke;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
+import org.jfree.chart.TestUtils;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+/**
+ * Tests for the {@link SerialUtils} class.
+ */
+<span class="fc" id="L58">public class SerialUtilsTest {</span>
+
+    @Test
+    public void mapOfPaintSerialisation() {
+<span class="fc" id="L62">        Map&lt;Integer, Paint&gt; m1 = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L63">        m1.put(5, Color.BLUE);</span>
+<span class="fc" id="L64">        ObjectWithMapOfPaint obj1 = new ObjectWithMapOfPaint(m1);</span>
+<span class="fc" id="L65">        ObjectWithMapOfPaint obj2 = TestUtils.serialised(obj1);</span>
+<span class="fc" id="L66">        assertTrue(PaintUtils.equal(obj1.getMap(), obj2.getMap()));</span>
+        
+<span class="fc" id="L68">        m1.put(11, new GradientPaint(1.0f, 2.0f, Color.RED, 3.0f, 4.0f, Color.GREEN));</span>
+<span class="fc" id="L69">        obj1 = new ObjectWithMapOfPaint(m1);</span>
+<span class="fc" id="L70">        obj2 = TestUtils.serialised(obj1);</span>
+<span class="fc" id="L71">        assertTrue(PaintUtils.equal(obj1.getMap(), obj2.getMap()));</span>
+<span class="fc" id="L72">    }</span>
+
+    @Test
+    public void mapOfStrokeSerialisation() {
+<span class="fc" id="L76">        Map&lt;Integer, Stroke&gt; m1 = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L77">        m1.put(5, new BasicStroke(9.0f));</span>
+<span class="fc" id="L78">        ObjectWithMapOfStroke obj1 = new ObjectWithMapOfStroke(m1);</span>
+<span class="fc" id="L79">        ObjectWithMapOfStroke obj2 = TestUtils.serialised(obj1);</span>
+<span class="fc" id="L80">        assertEquals(obj1.getMap(), obj2.getMap());</span>
+<span class="fc" id="L81">    }</span>
+
+    static class ObjectWithMapOfPaint implements Serializable {
+        
+        private transient Map&lt;Integer, Paint&gt; map;
+        
+<span class="fc" id="L87">        public ObjectWithMapOfPaint(Map&lt;Integer, Paint&gt; map) {</span>
+<span class="fc" id="L88">            this.map = map;</span>
+<span class="fc" id="L89">        }</span>
+        
+        public Map&lt;Integer, Paint&gt; getMap() {
+<span class="fc" id="L92">            return this.map;</span>
+        }
+
+        private void writeObject(ObjectOutputStream stream) throws IOException {
+<span class="fc" id="L96">            stream.defaultWriteObject();</span>
+<span class="fc" id="L97">            SerialUtils.writeMapOfPaint(this.map, stream);</span>
+<span class="fc" id="L98">        }</span>
+
+        private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+<span class="fc" id="L101">            stream.defaultReadObject();</span>
+<span class="fc" id="L102">            this.map = SerialUtils.readMapOfPaint(stream);</span>
+<span class="fc" id="L103">        }</span>
+    }
+
+    static class ObjectWithMapOfStroke implements Serializable {
+        
+        private transient Map&lt;Integer, Stroke&gt; map;
+        
+<span class="fc" id="L110">        public ObjectWithMapOfStroke(Map&lt;Integer, Stroke&gt; map) {</span>
+<span class="fc" id="L111">            this.map = map;</span>
+<span class="fc" id="L112">        }</span>
+        
+        public Map&lt;Integer, Stroke&gt; getMap() {
+<span class="fc" id="L115">            return this.map;</span>
+        }
+
+        private void writeObject(ObjectOutputStream stream) throws IOException {
+<span class="fc" id="L119">            stream.defaultWriteObject();</span>
+<span class="fc" id="L120">            SerialUtils.writeMapOfStroke(this.map, stream);</span>
+<span class="fc" id="L121">        }</span>
+
+        private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+<span class="fc" id="L124">            stream.defaultReadObject();</span>
+<span class="fc" id="L125">            this.map = SerialUtils.readMapOfStroke(stream);</span>
+<span class="fc" id="L126">        }</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (27/03/2022 17:50:40)</div></body></html>

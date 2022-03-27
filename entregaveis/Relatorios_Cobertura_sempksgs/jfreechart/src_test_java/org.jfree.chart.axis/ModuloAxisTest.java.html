@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>ModuloAxisTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (27/03/2022 17:50:40)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart.axis</a> &gt; <span class="el_source">ModuloAxisTest.java</span></div><h1>ModuloAxisTest.java</h1><pre class="source lang-java linenums">/* ===========================================================
+ * JFreeChart : a free chart library for the Java(tm) platform
+ * ===========================================================
+ *
+ * (C) Copyright 2000-2022, by David Gilbert and Contributors.
+ *
+ * Project Info:  http://www.jfree.org/jfreechart/index.html
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ *
+ * [Oracle and Java are registered trademarks of Oracle and/or its affiliates. 
+ * Other names may be trademarks of their respective owners.]
+ *
+ * -------------------
+ * ModuloAxisTest.java
+ * -------------------
+ * (C) Copyright 2007-2022, by David Gilbert and Contributors.
+ *
+ * Original Author:  David Gilbert;
+ * Contributor(s):   -;
+ *
+ */
+
+package org.jfree.chart.axis;
+
+import org.jfree.chart.TestUtils;
+
+import org.jfree.data.Range;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Tests for the {@link ModuloAxis} class.
+ */
+<span class="fc" id="L49">public class ModuloAxisTest {</span>
+
+    /**
+     * Confirm that cloning works.
+     */
+    @Test
+    public void testCloning() throws CloneNotSupportedException {
+<span class="fc" id="L56">        ModuloAxis a1 = new ModuloAxis(&quot;Test&quot;, new Range(0.0, 1.0));</span>
+<span class="fc" id="L57">        ModuloAxis a2 = (ModuloAxis) a1.clone();</span>
+<span class="fc" id="L58">        assertNotSame(a1, a2);</span>
+<span class="fc" id="L59">        assertSame(a1.getClass(), a2.getClass());</span>
+<span class="fc" id="L60">        assertEquals(a1, a2);</span>
+<span class="fc" id="L61">    }</span>
+
+    /**
+     * Confirm that the equals method can distinguish all the required fields.
+     */
+    @Test
+    public void testEquals() {
+<span class="fc" id="L68">        ModuloAxis a1 = new ModuloAxis(&quot;Test&quot;, new Range(0.0, 1.0));</span>
+<span class="fc" id="L69">        ModuloAxis a2 = new ModuloAxis(&quot;Test&quot;, new Range(0.0, 1.0));</span>
+<span class="fc" id="L70">        assertEquals(a1, a2);</span>
+
+<span class="fc" id="L72">        a1.setDisplayRange(0.1, 1.1);</span>
+<span class="fc" id="L73">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L74">        a2.setDisplayRange(0.1, 1.1);</span>
+<span class="fc" id="L75">        assertEquals(a1, a2);</span>
+<span class="fc" id="L76">    }</span>
+
+    /**
+     * Two objects that are equal are required to return the same hashCode.
+     */
+    @Test
+    public void testHashCode() {
+<span class="fc" id="L83">        ModuloAxis a1 = new ModuloAxis(&quot;Test&quot;, new Range(0.0, 1.0));</span>
+<span class="fc" id="L84">        ModuloAxis a2 = new ModuloAxis(&quot;Test&quot;, new Range(0.0, 1.0));</span>
+<span class="fc" id="L85">        assertEquals(a1, a2);</span>
+<span class="fc" id="L86">        int h1 = a1.hashCode();</span>
+<span class="fc" id="L87">        int h2 = a2.hashCode();</span>
+<span class="fc" id="L88">        assertEquals(h1, h2);</span>
+<span class="fc" id="L89">    }</span>
+
+    /**
+     * Serialize an instance, restore it, and check for equality.
+     */
+    @Test
+    public void testSerialization() {
+<span class="fc" id="L96">        ModuloAxis a1 = new ModuloAxis(&quot;Test&quot;, new Range(0.0, 1.0));</span>
+<span class="fc" id="L97">        ModuloAxis a2 = TestUtils.serialised(a1);</span>
+<span class="fc" id="L98">        assertEquals(a1, a2);</span>
+<span class="fc" id="L99">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (27/03/2022 17:50:40)</div></body></html>

@@ -437,25 +437,10 @@ public class LegendTitle extends Title
      */
     protected Block createLegendItemBlock(LegendItem item) {
         BlockContainer result;
-        LegendGraphic lg = new LegendGraphic(item.getShape(),
-                item.getFillPaint());
-        lg.setFillPaintTransformer(item.getFillPaintTransformer());
-        lg.setShapeFilled(item.isShapeFilled());
-        lg.setLine(item.getLine());
-        lg.setLineStroke(item.getLineStroke());
-        lg.setLinePaint(item.getLinePaint());
-        lg.setLineVisible(item.isLineVisible());
-        lg.setShapeVisible(item.isShapeVisible());
-        lg.setShapeOutlineVisible(item.isShapeOutlineVisible());
-        lg.setOutlinePaint(item.getOutlinePaint());
-        lg.setOutlineStroke(item.getOutlineStroke());
-        lg.setPadding(this.legendItemGraphicPadding);
-
-        LegendItemBlockContainer legendItem = new LegendItemBlockContainer(
+        LegendGraphic lg = lg(item);
+		LegendItemBlockContainer legendItem = new LegendItemBlockContainer(
                 new BorderArrangement(), item.getDataset(),
                 item.getSeriesKey());
-        lg.setShapeAnchor(getLegendItemGraphicAnchor());
-        lg.setShapeLocation(getLegendItemGraphicLocation());
         legendItem.add(lg, this.legendItemGraphicEdge);
         Font textFont = item.getLabelFont();
         if (textFont == null) {
@@ -477,6 +462,24 @@ public class LegendTitle extends Title
 
         return result;
     }
+
+	private LegendGraphic lg(LegendItem item) {
+		LegendGraphic lg = new LegendGraphic(item.getShape(), item.getFillPaint());
+		lg.setFillPaintTransformer(item.getFillPaintTransformer());
+		lg.setShapeFilled(item.isShapeFilled());
+		lg.setLine(item.getLine());
+		lg.setLineStroke(item.getLineStroke());
+		lg.setLinePaint(item.getLinePaint());
+		lg.setLineVisible(item.isLineVisible());
+		lg.setShapeVisible(item.isShapeVisible());
+		lg.setShapeOutlineVisible(item.isShapeOutlineVisible());
+		lg.setOutlinePaint(item.getOutlinePaint());
+		lg.setOutlineStroke(item.getOutlineStroke());
+		lg.setPadding(this.legendItemGraphicPadding);
+		lg.setShapeAnchor(getLegendItemGraphicAnchor());
+		lg.setShapeLocation(getLegendItemGraphicLocation());
+		return lg;
+	}
 
     /**
      * Returns the container that holds the legend items.

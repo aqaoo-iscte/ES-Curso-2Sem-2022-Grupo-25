@@ -528,46 +528,36 @@ public class SerialUtils {
             ObjectOutputStream stream) throws IOException {
 
         Args.nullNotPermitted(stream, "stream");
-        if (as != null) {
-            stream.writeBoolean(false);
-            AttributedCharacterIterator aci = as.getIterator();
-            // build a plain string from aci
-            // then write the string
-            StringBuffer plainStr = new StringBuffer();
-            char current = aci.first();
-            while (current != CharacterIterator.DONE) {
-                plainStr = plainStr.append(current);
-                current = aci.next();
-            }
-            stream.writeObject(plainStr.toString());
-
-            // then write the attributes and limits for each run
-            current = aci.first();
-            int begin = aci.getBeginIndex();
-            while (current != CharacterIterator.DONE) {
-                // write the current character - when the reader sees that this
-                // is not CharacterIterator.DONE, it will know to read the
-                // run limits and attributes
-                stream.writeChar(current);
-
-                // now write the limit, adjusted as if beginIndex is zero
-                int limit = aci.getRunLimit();
-                stream.writeInt(limit - begin);
-
-                // now write the attribute set
-                Map atts = new HashMap(aci.getAttributes());
-                stream.writeObject(atts);
-                current = aci.setIndex(limit);
-            }
-            // write a character that signals to the reader that all runs
-            // are done...
-            stream.writeChar(CharacterIterator.DONE);
-        } else {
-            // write a flag that indicates a null
-            stream.writeBoolean(true);
-        }
+        stream(as, stream);
 
     }
+
+	private static void stream(AttributedString as, ObjectOutputStream stream) throws IOException {
+		if (as != null) {
+			stream.writeBoolean(false);
+			AttributedCharacterIterator aci = as.getIterator();
+			StringBuffer plainStr = new StringBuffer();
+			char current = aci.first();
+			while (current != CharacterIterator.DONE) {
+				plainStr = plainStr.append(current);
+				current = aci.next();
+			}
+			stream.writeObject(plainStr.toString());
+			current = aci.first();
+			int begin = aci.getBeginIndex();
+			while (current != CharacterIterator.DONE) {
+				stream.writeChar(current);
+				int limit = aci.getRunLimit();
+				stream.writeInt(limit - begin);
+				Map atts = new HashMap(aci.getAttributes());
+				stream.writeObject(atts);
+				current = aci.setIndex(limit);
+			}
+			stream.writeChar(CharacterIterator.DONE);
+		} else {
+			stream.writeBoolean(true);
+		}
+	}
 
     /**
      * Serialises a {@code Map<Integer, Paint>} instance to the specified stream.

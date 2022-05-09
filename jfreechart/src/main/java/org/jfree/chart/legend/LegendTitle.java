@@ -506,16 +506,21 @@ public class LegendTitle extends Title
         if (this.items.isEmpty()) {
             return result;
         }
-        BlockContainer container = this.wrapper;
-        if (container == null) {
-            container = this.items;
-        }
-        RectangleConstraint c = toContentConstraint(constraint);
+        BlockContainer container = container();
+		RectangleConstraint c = toContentConstraint(constraint);
         Size2D size = container.arrange(g2, c);
         result.height = calculateTotalHeight(size.height);
         result.width = calculateTotalWidth(size.width);
         return result;
     }
+
+	private BlockContainer container() {
+		BlockContainer container = this.wrapper;
+		if (container == null) {
+			container = this.items;
+		}
+		return container;
+	}
 
     /**
      * Receives a chart element visitor. 

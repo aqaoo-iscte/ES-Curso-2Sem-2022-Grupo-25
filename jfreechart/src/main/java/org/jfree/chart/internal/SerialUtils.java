@@ -198,25 +198,29 @@ public class SerialUtils {
             throws IOException {
 
         Args.nullNotPermitted(stream, "stream");
-        if (stroke != null) {
-            stream.writeBoolean(false);
-            if (stroke instanceof BasicStroke) {
-                BasicStroke s = (BasicStroke) stroke;
-                stream.writeObject(BasicStroke.class);
-                stream.writeFloat(s.getLineWidth());
-                stream.writeInt(s.getEndCap());
-                stream.writeInt(s.getLineJoin());
-                stream.writeFloat(s.getMiterLimit());
-                stream.writeObject(s.getDashArray());
-                stream.writeFloat(s.getDashPhase());
-            } else {
-                stream.writeObject(stroke.getClass());
-                stream.writeObject(stroke);
-            }
-        } else {
-            stream.writeBoolean(true);
-        }
+        stream2(stroke, stream);
     }
+
+	private static void stream2(Stroke stroke, ObjectOutputStream stream) throws IOException {
+		if (stroke != null) {
+			stream.writeBoolean(false);
+			if (stroke instanceof BasicStroke) {
+				BasicStroke s = (BasicStroke) stroke;
+				stream.writeObject(BasicStroke.class);
+				stream.writeFloat(s.getLineWidth());
+				stream.writeInt(s.getEndCap());
+				stream.writeInt(s.getLineJoin());
+				stream.writeFloat(s.getMiterLimit());
+				stream.writeObject(s.getDashArray());
+				stream.writeFloat(s.getDashPhase());
+			} else {
+				stream.writeObject(stroke.getClass());
+				stream.writeObject(stroke);
+			}
+		} else {
+			stream.writeBoolean(true);
+		}
+	}
 
     /**
      * Reads a {@code Composite} object that has been serialised by the
@@ -528,11 +532,11 @@ public class SerialUtils {
             ObjectOutputStream stream) throws IOException {
 
         Args.nullNotPermitted(stream, "stream");
-        stream(as, stream);
+        stream1(as, stream);
 
     }
 
-	private static void stream(AttributedString as, ObjectOutputStream stream) throws IOException {
+	private static void stream1(AttributedString as, ObjectOutputStream stream) throws IOException {
 		if (as != null) {
 			stream.writeBoolean(false);
 			AttributedCharacterIterator aci = as.getIterator();

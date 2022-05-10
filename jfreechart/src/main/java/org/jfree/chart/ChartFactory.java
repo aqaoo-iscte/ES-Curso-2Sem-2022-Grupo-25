@@ -655,32 +655,8 @@ public abstract class ChartFactory {
         CategoryAxis categoryAxis = new CategoryAxis(categoryAxisLabel);
         ValueAxis valueAxis = new NumberAxis(valueAxisLabel);
 
-        BarRenderer renderer = new BarRenderer();
-        if (orientation == PlotOrientation.HORIZONTAL) {
-            ItemLabelPosition position1 = new ItemLabelPosition(
-                    ItemLabelAnchor.OUTSIDE3, TextAnchor.CENTER_LEFT);
-            renderer.setDefaultPositiveItemLabelPosition(position1);
-            ItemLabelPosition position2 = new ItemLabelPosition(
-                    ItemLabelAnchor.OUTSIDE9, TextAnchor.CENTER_RIGHT);
-            renderer.setDefaultNegativeItemLabelPosition(position2);
-        } else if (orientation == PlotOrientation.VERTICAL) {
-            ItemLabelPosition position1 = new ItemLabelPosition(
-                    ItemLabelAnchor.OUTSIDE12, TextAnchor.BOTTOM_CENTER);
-            renderer.setDefaultPositiveItemLabelPosition(position1);
-            ItemLabelPosition position2 = new ItemLabelPosition(
-                    ItemLabelAnchor.OUTSIDE6, TextAnchor.TOP_CENTER);
-            renderer.setDefaultNegativeItemLabelPosition(position2);
-        }
-        if (tooltips) {
-            renderer.setDefaultToolTipGenerator(
-                    new StandardCategoryToolTipGenerator());
-        }
-        if (urls) {
-            renderer.setDefaultItemURLGenerator(
-                    new StandardCategoryURLGenerator());
-        }
-
-        CategoryPlot plot = new CategoryPlot(dataset, categoryAxis, valueAxis,
+        BarRenderer renderer = renderer(orientation, tooltips, urls);
+		CategoryPlot plot = new CategoryPlot(dataset, categoryAxis, valueAxis,
                 renderer);
         plot.setOrientation(orientation);
         JFreeChart chart = new JFreeChart(title, JFreeChart.DEFAULT_TITLE_FONT,
@@ -689,6 +665,28 @@ public abstract class ChartFactory {
         return chart;
 
     }
+
+	private static BarRenderer renderer(PlotOrientation orientation, boolean tooltips, boolean urls) {
+		BarRenderer renderer = new BarRenderer();
+		if (orientation == PlotOrientation.HORIZONTAL) {
+			ItemLabelPosition position1 = new ItemLabelPosition(ItemLabelAnchor.OUTSIDE3, TextAnchor.CENTER_LEFT);
+			renderer.setDefaultPositiveItemLabelPosition(position1);
+			ItemLabelPosition position2 = new ItemLabelPosition(ItemLabelAnchor.OUTSIDE9, TextAnchor.CENTER_RIGHT);
+			renderer.setDefaultNegativeItemLabelPosition(position2);
+		} else if (orientation == PlotOrientation.VERTICAL) {
+			ItemLabelPosition position1 = new ItemLabelPosition(ItemLabelAnchor.OUTSIDE12, TextAnchor.BOTTOM_CENTER);
+			renderer.setDefaultPositiveItemLabelPosition(position1);
+			ItemLabelPosition position2 = new ItemLabelPosition(ItemLabelAnchor.OUTSIDE6, TextAnchor.TOP_CENTER);
+			renderer.setDefaultNegativeItemLabelPosition(position2);
+		}
+		if (tooltips) {
+			renderer.setDefaultToolTipGenerator(new StandardCategoryToolTipGenerator());
+		}
+		if (urls) {
+			renderer.setDefaultItemURLGenerator(new StandardCategoryURLGenerator());
+		}
+		return renderer;
+	}
 
     /**
      * Creates a stacked bar chart with default settings.  The chart object

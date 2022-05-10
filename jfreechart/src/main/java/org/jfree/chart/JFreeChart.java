@@ -1126,54 +1126,6 @@ public class JFreeChart implements Drawable, TitleChangeListener,
     }
 
     /**
-     * Creates a rectangle that is aligned to the frame.
-     *
-     * @param dimensions  the dimensions for the rectangle.
-     * @param frame  the frame to align to.
-     * @param hAlign  the horizontal alignment ({@code null} not permitted).
-     * @param vAlign  the vertical alignment ({@code null} not permitted).
-     *
-     * @return A rectangle.
-     */
-    private Rectangle2D createAlignedRectangle2D(Size2D dimensions,
-            Rectangle2D frame, HorizontalAlignment hAlign,
-            VerticalAlignment vAlign) {
-        Args.nullNotPermitted(hAlign, "hAlign");
-        Args.nullNotPermitted(vAlign, "vAlign");
-        double x = Double.NaN;
-        double y = Double.NaN;
-        switch (hAlign) {
-            case LEFT:
-                x = frame.getX();
-                break;
-            case CENTER:
-                x = frame.getCenterX() - (dimensions.width / 2.0);
-                break;
-            case RIGHT:
-                x = frame.getMaxX() - dimensions.width;
-                break;
-            default:
-                throw new IllegalStateException("Unexpected enum value " + hAlign);
-        }
-        switch (vAlign) {
-            case TOP:
-                y = frame.getY();
-                break;
-            case CENTER:
-                y = frame.getCenterY() - (dimensions.height / 2.0);
-                break;
-            case BOTTOM:
-                y = frame.getMaxY() - dimensions.height;
-                break;
-            default:
-                throw new IllegalStateException("Unexpected enum value " + hAlign);
-        }
-
-        return new Rectangle2D.Double(x, y, dimensions.width,
-                dimensions.height);
-    }
-
-    /**
      * Draws a title.  The title should be drawn at the top, bottom, left or
      * right of the specified area, and the area should be updated to reflect
      * the amount of space used by the title.
@@ -1211,7 +1163,7 @@ public class JFreeChart implements Drawable, TitleChangeListener,
         switch (position) {
             case TOP: {
                 Size2D size = t.arrange(g2, constraint);
-                titleArea = createAlignedRectangle2D(size, area,
+                titleArea = size.createAlignedRectangle2D(area,
                         t.getHorizontalAlignment(), VerticalAlignment.TOP);
                 retValue = t.draw(g2, titleArea, p);
                 area.setRect(area.getX(), Math.min(area.getY() + size.height,
@@ -1221,7 +1173,7 @@ public class JFreeChart implements Drawable, TitleChangeListener,
             }
             case BOTTOM: {
                 Size2D size = t.arrange(g2, constraint);
-                titleArea = createAlignedRectangle2D(size, area,
+                titleArea = size.createAlignedRectangle2D(area,
                         t.getHorizontalAlignment(), VerticalAlignment.BOTTOM);
                 retValue = t.draw(g2, titleArea, p);
                 area.setRect(area.getX(), area.getY(), area.getWidth(),
@@ -1230,7 +1182,7 @@ public class JFreeChart implements Drawable, TitleChangeListener,
             }
             case RIGHT: {
                 Size2D size = t.arrange(g2, constraint);
-                titleArea = createAlignedRectangle2D(size, area,
+                titleArea = size.createAlignedRectangle2D(area,
                         HorizontalAlignment.RIGHT, t.getVerticalAlignment());
                 retValue = t.draw(g2, titleArea, p);
                 area.setRect(area.getX(), area.getY(), area.getWidth()
@@ -1239,7 +1191,7 @@ public class JFreeChart implements Drawable, TitleChangeListener,
             }
             case LEFT: {
                 Size2D size = t.arrange(g2, constraint);
-                titleArea = createAlignedRectangle2D(size, area,
+                titleArea = size.createAlignedRectangle2D(area,
                         HorizontalAlignment.LEFT, t.getVerticalAlignment());
                 retValue = t.draw(g2, titleArea, p);
                 area.setRect(area.getX() + size.width, area.getY(), area.getWidth()

@@ -442,11 +442,8 @@ public class LegendTitle extends Title
                 new BorderArrangement(), item.getDataset(),
                 item.getSeriesKey());
         legendItem.add(lg, this.legendItemGraphicEdge);
-        Font textFont = item.getLabelFont();
-        if (textFont == null) {
-            textFont = this.itemFont;
-        }
-        Paint textPaint = item.getLabelPaint();
+        Font textFont = textFont(item);
+		Paint textPaint = item.getLabelPaint();
         if (textPaint == null) {
             textPaint = this.itemPaint;
         }
@@ -462,6 +459,14 @@ public class LegendTitle extends Title
 
         return result;
     }
+
+	private Font textFont(LegendItem item) {
+		Font textFont = item.getLabelFont();
+		if (textFont == null) {
+			textFont = this.itemFont;
+		}
+		return textFont;
+	}
 
 	private LegendGraphic lg(LegendItem item) {
 		LegendGraphic lg = new LegendGraphic(item.getShape(), item.getFillPaint());

@@ -1587,5 +1587,51 @@ public class JFreeChart implements Drawable, TitleChangeListener,
         return chart;
     }
 
+	/**
+	 * A utility method that creates an image of a chart, with scaling.
+	 * @param w   the image width.
+	 * @param h   the image height.
+	 * @param minDrawW   the minimum width for chart drawing.
+	 * @param minDrawH   the minimum height for chart drawing.
+	 * @param maxDrawW   the maximum width for chart drawing.
+	 * @param maxDrawH   the maximum height for chart drawing.
+	 * @return   A chart image.
+	 */
+	public BufferedImage createBufferedImage(int w, int h, int minDrawW, int minDrawH, int maxDrawW, int maxDrawH) {
+		BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+		Graphics2D g2 = image.createGraphics();
+		boolean scale = false;
+		double drawWidth = w;
+		double drawHeight = h;
+		double scaleX = 1.0;
+		double scaleY = 1.0;
+		if (drawWidth < minDrawW) {
+			scaleX = drawWidth / minDrawW;
+			drawWidth = minDrawW;
+			scale = true;
+		} else if (drawWidth > maxDrawW) {
+			scaleX = drawWidth / maxDrawW;
+			drawWidth = maxDrawW;
+			scale = true;
+		}
+		if (drawHeight < minDrawH) {
+			scaleY = drawHeight / minDrawH;
+			drawHeight = minDrawH;
+			scale = true;
+		} else if (drawHeight > maxDrawH) {
+			scaleY = drawHeight / maxDrawH;
+			drawHeight = maxDrawH;
+			scale = true;
+		}
+		Rectangle2D chartArea = new Rectangle2D.Double(0.0, 0.0, drawWidth, drawHeight);
+		if (scale) {
+			AffineTransform st = AffineTransform.getScaleInstance(scaleX, scaleY);
+			g2.transform(st);
+		}
+		draw(g2, chartArea, null, null);
+		g2.dispose();
+		return image;
+	}
+
 
 }

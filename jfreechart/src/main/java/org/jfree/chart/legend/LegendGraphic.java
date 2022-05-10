@@ -574,12 +574,8 @@ public class LegendGraphic extends AbstractBlock
             Shape s = ShapeUtils.createTranslatedShape(this.shape,
                     this.shapeAnchor, location.getX(), location.getY());
             if (this.shapeFilled) {
-                Paint p = this.fillPaint;
-                if (p instanceof GradientPaint) {
-                    GradientPaint gp = (GradientPaint) this.fillPaint;
-                    p = this.fillPaintTransformer.transform(gp, s);
-                }
-                g2.setPaint(p);
+                Paint p = p(s);
+				g2.setPaint(p);
                 g2.fill(s);
             }
             if (this.shapeOutlineVisible) {
@@ -589,6 +585,15 @@ public class LegendGraphic extends AbstractBlock
             }
         }
     }
+
+	private Paint p(Shape s) {
+		Paint p = this.fillPaint;
+		if (p instanceof GradientPaint) {
+			GradientPaint gp = (GradientPaint) this.fillPaint;
+			p = this.fillPaintTransformer.transform(gp, s);
+		}
+		return p;
+	}
 
     /**
      * Draws the block within the specified area.

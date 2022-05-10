@@ -129,7 +129,9 @@ import org.jfree.data.Range;
 public class JFreeChart implements Drawable, TitleChangeListener,
         PlotChangeListener, ChartElement, Serializable, Cloneable {
 
-    private transient JFreeChartProduct jFreeChartProduct = new JFreeChartProduct();
+    private transient JFreeChartProduct2 jFreeChartProduct2 = new JFreeChartProduct2();
+
+	private transient JFreeChartProduct jFreeChartProduct = new JFreeChartProduct();
 
 	/** For serialization. */
     private static final long serialVersionUID = -3470703747817429120L;
@@ -209,9 +211,6 @@ public class JFreeChart implements Drawable, TitleChangeListener,
     /** The alpha transparency for the background image. */
     private float backgroundImageAlpha = 0.5f;
 
-    /** Storage for registered progress listeners. */
-    private transient EventListenerList progressListeners;
-
     /**
      * A flag that can be used to enable/disable notification of chart change
      * events.
@@ -282,7 +281,7 @@ public class JFreeChart implements Drawable, TitleChangeListener,
         plot.setChart(this);
         
         // create storage for listeners...
-        this.progressListeners = new EventListenerList();
+        jFreeChartProduct2.setProgressListeners(new EventListenerList());
         jFreeChartProduct.setChangeListeners(new EventListenerList());
         this.notify = true;  // default is to notify listeners when the
                              // chart changes
@@ -1022,7 +1021,7 @@ public class JFreeChart implements Drawable, TitleChangeListener,
     public void draw(Graphics2D g2, Rectangle2D chartArea, Point2D anchor,
              ChartRenderingInfo info) {
 
-        notifyListeners(new ChartProgressEvent(this, this,
+        jFreeChartProduct2.notifyListeners(new ChartProgressEvent(this, this,
                 ChartProgressEventType.DRAWING_STARTED, 0));
         
         if (this.elementHinting) {
@@ -1122,7 +1121,7 @@ public class JFreeChart implements Drawable, TitleChangeListener,
             g2.setRenderingHint(ChartHints.KEY_END_ELEMENT, Boolean.TRUE);            
         }
 
-        notifyListeners(new ChartProgressEvent(this, this,
+        jFreeChartProduct2.notifyListeners(new ChartProgressEvent(this, this,
                 ChartProgressEventType.DRAWING_FINISHED, 100));
     }
 
@@ -1417,7 +1416,7 @@ public class JFreeChart implements Drawable, TitleChangeListener,
      * @see #removeProgressListener(ChartProgressListener)
      */
     public void addProgressListener(ChartProgressListener listener) {
-        this.progressListeners.add(ChartProgressListener.class, listener);
+        jFreeChartProduct2.addProgressListener(listener);
     }
 
     /**
@@ -1428,7 +1427,7 @@ public class JFreeChart implements Drawable, TitleChangeListener,
      * @see #addProgressListener(ChartProgressListener)
      */
     public void removeProgressListener(ChartProgressListener listener) {
-        this.progressListeners.remove(ChartProgressListener.class, listener);
+        jFreeChartProduct2.removeProgressListener(listener);
     }
 
     /**
@@ -1438,12 +1437,7 @@ public class JFreeChart implements Drawable, TitleChangeListener,
      *               notification.
      */
     protected void notifyListeners(ChartProgressEvent event) {
-        Object[] listeners = this.progressListeners.getListenerList();
-        for (int i = listeners.length - 2; i >= 0; i -= 2) {
-            if (listeners[i] == ChartProgressListener.class) {
-                ((ChartProgressListener) listeners[i + 1]).chartProgress(event);
-            }
-        }
+        jFreeChartProduct2.notifyListeners(event);
     }
 
     /**
@@ -1558,6 +1552,7 @@ public class JFreeChart implements Drawable, TitleChangeListener,
      */
     private void writeObject(ObjectOutputStream stream) throws IOException {
         stream.defaultWriteObject();
+		stream.writeObject(this.jFreeChartProduct2);
 		stream.writeObject(this.jFreeChartProduct);
         SerialUtils.writeStroke(this.borderStroke, stream);
         SerialUtils.writePaint(this.borderPaint, stream);
@@ -1575,11 +1570,12 @@ public class JFreeChart implements Drawable, TitleChangeListener,
     private void readObject(ObjectInputStream stream)
         throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
+		this.jFreeChartProduct2 = (JFreeChartProduct2) stream.readObject();
 		this.jFreeChartProduct = (JFreeChartProduct) stream.readObject();
         this.borderStroke = SerialUtils.readStroke(stream);
         this.borderPaint = SerialUtils.readPaint(stream);
         this.backgroundPaint = SerialUtils.readPaint(stream);
-        this.progressListeners = new EventListenerList();
+        jFreeChartProduct2.setProgressListeners(new EventListenerList());
         jFreeChartProduct.setChangeListeners(new EventListenerList());
         this.renderingHints = new RenderingHints(
                 RenderingHints.KEY_ANTIALIASING,
@@ -1609,6 +1605,7 @@ public class JFreeChart implements Drawable, TitleChangeListener,
     @Override
     public Object clone() throws CloneNotSupportedException {
         JFreeChart chart = (JFreeChart) super.clone();
+		chart.jFreeChartProduct2 = (JFreeChartProduct2) this.jFreeChartProduct2.clone();
 		chart.jFreeChartProduct = (JFreeChartProduct) this.jFreeChartProduct.clone();
 
         chart.renderingHints = (RenderingHints) this.renderingHints.clone();
@@ -1633,7 +1630,7 @@ public class JFreeChart implements Drawable, TitleChangeListener,
             chart.plot.addChangeListener(chart);
         }
 
-        chart.progressListeners = new EventListenerList();
+        chart.jFreeChartProduct2.setProgressListeners(new EventListenerList());
         chart.jFreeChartProduct.setChangeListeners(new EventListenerList());
         return chart;
     }

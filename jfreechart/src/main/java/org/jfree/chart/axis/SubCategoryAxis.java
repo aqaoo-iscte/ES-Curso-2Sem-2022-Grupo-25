@@ -278,14 +278,8 @@ public class SubCategoryAxis extends CategoryAxis
 
         g2.setFont(this.subLabelFont);
         g2.setPaint(this.subLabelPaint);
-        CategoryPlot plot = (CategoryPlot) getPlot();
-        int categoryCount = 0;
-        CategoryDataset dataset = plot.getDataset();
-        if (dataset != null) {
-            categoryCount = dataset.getColumnCount();
-        }
-
-        double maxdim = getMaxDim(g2, edge);
+        int categoryCount = categoryCount();
+		double maxdim = getMaxDim(g2, edge);
         for (int categoryIndex = 0; categoryIndex < categoryCount;
              categoryIndex++) {
 
@@ -364,6 +358,16 @@ public class SubCategoryAxis extends CategoryAxis
         }
         return state;
     }
+
+	private int categoryCount() {
+		CategoryPlot plot = (CategoryPlot) getPlot();
+		int categoryCount = 0;
+		CategoryDataset dataset = plot.getDataset();
+		if (dataset != null) {
+			categoryCount = dataset.getColumnCount();
+		}
+		return categoryCount;
+	}
 
     /**
      * Tests the axis for equality with an arbitrary object.

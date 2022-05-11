@@ -578,18 +578,21 @@ public class PeriodAxis extends ValueAxis
             space.add(labelWidth + tickLabelBandsDimension, edge);
         }
 
-        // add space for the outer tick labels, if any...
-        double tickMarkSpace = 0.0;
-        if (isTickMarksVisible()) {
-            tickMarkSpace = getTickMarkOutsideLength();
-        }
-        if (this.minorTickMarksVisible) {
-            tickMarkSpace = Math.max(tickMarkSpace,
-                    this.minorTickMarkOutsideLength);
-        }
-        space.add(tickMarkSpace, edge);
+        double tickMarkSpace = tickMarkSpace();
+		space.add(tickMarkSpace, edge);
         return space;
     }
+
+	private double tickMarkSpace() {
+		double tickMarkSpace = 0.0;
+		if (isTickMarksVisible()) {
+			tickMarkSpace = getTickMarkOutsideLength();
+		}
+		if (this.minorTickMarksVisible) {
+			tickMarkSpace = Math.max(tickMarkSpace, this.minorTickMarkOutsideLength);
+		}
+		return tickMarkSpace;
+	}
 
     /**
      * Draws the axis on a Java 2D graphics device (such as the screen or a

@@ -778,40 +778,39 @@ public class LogarithmicAxis extends NumberAxis {
                 }
 
                 if (currentTickValue >= lowerBoundVal - SMALL_LOG_VALUE) {
-                    //tick value not below lowest data value
-                    TextAnchor anchor;
-                    TextAnchor rotationAnchor;
-                    double angle = 0.0;
-                    if (isVerticalTickLabels()) {
-                        anchor = TextAnchor.CENTER_RIGHT;
-                        rotationAnchor = TextAnchor.CENTER_RIGHT;
-                        if (edge == RectangleEdge.TOP) {
-                            angle = Math.PI / 2.0;
-                        }
-                        else {
-                            angle = -Math.PI / 2.0;
-                        }
-                    }
-                    else {
-                        if (edge == RectangleEdge.TOP) {
-                            anchor = TextAnchor.BOTTOM_CENTER;
-                            rotationAnchor = TextAnchor.BOTTOM_CENTER;
-                        }
-                        else {
-                            anchor = TextAnchor.TOP_CENTER;
-                            rotationAnchor = TextAnchor.TOP_CENTER;
-                        }
-                    }
-
-                    Tick tick = new NumberTick(currentTickValue, tickLabel, 
-                            anchor, rotationAnchor, angle);
-                    ticks.add(tick);
+                    Tick tick = tick(edge, currentTickValue, tickLabel);
+					ticks.add(tick);
                 }
             }
         }
         return ticks;
 
     }
+
+	private Tick tick(RectangleEdge edge, double currentTickValue, String tickLabel) {
+		TextAnchor anchor;
+		TextAnchor rotationAnchor;
+		double angle = 0.0;
+		if (isVerticalTickLabels()) {
+			anchor = TextAnchor.CENTER_RIGHT;
+			rotationAnchor = TextAnchor.CENTER_RIGHT;
+			if (edge == RectangleEdge.TOP) {
+				angle = Math.PI / 2.0;
+			} else {
+				angle = -Math.PI / 2.0;
+			}
+		} else {
+			if (edge == RectangleEdge.TOP) {
+				anchor = TextAnchor.BOTTOM_CENTER;
+				rotationAnchor = TextAnchor.BOTTOM_CENTER;
+			} else {
+				anchor = TextAnchor.TOP_CENTER;
+				rotationAnchor = TextAnchor.TOP_CENTER;
+			}
+		}
+		Tick tick = new NumberTick(currentTickValue, tickLabel, anchor, rotationAnchor, angle);
+		return tick;
+	}
 
     /**
      * Calculates the positions of the tick labels for the axis, storing the

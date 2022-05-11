@@ -230,32 +230,54 @@ public class RectangleInsets implements Serializable {
     public Rectangle2D createAdjustedRectangle(Rectangle2D base,
             LengthAdjustmentType horizontal, LengthAdjustmentType vertical) {
         Args.nullNotPermitted(base, "base");
-        double x = base.getX();
-        double y = base.getY();
-        double w = base.getWidth();
+        double x = x(base, horizontal);
+		double y = y(base, vertical);
+		double w = base.getWidth();
         double h = base.getHeight();
         if (horizontal == LengthAdjustmentType.EXPAND) {
             final double leftOutset = calculateLeftOutset(w);
-            x = x - leftOutset;
             w = w + leftOutset + calculateRightOutset(w);
         }
         else if (horizontal == LengthAdjustmentType.CONTRACT) {
             final double leftMargin = calculateLeftInset(w);
-            x = x + leftMargin;
             w = w - leftMargin - calculateRightInset(w);
         }
         if (vertical == LengthAdjustmentType.EXPAND) {
             final double topMargin = calculateTopOutset(h);
-            y = y - topMargin;
             h = h + topMargin + calculateBottomOutset(h);
         }
         else if (vertical == LengthAdjustmentType.CONTRACT) {
             final double topMargin = calculateTopInset(h);
-            y = y + topMargin;
             h = h - topMargin - calculateBottomInset(h);
         }
         return new Rectangle2D.Double(x, y, w, h);
     }
+
+	private double y(Rectangle2D base, LengthAdjustmentType vertical) {
+		double y = base.getY();
+		double h = base.getHeight();
+		if (vertical == LengthAdjustmentType.EXPAND) {
+			final double topMargin = calculateTopOutset(h);
+			y = y - topMargin;
+		} else if (vertical == LengthAdjustmentType.CONTRACT) {
+			final double topMargin = calculateTopInset(h);
+			y = y + topMargin;
+		}
+		return y;
+	}
+
+	private double x(Rectangle2D base, LengthAdjustmentType horizontal) {
+		double x = base.getX();
+		double w = base.getWidth();
+		if (horizontal == LengthAdjustmentType.EXPAND) {
+			final double leftOutset = calculateLeftOutset(w);
+			x = x - leftOutset;
+		} else if (horizontal == LengthAdjustmentType.CONTRACT) {
+			final double leftMargin = calculateLeftInset(w);
+			x = x + leftMargin;
+		}
+		return x;
+	}
     
     /**
      * Creates an 'inset' rectangle.

@@ -9,24 +9,23 @@ import java.io.Serializable;
 import org.jfree.chart.api.PublicCloneable;
 
 public class PaintScaleLegendProduct implements Serializable, PublicCloneable {
-	private PaintScale scale;
-	private AxisLocation axisLocation;
+	private PaintScaleLegendProductProduct paintScaleLegendProductProduct = new PaintScaleLegendProductProduct();
 	private int subdivisions;
 
 	public PaintScale getScale() {
-		return scale;
+		return paintScaleLegendProductProduct.getScale();
 	}
 
 	public void setScale2(PaintScale scale) {
-		this.scale = scale;
+		paintScaleLegendProductProduct.setScale2(scale);
 	}
 
 	public AxisLocation getAxisLocation() {
-		return axisLocation;
+		return paintScaleLegendProductProduct.getAxisLocation();
 	}
 
 	public void setAxisLocation2(AxisLocation axisLocation) {
-		this.axisLocation = axisLocation;
+		paintScaleLegendProductProduct.setAxisLocation2(axisLocation);
 	}
 
 	public int getSubdivisions() {
@@ -43,9 +42,7 @@ public class PaintScaleLegendProduct implements Serializable, PublicCloneable {
 	* @see #getScale()
 	*/
 	public void setScale(PaintScale scale, PaintScaleLegend paintScaleLegend) {
-		Args.nullNotPermitted(scale, "scale");
-		this.scale = scale;
-		paintScaleLegend.notifyListeners(new TitleChangeEvent(paintScaleLegend));
+		paintScaleLegendProductProduct.setScale(scale, paintScaleLegend);
 	}
 
 	/**
@@ -54,9 +51,7 @@ public class PaintScaleLegendProduct implements Serializable, PublicCloneable {
 	* @see #getAxisLocation()
 	*/
 	public void setAxisLocation(AxisLocation location, PaintScaleLegend paintScaleLegend) {
-		Args.nullNotPermitted(location, "location");
-		this.axisLocation = location;
-		paintScaleLegend.notifyListeners(new TitleChangeEvent(paintScaleLegend));
+		paintScaleLegendProductProduct.setAxisLocation(location, paintScaleLegend);
 	}
 
 	/**

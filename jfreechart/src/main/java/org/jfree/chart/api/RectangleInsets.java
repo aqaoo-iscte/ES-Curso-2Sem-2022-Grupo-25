@@ -232,26 +232,34 @@ public class RectangleInsets implements Serializable {
         Args.nullNotPermitted(base, "base");
         double x = x(base, horizontal);
 		double y = y(base, vertical);
-		double w = base.getWidth();
-        double h = base.getHeight();
-        if (horizontal == LengthAdjustmentType.EXPAND) {
-            final double leftOutset = calculateLeftOutset(w);
-            w = w + leftOutset + calculateRightOutset(w);
-        }
-        else if (horizontal == LengthAdjustmentType.CONTRACT) {
-            final double leftMargin = calculateLeftInset(w);
-            w = w - leftMargin - calculateRightInset(w);
-        }
-        if (vertical == LengthAdjustmentType.EXPAND) {
-            final double topMargin = calculateTopOutset(h);
-            h = h + topMargin + calculateBottomOutset(h);
-        }
-        else if (vertical == LengthAdjustmentType.CONTRACT) {
-            final double topMargin = calculateTopInset(h);
-            h = h - topMargin - calculateBottomInset(h);
-        }
-        return new Rectangle2D.Double(x, y, w, h);
+		double w = w(base, horizontal);
+		double h = base.getHeight();
+        h = h(vertical, h);
+		return new Rectangle2D.Double(x, y, w, h);
     }
+
+	private double w(Rectangle2D base, LengthAdjustmentType horizontal) {
+		double w = base.getWidth();
+		if (horizontal == LengthAdjustmentType.EXPAND) {
+			final double leftOutset = calculateLeftOutset(w);
+			w = w + leftOutset + calculateRightOutset(w);
+		} else if (horizontal == LengthAdjustmentType.CONTRACT) {
+			final double leftMargin = calculateLeftInset(w);
+			w = w - leftMargin - calculateRightInset(w);
+		}
+		return w;
+	}
+
+	private double h(LengthAdjustmentType vertical, double h) {
+		if (vertical == LengthAdjustmentType.EXPAND) {
+			final double topMargin = calculateTopOutset(h);
+			h = h + topMargin + calculateBottomOutset(h);
+		} else if (vertical == LengthAdjustmentType.CONTRACT) {
+			final double topMargin = calculateTopInset(h);
+			h = h - topMargin - calculateBottomInset(h);
+		}
+		return h;
+	}
 
 	private double y(Rectangle2D base, LengthAdjustmentType vertical) {
 		double y = base.getY();

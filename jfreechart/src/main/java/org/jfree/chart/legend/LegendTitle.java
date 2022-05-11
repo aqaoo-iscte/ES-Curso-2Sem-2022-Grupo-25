@@ -437,31 +437,13 @@ public class LegendTitle extends Title
      */
     protected Block createLegendItemBlock(LegendItem item) {
         BlockContainer result;
-        LegendGraphic lg = new LegendGraphic(item.getShape(),
-                item.getFillPaint());
-        lg.setFillPaintTransformer(item.getFillPaintTransformer());
-        lg.setShapeFilled(item.isShapeFilled());
-        lg.setLine(item.getLine());
-        lg.setLineStroke(item.getLineStroke());
-        lg.setLinePaint(item.getLinePaint());
-        lg.setLineVisible(item.isLineVisible());
-        lg.setShapeVisible(item.isShapeVisible());
-        lg.setShapeOutlineVisible(item.isShapeOutlineVisible());
-        lg.setOutlinePaint(item.getOutlinePaint());
-        lg.setOutlineStroke(item.getOutlineStroke());
-        lg.setPadding(this.legendItemGraphicPadding);
-
-        LegendItemBlockContainer legendItem = new LegendItemBlockContainer(
+        LegendGraphic lg = lg(item);
+		LegendItemBlockContainer legendItem = new LegendItemBlockContainer(
                 new BorderArrangement(), item.getDataset(),
                 item.getSeriesKey());
-        lg.setShapeAnchor(getLegendItemGraphicAnchor());
-        lg.setShapeLocation(getLegendItemGraphicLocation());
         legendItem.add(lg, this.legendItemGraphicEdge);
-        Font textFont = item.getLabelFont();
-        if (textFont == null) {
-            textFont = this.itemFont;
-        }
-        Paint textPaint = item.getLabelPaint();
+        Font textFont = textFont(item);
+		Paint textPaint = item.getLabelPaint();
         if (textPaint == null) {
             textPaint = this.itemPaint;
         }
@@ -477,6 +459,32 @@ public class LegendTitle extends Title
 
         return result;
     }
+
+	private Font textFont(LegendItem item) {
+		Font textFont = item.getLabelFont();
+		if (textFont == null) {
+			textFont = this.itemFont;
+		}
+		return textFont;
+	}
+
+	private LegendGraphic lg(LegendItem item) {
+		LegendGraphic lg = new LegendGraphic(item.getShape(), item.getFillPaint());
+		lg.setFillPaintTransformer(item.getFillPaintTransformer());
+		lg.setShapeFilled(item.isShapeFilled());
+		lg.setLine(item.getLine());
+		lg.setLineStroke(item.getLineStroke());
+		lg.setLinePaint(item.getLinePaint());
+		lg.setLineVisible(item.isLineVisible());
+		lg.setShapeVisible(item.isShapeVisible());
+		lg.setShapeOutlineVisible(item.isShapeOutlineVisible());
+		lg.setOutlinePaint(item.getOutlinePaint());
+		lg.setOutlineStroke(item.getOutlineStroke());
+		lg.setPadding(this.legendItemGraphicPadding);
+		lg.setShapeAnchor(getLegendItemGraphicAnchor());
+		lg.setShapeLocation(getLegendItemGraphicLocation());
+		return lg;
+	}
 
     /**
      * Returns the container that holds the legend items.
@@ -503,16 +511,21 @@ public class LegendTitle extends Title
         if (this.items.isEmpty()) {
             return result;
         }
-        BlockContainer container = this.wrapper;
-        if (container == null) {
-            container = this.items;
-        }
-        RectangleConstraint c = toContentConstraint(constraint);
+        BlockContainer container = container();
+		RectangleConstraint c = toContentConstraint(constraint);
         Size2D size = container.arrange(g2, c);
         result.height = calculateTotalHeight(size.height);
         result.width = calculateTotalWidth(size.width);
         return result;
     }
+
+	private BlockContainer container() {
+		BlockContainer container = this.wrapper;
+		if (container == null) {
+			container = this.items;
+		}
+		return container;
+	}
 
     /**
      * Receives a chart element visitor. 

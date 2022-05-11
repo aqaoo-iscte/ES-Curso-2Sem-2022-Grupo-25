@@ -141,7 +141,8 @@ public class IntervalXYToolTipGenerator extends AbstractXYItemLabelGenerator
     @Override
     protected Object[] createItemArray(XYDataset dataset, int series, 
             int item) {
-        IntervalXYDataset intervalDataset = null;
+        double ys = ys(dataset, series, item);
+		IntervalXYDataset intervalDataset = null;
         if (dataset instanceof IntervalXYDataset) {
             intervalDataset = (IntervalXYDataset) dataset;
         }
@@ -152,12 +153,10 @@ public class IntervalXYToolTipGenerator extends AbstractXYItemLabelGenerator
         double xs = x;
         double xe = x;
         double y = dataset.getYValue(series, item);
-        double ys = y;
         double ye = y;
         if (intervalDataset != null) {
             xs = intervalDataset.getStartXValue(series, item);
             xe = intervalDataset.getEndXValue(series, item);
-            ys = intervalDataset.getStartYValue(series, item);
             ye = intervalDataset.getEndYValue(series, item);
         }
 
@@ -209,6 +208,19 @@ public class IntervalXYToolTipGenerator extends AbstractXYItemLabelGenerator
         }
         return result;
     }
+
+	private double ys(XYDataset dataset, int series, int item) {
+		IntervalXYDataset intervalDataset = null;
+		if (dataset instanceof IntervalXYDataset) {
+			intervalDataset = (IntervalXYDataset) dataset;
+		}
+		double y = dataset.getYValue(series, item);
+		double ys = y;
+		if (intervalDataset != null) {
+			ys = intervalDataset.getStartYValue(series, item);
+		}
+		return ys;
+	}
 
     /**
      * Generates the tool tip text for an item in a dataset.

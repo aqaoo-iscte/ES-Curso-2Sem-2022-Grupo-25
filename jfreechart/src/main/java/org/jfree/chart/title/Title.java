@@ -349,7 +349,7 @@ public abstract class Title extends AbstractBlock
      * @param event  an object that contains information about the change to
      *               the title.
      */
-    protected void notifyListeners(TitleChangeEvent event) {
+    public void notifyListeners(TitleChangeEvent event) {
         if (this.notify) {
             Object[] listeners = this.listenerList.getListenerList();
             for (int i = listeners.length - 2; i >= 0; i -= 2) {

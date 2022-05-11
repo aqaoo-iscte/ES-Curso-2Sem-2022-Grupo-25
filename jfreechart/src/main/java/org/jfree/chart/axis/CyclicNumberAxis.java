@@ -586,16 +586,8 @@ public class CyclicNumberAxis extends NumberAxis {
             }
 
             double yy = valueToJava2D(currentTickValue, dataArea, edge);
-            String tickLabel;
-            NumberFormat formatter = getNumberFormatOverride();
-            if (formatter != null) {
-                tickLabel = formatter.format(currentTickValue);
-            }
-            else {
-                tickLabel = getTickUnit().valueToString(currentTickValue);
-            }
-
-            float y = (float) yy;
+            String tickLabel = tickLabel(currentTickValue);
+			float y = (float) yy;
             TextAnchor anchor;
             TextAnchor rotationAnchor;
             double angle = 0.0;
@@ -705,6 +697,17 @@ public class CyclicNumberAxis extends NumberAxis {
         this.boundMappedToLastCycle = boundMapping;
         return result;
     }
+
+	private String tickLabel(double currentTickValue) {
+		String tickLabel;
+		NumberFormat formatter = getNumberFormatOverride();
+		if (formatter != null) {
+			tickLabel = formatter.format(currentTickValue);
+		} else {
+			tickLabel = getTickUnit().valueToString(currentTickValue);
+		}
+		return tickLabel;
+	}
 
     /**
      * Converts a coordinate from Java 2D space to data space.

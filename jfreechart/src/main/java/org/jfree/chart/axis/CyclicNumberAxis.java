@@ -969,16 +969,8 @@ public class CyclicNumberAxis extends NumberAxis {
             return ret;
         }
 
-        double ol;
-        FontMetrics fm = g2.getFontMetrics(getTickLabelFont());
-        if (isVerticalTickLabels()) {
-            ol = fm.getMaxAdvance();
-        }
-        else {
-            ol = fm.getHeight();
-        }
-
-        double il = 0;
+        double ol = ol(g2);
+		double il = 0;
         if (isTickMarksVisible()) {
             float xx = (float) valueToJava2D(getRange().getUpperBound(),
                     dataArea, edge);
@@ -1001,6 +993,17 @@ public class CyclicNumberAxis extends NumberAxis {
         }
         return ret;
     }
+
+	private double ol(Graphics2D g2) {
+		double ol;
+		FontMetrics fm = g2.getFontMetrics(getTickLabelFont());
+		if (isVerticalTickLabels()) {
+			ol = fm.getMaxAdvance();
+		} else {
+			ol = fm.getHeight();
+		}
+		return ol;
+	}
 
     /**
      * Draws the axis.

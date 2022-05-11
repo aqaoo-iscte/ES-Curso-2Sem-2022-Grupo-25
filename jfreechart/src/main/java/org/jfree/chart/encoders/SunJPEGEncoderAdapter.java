@@ -153,17 +153,25 @@ public class SunJPEGEncoderAdapter implements ImageEncoder {
             throws IOException {
         Args.nullNotPermitted(bufferedImage, "bufferedImage");
         Args.nullNotPermitted(outputStream, "outputStream");
-        Iterator iterator = ImageIO.getImageWritersByFormatName("jpeg");
+        ImageWriteParam p = p(outputStream);
+		Iterator iterator = ImageIO.getImageWritersByFormatName("jpeg");
         ImageWriter writer = (ImageWriter) iterator.next();
-        ImageWriteParam p = writer.getDefaultWriteParam();
-        p.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-        p.setCompressionQuality(this.quality);
         ImageOutputStream ios = ImageIO.createImageOutputStream(outputStream);
-        writer.setOutput(ios);
         writer.write(null, new IIOImage(bufferedImage, null, null), p);
         ios.flush();
         writer.dispose();
         ios.close();
     }
+
+	private ImageWriteParam p(OutputStream outputStream) throws IOException {
+		Iterator iterator = ImageIO.getImageWritersByFormatName("jpeg");
+		ImageWriter writer = (ImageWriter) iterator.next();
+		ImageWriteParam p = writer.getDefaultWriteParam();
+		p.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+		p.setCompressionQuality(this.quality);
+		ImageOutputStream ios = ImageIO.createImageOutputStream(outputStream);
+		writer.setOutput(ios);
+		return p;
+	}
 
 }

@@ -785,30 +785,27 @@ public class NumberAxis extends ValueAxis implements Cloneable, Serializable {
             unit = tickUnitSource.getCeilingTickUnit(length / 10);
         }
 
-        // now consider the label size relative to the width of the tick unit
-        // and make a guess at the ideal size
-        TickUnit unit1 = tickUnitSource.getCeilingTickUnit(unit);
-        double tickLabelWidth = estimateMaximumTickLabelWidth(g2, unit1);
-        double unit1Width = lengthToJava2D(unit1.getSize(), dataArea, edge);
-        NumberTickUnit unit2 = (NumberTickUnit) unit1;
-        double guess = (tickLabelWidth / unit1Width) * unit1.getSize();
-
-        // due to limitations of double precision, when you zoom very far into
-        // a chart, eventually the visible axis range will get reported as 
-        // having length 0, and then 'guess' above will be infinite ... in that 
-        // case we'll just stick with the tick unit we have, it's better than 
-        // throwing an exception 
-        // https://github.com/jfree/jfreechart/issues/64
-        if (Double.isFinite(guess)) {
-            unit2 = (NumberTickUnit) tickUnitSource.getCeilingTickUnit(guess);
-            double unit2Width = lengthToJava2D(unit2.getSize(), dataArea, edge);
-            tickLabelWidth = estimateMaximumTickLabelWidth(g2, unit2);
-            if (tickLabelWidth > unit2Width) {
-                unit2 = (NumberTickUnit) tickUnitSource.getLargerTickUnit(unit2);
-            }
-        }
-        setTickUnit(unit2, false, false);
+        NumberTickUnit unit2 = unit2(g2, dataArea, edge, unit, tickUnitSource);
+		setTickUnit(unit2, false, false);
     }
+
+	private NumberTickUnit unit2(Graphics2D g2, Rectangle2D dataArea, RectangleEdge edge, TickUnit unit,
+			TickUnitSource tickUnitSource) {
+		TickUnit unit1 = tickUnitSource.getCeilingTickUnit(unit);
+		double tickLabelWidth = estimateMaximumTickLabelWidth(g2, unit1);
+		double unit1Width = lengthToJava2D(unit1.getSize(), dataArea, edge);
+		NumberTickUnit unit2 = (NumberTickUnit) unit1;
+		double guess = (tickLabelWidth / unit1Width) * unit1.getSize();
+		if (Double.isFinite(guess)) {
+			unit2 = (NumberTickUnit) tickUnitSource.getCeilingTickUnit(guess);
+			double unit2Width = lengthToJava2D(unit2.getSize(), dataArea, edge);
+			tickLabelWidth = estimateMaximumTickLabelWidth(g2, unit2);
+			if (tickLabelWidth > unit2Width) {
+				unit2 = (NumberTickUnit) tickUnitSource.getLargerTickUnit(unit2);
+			}
+		}
+		return unit2;
+	}
 
     /**
      * Selects an appropriate tick value for the axis.  The strategy is to

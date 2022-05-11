@@ -1132,33 +1132,35 @@ public class DateAxis extends ValueAxis implements Cloneable, Serializable {
                 r = new DateRange();
             }
 
-            long upper = this.timeline.toTimelineValue(
-                    (long) r.getUpperBound());
-            long lower;
-            long fixedAutoRange = (long) getFixedAutoRange();
-            if (fixedAutoRange > 0.0) {
-                lower = upper - fixedAutoRange;
-            }
-            else {
-                lower = this.timeline.toTimelineValue((long) r.getLowerBound());
-                double range = upper - lower;
-                long minRange = (long) getAutoRangeMinimumSize();
-                if (range < minRange) {
-                    long expand = (long) (minRange - range) / 2;
-                    upper = upper + expand;
-                    lower = lower - expand;
-                }
-                upper = upper + (long) (range * getUpperMargin());
-                lower = lower - (long) (range * getLowerMargin());
-            }
-
-            upper = this.timeline.toMillisecond(upper);
-            lower = this.timeline.toMillisecond(lower);
-            DateRange dr = new DateRange(new Date(lower), new Date(upper));
-            setRange(dr, false, false);
+            DateRange dr = dr(r);
+			setRange(dr, false, false);
         }
 
     }
+
+	private DateRange dr(Range r) {
+		long upper = this.timeline.toTimelineValue((long) r.getUpperBound());
+		long lower;
+		long fixedAutoRange = (long) getFixedAutoRange();
+		if (fixedAutoRange > 0.0) {
+			lower = upper - fixedAutoRange;
+		} else {
+			lower = this.timeline.toTimelineValue((long) r.getLowerBound());
+			double range = upper - lower;
+			long minRange = (long) getAutoRangeMinimumSize();
+			if (range < minRange) {
+				long expand = (long) (minRange - range) / 2;
+				upper = upper + expand;
+				lower = lower - expand;
+			}
+			upper = upper + (long) (range * getUpperMargin());
+			lower = lower - (long) (range * getLowerMargin());
+		}
+		upper = this.timeline.toMillisecond(upper);
+		lower = this.timeline.toMillisecond(lower);
+		DateRange dr = new DateRange(new Date(lower), new Date(upper));
+		return dr;
+	}
 
     /**
      * Selects an appropriate tick value for the axis.  The strategy is to

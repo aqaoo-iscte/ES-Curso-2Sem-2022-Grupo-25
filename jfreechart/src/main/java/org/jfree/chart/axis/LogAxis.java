@@ -698,30 +698,31 @@ public class LogAxis extends ValueAxis {
         TickUnit candidate = tickUnits.getCeilingTickUnit(size);
         TickUnit prevCandidate = candidate;
         boolean found = false;
-        while (!found) {
-        // while the tick labels overlap and there are more tick sizes available,
-            // choose the next bigger label
-            this.tickUnit = (NumberTickUnit) candidate;
-            double tickLabelWidth = estimateMaximumTickLabelWidth(g2, 
-                    candidate);
-            // what is the available space for one unit?
-            double candidateWidth = exponentLengthToJava2D(candidate.getSize(), 
-                    dataArea, edge);
-            if (tickLabelWidth < candidateWidth) {
-                found = true;
-            } else if (Double.isNaN(candidateWidth)) {
-                candidate = prevCandidate;
-                found = true;
-            } else {
-                prevCandidate = candidate;
-                candidate = tickUnits.getLargerTickUnit(prevCandidate);
-                if (candidate.equals(prevCandidate)) {
-                    found = true;  // there are no more candidates
-                }
-            }
-        } 
-        setTickUnit((NumberTickUnit) candidate, false, false);
+        candidate = candidate(g2, dataArea, edge, tickUnits, candidate, prevCandidate, found);
+		setTickUnit((NumberTickUnit) candidate, false, false);
     }
+
+	private TickUnit candidate(Graphics2D g2, Rectangle2D dataArea, RectangleEdge edge, TickUnitSource tickUnits,
+			TickUnit candidate, TickUnit prevCandidate, boolean found) {
+		while (!found) {
+			this.tickUnit = (NumberTickUnit) candidate;
+			double tickLabelWidth = estimateMaximumTickLabelWidth(g2, candidate);
+			double candidateWidth = exponentLengthToJava2D(candidate.getSize(), dataArea, edge);
+			if (tickLabelWidth < candidateWidth) {
+				found = true;
+			} else if (Double.isNaN(candidateWidth)) {
+				candidate = prevCandidate;
+				found = true;
+			} else {
+				prevCandidate = candidate;
+				candidate = tickUnits.getLargerTickUnit(prevCandidate);
+				if (candidate.equals(prevCandidate)) {
+					found = true;
+				}
+			}
+		}
+		return candidate;
+	}
 
     /**
      * Converts a length in data coordinates into the corresponding length in

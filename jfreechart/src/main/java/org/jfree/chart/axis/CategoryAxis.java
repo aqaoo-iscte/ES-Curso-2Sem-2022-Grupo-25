@@ -954,45 +954,8 @@ public class CategoryAxis extends Axis implements Cloneable, Serializable {
 
             CategoryLabelPosition position
                     = this.categoryLabelPositions.getLabelPosition(edge);
-            double x0 = 0.0;
-            double x1 = 0.0;
-            double y0 = 0.0;
-            double y1 = 0.0;
-            if (edge == RectangleEdge.TOP) {
-                x0 = getCategoryStart(categoryIndex, ticks.size(), dataArea, 
-                        edge);
-                x1 = getCategoryEnd(categoryIndex, ticks.size(), dataArea, 
-                        edge);
-                y1 = state.getCursor() - this.categoryLabelPositionOffset;
-                y0 = y1 - state.getMax();
-            }
-            else if (edge == RectangleEdge.BOTTOM) {
-                x0 = getCategoryStart(categoryIndex, ticks.size(), dataArea, 
-                        edge);
-                x1 = getCategoryEnd(categoryIndex, ticks.size(), dataArea, 
-                        edge);
-                y0 = state.getCursor() + this.categoryLabelPositionOffset;
-                y1 = y0 + state.getMax();
-            }
-            else if (edge == RectangleEdge.LEFT) {
-                y0 = getCategoryStart(categoryIndex, ticks.size(), dataArea, 
-                        edge);
-                y1 = getCategoryEnd(categoryIndex, ticks.size(), dataArea,
-                        edge);
-                x1 = state.getCursor() - this.categoryLabelPositionOffset;
-                x0 = x1 - state.getMax();
-            }
-            else if (edge == RectangleEdge.RIGHT) {
-                y0 = getCategoryStart(categoryIndex, ticks.size(), dataArea, 
-                        edge);
-                y1 = getCategoryEnd(categoryIndex, ticks.size(), dataArea,
-                        edge);
-                x0 = state.getCursor() + this.categoryLabelPositionOffset;
-                x1 = x0 - state.getMax();
-            }
-            Rectangle2D area = new Rectangle2D.Double(x0, y0, (x1 - x0),
-                    (y1 - y0));
-            Point2D anchorPoint = position.getCategoryAnchor().getAnchorPoint(area);
+            Rectangle2D area = area(dataArea, edge, state, ticks, categoryIndex);
+			Point2D anchorPoint = position.getCategoryAnchor().getAnchorPoint(area);
             TextBlock block = tick.getLabel();
             block.draw(g2, (float) anchorPoint.getX(),
                     (float) anchorPoint.getY(), position.getLabelAnchor(),
@@ -1034,6 +997,36 @@ public class CategoryAxis extends Axis implements Cloneable, Serializable {
         }
         return state;
     }
+
+	private Rectangle2D area(Rectangle2D dataArea, RectangleEdge edge, AxisState state, List ticks, int categoryIndex) {
+		double x0 = 0.0;
+		double x1 = 0.0;
+		double y0 = 0.0;
+		double y1 = 0.0;
+		if (edge == RectangleEdge.TOP) {
+			x0 = getCategoryStart(categoryIndex, ticks.size(), dataArea, edge);
+			x1 = getCategoryEnd(categoryIndex, ticks.size(), dataArea, edge);
+			y1 = state.getCursor() - this.categoryLabelPositionOffset;
+			y0 = y1 - state.getMax();
+		} else if (edge == RectangleEdge.BOTTOM) {
+			x0 = getCategoryStart(categoryIndex, ticks.size(), dataArea, edge);
+			x1 = getCategoryEnd(categoryIndex, ticks.size(), dataArea, edge);
+			y0 = state.getCursor() + this.categoryLabelPositionOffset;
+			y1 = y0 + state.getMax();
+		} else if (edge == RectangleEdge.LEFT) {
+			y0 = getCategoryStart(categoryIndex, ticks.size(), dataArea, edge);
+			y1 = getCategoryEnd(categoryIndex, ticks.size(), dataArea, edge);
+			x1 = state.getCursor() - this.categoryLabelPositionOffset;
+			x0 = x1 - state.getMax();
+		} else if (edge == RectangleEdge.RIGHT) {
+			y0 = getCategoryStart(categoryIndex, ticks.size(), dataArea, edge);
+			y1 = getCategoryEnd(categoryIndex, ticks.size(), dataArea, edge);
+			x0 = state.getCursor() + this.categoryLabelPositionOffset;
+			x1 = x0 - state.getMax();
+		}
+		Rectangle2D area = new Rectangle2D.Double(x0, y0, (x1 - x0), (y1 - y0));
+		return area;
+	}
 
     /**
      * Creates a temporary list of ticks that can be used when drawing the axis.

@@ -578,18 +578,21 @@ public class PeriodAxis extends ValueAxis
             space.add(labelWidth + tickLabelBandsDimension, edge);
         }
 
-        // add space for the outer tick labels, if any...
-        double tickMarkSpace = 0.0;
-        if (isTickMarksVisible()) {
-            tickMarkSpace = getTickMarkOutsideLength();
-        }
-        if (this.minorTickMarksVisible) {
-            tickMarkSpace = Math.max(tickMarkSpace,
-                    this.minorTickMarkOutsideLength);
-        }
-        space.add(tickMarkSpace, edge);
+        double tickMarkSpace = tickMarkSpace();
+		space.add(tickMarkSpace, edge);
         return space;
     }
+
+	private double tickMarkSpace() {
+		double tickMarkSpace = 0.0;
+		if (isTickMarksVisible()) {
+			tickMarkSpace = getTickMarkOutsideLength();
+		}
+		if (this.minorTickMarksVisible) {
+			tickMarkSpace = Math.max(tickMarkSpace, this.minorTickMarkOutsideLength);
+		}
+		return tickMarkSpace;
+	}
 
     /**
      * Draws the axis on a Java 2D graphics device (such as the screen or a
@@ -739,16 +742,17 @@ public class PeriodAxis extends ValueAxis
             t.peg(this.calendar);
             t0 = t.getFirstMillisecond();
         }
-        if (edge == RectangleEdge.TOP) {
-            state.cursorUp(Math.max(outsideLength,
-                    this.minorTickMarkOutsideLength));
-        }
-        else if (edge == RectangleEdge.BOTTOM) {
-            state.cursorDown(Math.max(outsideLength,
-                    this.minorTickMarkOutsideLength));
-        }
-        state.setTicks(ticks);
+        state(state, edge, ticks, outsideLength);
     }
+
+	private void state(AxisState state, RectangleEdge edge, List ticks, double outsideLength) {
+		if (edge == RectangleEdge.TOP) {
+			state.cursorUp(Math.max(outsideLength, this.minorTickMarkOutsideLength));
+		} else if (edge == RectangleEdge.BOTTOM) {
+			state.cursorDown(Math.max(outsideLength, this.minorTickMarkOutsideLength));
+		}
+		state.setTicks(ticks);
+	}
 
     /**
      * Draws the tick marks for a vertical axis.

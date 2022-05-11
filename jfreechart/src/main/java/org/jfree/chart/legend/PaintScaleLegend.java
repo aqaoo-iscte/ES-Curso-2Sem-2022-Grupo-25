@@ -73,20 +73,15 @@ import org.jfree.data.Range;
 public class PaintScaleLegend extends Title implements AxisChangeListener,
         PublicCloneable {
 
-    /** For serialization. */
-    static final long serialVersionUID = -1365146490993227503L;
+    private transient PaintScaleLegendProduct2 paintScaleLegendProduct2 = new PaintScaleLegendProduct2();
 
-    /** The paint scale (never {@code null}). */
-    private PaintScale scale;
+	private PaintScaleLegendProduct paintScaleLegendProduct = new PaintScaleLegendProduct();
+
+	/** For serialization. */
+    static final long serialVersionUID = -1365146490993227503L;
 
     /** The value axis (never {@code null}). */
     private ValueAxis axis;
-
-    /**
-     * The axis location (handles both orientations, never
-     * {@code null}).
-     */
-    private AxisLocation axisLocation;
 
     /** The offset between the axis and the paint strip (in Java2D units). */
     private double axisOffset;
@@ -100,20 +95,6 @@ public class PaintScaleLegend extends Title implements AxisChangeListener,
      */
     private boolean stripOutlineVisible;
 
-    /** The paint used to draw an outline around the paint strip. */
-    private transient Paint stripOutlinePaint;
-
-    /** The stroke used to draw an outline around the paint strip. */
-    private transient Stroke stripOutlineStroke;
-
-    /** The background paint (never {@code null}). */
-    private transient Paint backgroundPaint;
-
-    /**
-     * The number of subdivisions for the scale when rendering.
-     */
-    private int subdivisions;
-
     /**
      * Creates a new instance.
      *
@@ -122,18 +103,18 @@ public class PaintScaleLegend extends Title implements AxisChangeListener,
      */
     public PaintScaleLegend(PaintScale scale, ValueAxis axis) {
         Args.nullNotPermitted(axis, "axis");
-        this.scale = scale;
+        paintScaleLegendProduct.setScale2(scale);
         this.axis = axis;
         this.axis.addChangeListener(this);
-        this.axisLocation = AxisLocation.BOTTOM_OR_LEFT;
+        paintScaleLegendProduct.setAxisLocation2(AxisLocation.BOTTOM_OR_LEFT);
         this.axisOffset = 0.0;
         this.axis.setRange(scale.getLowerBound(), scale.getUpperBound());
         this.stripWidth = 15.0;
         this.stripOutlineVisible = true;
-        this.stripOutlinePaint = Color.GRAY;
-        this.stripOutlineStroke = new BasicStroke(0.5f);
-        this.backgroundPaint = Color.WHITE;
-        this.subdivisions = 100;
+        paintScaleLegendProduct2.setStripOutlinePaint2(Color.GRAY);
+        paintScaleLegendProduct2.setStripOutlineStroke2(new BasicStroke(0.5f));
+        paintScaleLegendProduct2.setBackgroundPaint2(Color.WHITE);
+        paintScaleLegendProduct.setSubdivisions(100);
     }
 
     /**
@@ -144,7 +125,7 @@ public class PaintScaleLegend extends Title implements AxisChangeListener,
      * @see #setScale(PaintScale)
      */
     public PaintScale getScale() {
-        return this.scale;
+        return this.paintScaleLegendProduct.getScale();
     }
 
     /**
@@ -156,9 +137,7 @@ public class PaintScaleLegend extends Title implements AxisChangeListener,
      * @see #getScale()
      */
     public void setScale(PaintScale scale) {
-        Args.nullNotPermitted(scale, "scale");
-        this.scale = scale;
-        notifyListeners(new TitleChangeEvent(this));
+        paintScaleLegendProduct.setScale(scale, this);
     }
 
     /**
@@ -196,7 +175,7 @@ public class PaintScaleLegend extends Title implements AxisChangeListener,
      * @see #setAxisLocation(AxisLocation)
      */
     public AxisLocation getAxisLocation() {
-        return this.axisLocation;
+        return this.paintScaleLegendProduct.getAxisLocation();
     }
 
     /**
@@ -208,9 +187,7 @@ public class PaintScaleLegend extends Title implements AxisChangeListener,
      * @see #getAxisLocation()
      */
     public void setAxisLocation(AxisLocation location) {
-        Args.nullNotPermitted(location, "location");
-        this.axisLocation = location;
-        notifyListeners(new TitleChangeEvent(this));
+        paintScaleLegendProduct.setAxisLocation(location, this);
     }
 
     /**
@@ -293,7 +270,7 @@ public class PaintScaleLegend extends Title implements AxisChangeListener,
      * @see #setStripOutlinePaint(Paint)
      */
     public Paint getStripOutlinePaint() {
-        return this.stripOutlinePaint;
+        return this.paintScaleLegendProduct2.getStripOutlinePaint();
     }
 
     /**
@@ -305,9 +282,7 @@ public class PaintScaleLegend extends Title implements AxisChangeListener,
      * @see #getStripOutlinePaint()
      */
     public void setStripOutlinePaint(Paint paint) {
-        Args.nullNotPermitted(paint, "paint");
-        this.stripOutlinePaint = paint;
-        notifyListeners(new TitleChangeEvent(this));
+        paintScaleLegendProduct2.setStripOutlinePaint(paint, this);
     }
 
     /**
@@ -318,7 +293,7 @@ public class PaintScaleLegend extends Title implements AxisChangeListener,
      * @see #setStripOutlineStroke(Stroke)
      */
     public Stroke getStripOutlineStroke() {
-        return this.stripOutlineStroke;
+        return this.paintScaleLegendProduct2.getStripOutlineStroke();
     }
 
     /**
@@ -330,9 +305,7 @@ public class PaintScaleLegend extends Title implements AxisChangeListener,
      * @see #getStripOutlineStroke()
      */
     public void setStripOutlineStroke(Stroke stroke) {
-        Args.nullNotPermitted(stroke, "stroke");
-        this.stripOutlineStroke = stroke;
-        notifyListeners(new TitleChangeEvent(this));
+        paintScaleLegendProduct2.setStripOutlineStroke(stroke, this);
     }
 
     /**
@@ -341,7 +314,7 @@ public class PaintScaleLegend extends Title implements AxisChangeListener,
      * @return The background paint.
      */
     public Paint getBackgroundPaint() {
-        return this.backgroundPaint;
+        return this.paintScaleLegendProduct2.getBackgroundPaint();
     }
 
     /**
@@ -351,8 +324,7 @@ public class PaintScaleLegend extends Title implements AxisChangeListener,
      * @param paint  the paint ({@code null} permitted).
      */
     public void setBackgroundPaint(Paint paint) {
-        this.backgroundPaint = paint;
-        notifyListeners(new TitleChangeEvent(this));
+        paintScaleLegendProduct2.setBackgroundPaint(paint, this);
     }
 
     /**
@@ -361,7 +333,7 @@ public class PaintScaleLegend extends Title implements AxisChangeListener,
      * @return The subdivision count.
      */
     public int getSubdivisionCount() {
-        return this.subdivisions;
+        return this.paintScaleLegendProduct.getSubdivisions();
     }
 
     /**
@@ -371,11 +343,7 @@ public class PaintScaleLegend extends Title implements AxisChangeListener,
      * @param count  the count.
      */
     public void setSubdivisionCount(int count) {
-        if (count <= 0) {
-            throw new IllegalArgumentException("Requires 'count' > 0.");
-        }
-        this.subdivisions = count;
-        notifyListeners(new TitleChangeEvent(this));
+        paintScaleLegendProduct.setSubdivisionCount(count, this);
     }
 
     /**
@@ -511,24 +479,24 @@ public class PaintScaleLegend extends Title implements AxisChangeListener,
     public Object draw(Graphics2D g2, Rectangle2D area, Object params) {
         Rectangle2D target = (Rectangle2D) area.clone();
         target = trimMargin(target);
-        if (this.backgroundPaint != null) {
-            g2.setPaint(this.backgroundPaint);
+        if (this.paintScaleLegendProduct2.getBackgroundPaint() != null) {
+            g2.setPaint(this.paintScaleLegendProduct2.getBackgroundPaint());
             g2.fill(target);
         }
         getFrame().draw(g2, target);
         getFrame().getInsets().trim(target);
         target = trimPadding(target);
         double base = this.axis.getLowerBound();
-        double increment = this.axis.getRange().getLength() / this.subdivisions;
+        double increment = this.axis.getRange().getLength() / this.paintScaleLegendProduct.getSubdivisions();
         Rectangle2D r = new Rectangle2D.Double();
 
         if (RectangleEdge.isTopOrBottom(getPosition())) {
             RectangleEdge axisEdge = Plot.resolveRangeAxisLocation(
-                    this.axisLocation, PlotOrientation.HORIZONTAL);
+                    this.paintScaleLegendProduct.getAxisLocation(), PlotOrientation.HORIZONTAL);
             if (axisEdge == RectangleEdge.TOP) {
-                for (int i = 0; i < this.subdivisions; i++) {
+                for (int i = 0; i < this.paintScaleLegendProduct.getSubdivisions(); i++) {
                     double v = base + (i * increment);
-                    Paint p = this.scale.getPaint(v);
+                    Paint p = this.paintScaleLegendProduct.getScale().getPaint(v);
                     double vv0 = this.axis.valueToJava2D(v, target,
                             RectangleEdge.TOP);
                     double vv1 = this.axis.valueToJava2D(v + increment, target,
@@ -540,8 +508,8 @@ public class PaintScaleLegend extends Title implements AxisChangeListener,
                     g2.fill(r);
                 }
                 if (isStripOutlineVisible()) {
-                    g2.setPaint(this.stripOutlinePaint);
-                    g2.setStroke(this.stripOutlineStroke);
+                    g2.setPaint(this.paintScaleLegendProduct2.getStripOutlinePaint());
+                    g2.setStroke(this.paintScaleLegendProduct2.getStripOutlineStroke());
                     g2.draw(new Rectangle2D.Double(target.getMinX(),
                             target.getMaxY() - this.stripWidth,
                             target.getWidth(), this.stripWidth));
@@ -551,9 +519,9 @@ public class PaintScaleLegend extends Title implements AxisChangeListener,
                         null);
             }
             else if (axisEdge == RectangleEdge.BOTTOM) {
-                for (int i = 0; i < this.subdivisions; i++) {
+                for (int i = 0; i < this.paintScaleLegendProduct.getSubdivisions(); i++) {
                     double v = base + (i * increment);
-                    Paint p = this.scale.getPaint(v);
+                    Paint p = this.paintScaleLegendProduct.getScale().getPaint(v);
                     double vv0 = this.axis.valueToJava2D(v, target,
                             RectangleEdge.BOTTOM);
                     double vv1 = this.axis.valueToJava2D(v + increment, target,
@@ -565,8 +533,8 @@ public class PaintScaleLegend extends Title implements AxisChangeListener,
                     g2.fill(r);
                 }
                 if (isStripOutlineVisible()) {
-                    g2.setPaint(this.stripOutlinePaint);
-                    g2.setStroke(this.stripOutlineStroke);
+                    g2.setPaint(this.paintScaleLegendProduct2.getStripOutlinePaint());
+                    g2.setStroke(this.paintScaleLegendProduct2.getStripOutlineStroke());
                     g2.draw(new Rectangle2D.Double(target.getMinX(),
                             target.getMinY(), target.getWidth(),
                             this.stripWidth));
@@ -578,11 +546,11 @@ public class PaintScaleLegend extends Title implements AxisChangeListener,
         }
         else {
             RectangleEdge axisEdge = Plot.resolveRangeAxisLocation(
-                    this.axisLocation, PlotOrientation.VERTICAL);
+                    this.paintScaleLegendProduct.getAxisLocation(), PlotOrientation.VERTICAL);
             if (axisEdge == RectangleEdge.LEFT) {
-                for (int i = 0; i < this.subdivisions; i++) {
+                for (int i = 0; i < this.paintScaleLegendProduct.getSubdivisions(); i++) {
                     double v = base + (i * increment);
-                    Paint p = this.scale.getPaint(v);
+                    Paint p = this.paintScaleLegendProduct.getScale().getPaint(v);
                     double vv0 = this.axis.valueToJava2D(v, target,
                             RectangleEdge.LEFT);
                     double vv1 = this.axis.valueToJava2D(v + increment, target,
@@ -594,8 +562,8 @@ public class PaintScaleLegend extends Title implements AxisChangeListener,
                     g2.fill(r);
                 }
                 if (isStripOutlineVisible()) {
-                    g2.setPaint(this.stripOutlinePaint);
-                    g2.setStroke(this.stripOutlineStroke);
+                    g2.setPaint(this.paintScaleLegendProduct2.getStripOutlinePaint());
+                    g2.setStroke(this.paintScaleLegendProduct2.getStripOutlineStroke());
                     g2.draw(new Rectangle2D.Double(target.getMaxX()
                             - this.stripWidth, target.getMinY(), 
                             this.stripWidth, target.getHeight()));
@@ -605,9 +573,9 @@ public class PaintScaleLegend extends Title implements AxisChangeListener,
                         null);
             }
             else if (axisEdge == RectangleEdge.RIGHT) {
-                for (int i = 0; i < this.subdivisions; i++) {
+                for (int i = 0; i < this.paintScaleLegendProduct.getSubdivisions(); i++) {
                     double v = base + (i * increment);
-                    Paint p = this.scale.getPaint(v);
+                    Paint p = this.paintScaleLegendProduct.getScale().getPaint(v);
                     double vv0 = this.axis.valueToJava2D(v, target,
                             RectangleEdge.LEFT);
                     double vv1 = this.axis.valueToJava2D(v + increment, target,
@@ -619,8 +587,8 @@ public class PaintScaleLegend extends Title implements AxisChangeListener,
                     g2.fill(r);
                 }
                 if (isStripOutlineVisible()) {
-                    g2.setPaint(this.stripOutlinePaint);
-                    g2.setStroke(this.stripOutlineStroke);
+                    g2.setPaint(this.paintScaleLegendProduct2.getStripOutlinePaint());
+                    g2.setStroke(this.paintScaleLegendProduct2.getStripOutlineStroke());
                     g2.draw(new Rectangle2D.Double(target.getMinX(),
                             target.getMinY(), this.stripWidth,
                             target.getHeight()));
@@ -646,13 +614,13 @@ public class PaintScaleLegend extends Title implements AxisChangeListener,
             return false;
         }
         PaintScaleLegend that = (PaintScaleLegend) obj;
-        if (!this.scale.equals(that.scale)) {
+        if (!this.paintScaleLegendProduct.getScale().equals(that.paintScaleLegendProduct.getScale())) {
             return false;
         }
         if (!this.axis.equals(that.axis)) {
             return false;
         }
-        if (!this.axisLocation.equals(that.axisLocation)) {
+        if (!this.paintScaleLegendProduct.getAxisLocation().equals(that.paintScaleLegendProduct.getAxisLocation())) {
             return false;
         }
         if (this.axisOffset != that.axisOffset) {
@@ -664,17 +632,17 @@ public class PaintScaleLegend extends Title implements AxisChangeListener,
         if (this.stripOutlineVisible != that.stripOutlineVisible) {
             return false;
         }
-        if (!PaintUtils.equal(this.stripOutlinePaint,
-                that.stripOutlinePaint)) {
+        if (!PaintUtils.equal(this.paintScaleLegendProduct2.getStripOutlinePaint(),
+                that.paintScaleLegendProduct2.getStripOutlinePaint())) {
             return false;
         }
-        if (!this.stripOutlineStroke.equals(that.stripOutlineStroke)) {
+        if (!this.paintScaleLegendProduct2.getStripOutlineStroke().equals(that.paintScaleLegendProduct2.getStripOutlineStroke())) {
             return false;
         }
-        if (!PaintUtils.equal(this.backgroundPaint, that.backgroundPaint)) {
+        if (!PaintUtils.equal(this.paintScaleLegendProduct2.getBackgroundPaint(), that.paintScaleLegendProduct2.getBackgroundPaint())) {
             return false;
         }
-        if (this.subdivisions != that.subdivisions) {
+        if (this.paintScaleLegendProduct.getSubdivisions() != that.paintScaleLegendProduct.getSubdivisions()) {
             return false;
         }
         return super.equals(obj);
@@ -689,9 +657,10 @@ public class PaintScaleLegend extends Title implements AxisChangeListener,
      */
     private void writeObject(ObjectOutputStream stream) throws IOException {
         stream.defaultWriteObject();
-        SerialUtils.writePaint(this.backgroundPaint, stream);
-        SerialUtils.writePaint(this.stripOutlinePaint, stream);
-        SerialUtils.writeStroke(this.stripOutlineStroke, stream);
+		stream.writeObject(this.paintScaleLegendProduct2);
+        SerialUtils.writePaint(this.paintScaleLegendProduct2.getBackgroundPaint(), stream);
+        SerialUtils.writePaint(this.paintScaleLegendProduct2.getStripOutlinePaint(), stream);
+        SerialUtils.writeStroke(this.paintScaleLegendProduct2.getStripOutlineStroke(), stream);
     }
 
     /**
@@ -705,9 +674,17 @@ public class PaintScaleLegend extends Title implements AxisChangeListener,
     private void readObject(ObjectInputStream stream)
             throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
-        this.backgroundPaint = SerialUtils.readPaint(stream);
-        this.stripOutlinePaint = SerialUtils.readPaint(stream);
-        this.stripOutlineStroke = SerialUtils.readStroke(stream);
+		this.paintScaleLegendProduct2 = (PaintScaleLegendProduct2) stream.readObject();
+        paintScaleLegendProduct2.setBackgroundPaint2(SerialUtils.readPaint(stream));
+        paintScaleLegendProduct2.setStripOutlinePaint2(SerialUtils.readPaint(stream));
+        paintScaleLegendProduct2.setStripOutlineStroke2(SerialUtils.readStroke(stream));
     }
+
+	public Object clone() throws java.lang.CloneNotSupportedException {
+		PaintScaleLegend clone = (PaintScaleLegend) super.clone();
+		clone.paintScaleLegendProduct2 = (PaintScaleLegendProduct2) this.paintScaleLegendProduct2.clone();
+		clone.paintScaleLegendProduct = (PaintScaleLegendProduct) this.paintScaleLegendProduct.clone();
+		return clone;
+	}
 
 }

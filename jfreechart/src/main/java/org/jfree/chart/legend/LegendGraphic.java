@@ -68,7 +68,9 @@ import org.jfree.chart.internal.ShapeUtils;
 public class LegendGraphic extends AbstractBlock
                            implements Block, PublicCloneable {
 
-    /** For serialization. */
+    private LegendGraphicProduct legendGraphicProduct = new LegendGraphicProduct();
+
+	/** For serialization. */
     static final long serialVersionUID = -1338791523854985009L;
 
     /**
@@ -83,28 +85,11 @@ public class LegendGraphic extends AbstractBlock
      */
     private transient Shape shape;
 
-    /**
-     * Defines the location within the block to which the shape will be aligned.
-     */
-    private RectangleAnchor shapeLocation;
-
-    /**
-     * Defines the point on the shape's bounding rectangle that will be
-     * aligned to the drawing location when the shape is rendered.
-     */
-    private RectangleAnchor shapeAnchor;
-
     /** A flag that controls whether or not the shape is filled. */
     private boolean shapeFilled;
 
     /** The fill paint for the shape. */
     private transient Paint fillPaint;
-
-    /**
-     * The fill paint transformer (used if the fillPaint is an instance of
-     * GradientPaint).
-     */
-    private GradientPaintTransformer fillPaintTransformer;
 
     /** A flag that controls whether or not the shape outline is visible. */
     private boolean shapeOutlineVisible;
@@ -141,11 +126,11 @@ public class LegendGraphic extends AbstractBlock
         Args.nullNotPermitted(fillPaint, "fillPaint");
         this.shapeVisible = true;
         this.shape = shape;
-        this.shapeAnchor = RectangleAnchor.CENTER;
-        this.shapeLocation = RectangleAnchor.CENTER;
+        legendGraphicProduct.setShapeAnchor2(RectangleAnchor.CENTER);
+        legendGraphicProduct.setShapeLocation2(RectangleAnchor.CENTER);
         this.shapeFilled = true;
         this.fillPaint = fillPaint;
-        this.fillPaintTransformer = new StandardGradientPaintTransformer();
+        legendGraphicProduct.setFillPaintTransformer2(new StandardGradientPaintTransformer());
         setPadding(2.0, 2.0, 2.0, 2.0);
     }
 
@@ -250,7 +235,7 @@ public class LegendGraphic extends AbstractBlock
      * @see #setFillPaintTransformer(GradientPaintTransformer)
      */
     public GradientPaintTransformer getFillPaintTransformer() {
-        return this.fillPaintTransformer;
+        return this.legendGraphicProduct.getFillPaintTransformer();
     }
 
     /**
@@ -262,8 +247,7 @@ public class LegendGraphic extends AbstractBlock
      * @see #getFillPaintTransformer()
      */
     public void setFillPaintTransformer(GradientPaintTransformer transformer) {
-        Args.nullNotPermitted(transformer, "transformer");
-        this.fillPaintTransformer = transformer;
+        legendGraphicProduct.setFillPaintTransformer(transformer);
     }
 
     /**
@@ -341,7 +325,7 @@ public class LegendGraphic extends AbstractBlock
      * @see #getShapeAnchor()
      */
     public RectangleAnchor getShapeAnchor() {
-        return this.shapeAnchor;
+        return this.legendGraphicProduct.getShapeAnchor();
     }
 
     /**
@@ -353,8 +337,7 @@ public class LegendGraphic extends AbstractBlock
      * @see #setShapeAnchor(RectangleAnchor)
      */
     public void setShapeAnchor(RectangleAnchor anchor) {
-        Args.nullNotPermitted(anchor, "anchor");
-        this.shapeAnchor = anchor;
+        legendGraphicProduct.setShapeAnchor(anchor);
     }
 
     /**
@@ -365,7 +348,7 @@ public class LegendGraphic extends AbstractBlock
      * @see #setShapeLocation(RectangleAnchor)
      */
     public RectangleAnchor getShapeLocation() {
-        return this.shapeLocation;
+        return this.legendGraphicProduct.getShapeLocation();
     }
 
     /**
@@ -377,8 +360,7 @@ public class LegendGraphic extends AbstractBlock
      * @see #getShapeLocation()
      */
     public void setShapeLocation(RectangleAnchor location) {
-        Args.nullNotPermitted(location, "location");
-        this.shapeLocation = location;
+        legendGraphicProduct.setShapeLocation(location);
     }
 
     /**
@@ -560,22 +542,23 @@ public class LegendGraphic extends AbstractBlock
         area = trimPadding(area);
 
         if (this.lineVisible) {
-            Point2D location = this.shapeLocation.getAnchorPoint(area);
+            Point2D location = this.legendGraphicProduct.getShapeLocation().getAnchorPoint(area);
             Shape aLine = ShapeUtils.createTranslatedShape(getLine(),
-                    this.shapeAnchor, location.getX(), location.getY());
+                    this.legendGraphicProduct.getShapeAnchor(), location.getX(), location.getY());
             g2.setPaint(this.linePaint);
             g2.setStroke(this.lineStroke);
             g2.draw(aLine);
         }
 
         if (this.shapeVisible) {
-            Point2D location = this.shapeLocation.getAnchorPoint(area);
+            Point2D location = this.legendGraphicProduct.getShapeLocation().getAnchorPoint(area);
 
             Shape s = ShapeUtils.createTranslatedShape(this.shape,
-                    this.shapeAnchor, location.getX(), location.getY());
+                    this.legendGraphicProduct.getShapeAnchor(), location.getX(), location.getY());
             if (this.shapeFilled) {
                 Paint p = p(s);
-				g2.setPaint(p);
+				        g2.setPaint(p);
+
                 g2.fill(s);
             }
             if (this.shapeOutlineVisible) {
@@ -590,7 +573,7 @@ public class LegendGraphic extends AbstractBlock
 		Paint p = this.fillPaint;
 		if (p instanceof GradientPaint) {
 			GradientPaint gp = (GradientPaint) this.fillPaint;
-			p = this.fillPaintTransformer.transform(gp, s);
+			p = this.legendGraphicProduct.getFillPaintTransformer().transform(gp, s);
 		}
 		return p;
 	}
@@ -636,7 +619,7 @@ public class LegendGraphic extends AbstractBlock
         if (!PaintUtils.equal(this.fillPaint, that.fillPaint)) {
             return false;
         }
-        if (!Objects.equals(this.fillPaintTransformer, that.fillPaintTransformer)) {
+        if (!Objects.equals(this.legendGraphicProduct.getFillPaintTransformer(), that.legendGraphicProduct.getFillPaintTransformer())) {
             return false;
         }
         if (this.shapeOutlineVisible != that.shapeOutlineVisible) {
@@ -648,10 +631,10 @@ public class LegendGraphic extends AbstractBlock
         if (!Objects.equals(this.outlineStroke, that.outlineStroke)) {
             return false;
         }
-        if (this.shapeAnchor != that.shapeAnchor) {
+        if (this.legendGraphicProduct.getShapeAnchor() != that.legendGraphicProduct.getShapeAnchor()) {
             return false;
         }
-        if (this.shapeLocation != that.shapeLocation) {
+        if (this.legendGraphicProduct.getShapeLocation() != that.legendGraphicProduct.getShapeLocation()) {
             return false;
         }
         if (this.lineVisible != that.lineVisible) {
@@ -679,11 +662,11 @@ public class LegendGraphic extends AbstractBlock
         int hash = 7;
         hash = 89 * hash + (this.shapeVisible ? 1 : 0);
         hash = 89 * hash + Objects.hashCode(this.shape);
-        hash = 89 * hash + Objects.hashCode(this.shapeLocation);
-        hash = 89 * hash + Objects.hashCode(this.shapeAnchor);
+        hash = 89 * hash + Objects.hashCode(this.legendGraphicProduct.getShapeLocation());
+        hash = 89 * hash + Objects.hashCode(this.legendGraphicProduct.getShapeAnchor());
         hash = 89 * hash + (this.shapeFilled ? 1 : 0);
         hash = 89 * hash + Objects.hashCode(this.fillPaint);
-        hash = 89 * hash + Objects.hashCode(this.fillPaintTransformer);
+        hash = 89 * hash + Objects.hashCode(this.legendGraphicProduct.getFillPaintTransformer());
         hash = 89 * hash + (this.shapeOutlineVisible ? 1 : 0);
         hash = 89 * hash + Objects.hashCode(this.outlinePaint);
         hash = 89 * hash + Objects.hashCode(this.outlineStroke);
@@ -704,6 +687,7 @@ public class LegendGraphic extends AbstractBlock
     @Override
     public Object clone() throws CloneNotSupportedException {
         LegendGraphic clone = (LegendGraphic) super.clone();
+		clone.legendGraphicProduct = (LegendGraphicProduct) this.legendGraphicProduct.clone();
         clone.shape = CloneUtils.clone(this.shape);
         clone.line = CloneUtils.clone(this.line);
         return clone;

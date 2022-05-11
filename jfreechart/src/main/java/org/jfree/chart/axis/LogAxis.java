@@ -553,15 +553,8 @@ public class LogAxis extends ValueAxis {
         List ticks = new ArrayList();
         Font tickLabelFont = getTickLabelFont();
         g2.setFont(tickLabelFont);
-        TextAnchor textAnchor;
-        if (edge == RectangleEdge.TOP) {
-            textAnchor = TextAnchor.BOTTOM_CENTER;
-        }
-        else {
-            textAnchor = TextAnchor.TOP_CENTER;
-        }
-
-        if (isAutoTickUnitSelection()) {
+        TextAnchor textAnchor = textAnchor(edge);
+		if (isAutoTickUnitSelection()) {
             selectAutoTickUnit(g2, dataArea, edge);
         }
         int minorTickCount = this.tickUnit.getMinorTickCount();
@@ -593,6 +586,16 @@ public class LogAxis extends ValueAxis {
         }
         return ticks;
     }
+
+	private TextAnchor textAnchor(RectangleEdge edge) {
+		TextAnchor textAnchor;
+		if (edge == RectangleEdge.TOP) {
+			textAnchor = TextAnchor.BOTTOM_CENTER;
+		} else {
+			textAnchor = TextAnchor.TOP_CENTER;
+		}
+		return textAnchor;
+	}
 
     /**
      * Returns a list of ticks for an axis at the left or right of the chart.

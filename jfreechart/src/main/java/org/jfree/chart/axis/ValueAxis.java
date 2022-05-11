@@ -448,22 +448,8 @@ public abstract class ValueAxis extends Axis
     @Override
     protected void drawAxisLine(Graphics2D g2, double cursor,
             Rectangle2D dataArea, RectangleEdge edge) {
-        Line2D axisLine = null;
-        double c = cursor;
-        if (edge == RectangleEdge.TOP) {
-            axisLine = new Line2D.Double(dataArea.getX(), c, dataArea.getMaxX(),
-                    c);
-        } else if (edge == RectangleEdge.BOTTOM) {
-            axisLine = new Line2D.Double(dataArea.getX(), c, dataArea.getMaxX(),
-                    c);
-        } else if (edge == RectangleEdge.LEFT) {
-            axisLine = new Line2D.Double(c, dataArea.getY(), c, 
-                    dataArea.getMaxY());
-        } else if (edge == RectangleEdge.RIGHT) {
-            axisLine = new Line2D.Double(c, dataArea.getY(), c,
-                    dataArea.getMaxY());
-        }
-        g2.setPaint(getAxisLinePaint());
+        Line2D axisLine = axisLine(cursor, dataArea, edge);
+		g2.setPaint(getAxisLinePaint());
         g2.setStroke(getAxisLineStroke());
         Object saved = g2.getRenderingHint(RenderingHints.KEY_STROKE_CONTROL);
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, 
@@ -535,6 +521,21 @@ public abstract class ValueAxis extends Axis
         }
 
     }
+
+	private Line2D axisLine(double cursor, Rectangle2D dataArea, RectangleEdge edge) {
+		Line2D axisLine = null;
+		double c = cursor;
+		if (edge == RectangleEdge.TOP) {
+			axisLine = new Line2D.Double(dataArea.getX(), c, dataArea.getMaxX(), c);
+		} else if (edge == RectangleEdge.BOTTOM) {
+			axisLine = new Line2D.Double(dataArea.getX(), c, dataArea.getMaxX(), c);
+		} else if (edge == RectangleEdge.LEFT) {
+			axisLine = new Line2D.Double(c, dataArea.getY(), c, dataArea.getMaxY());
+		} else if (edge == RectangleEdge.RIGHT) {
+			axisLine = new Line2D.Double(c, dataArea.getY(), c, dataArea.getMaxY());
+		}
+		return axisLine;
+	}
 
     /**
      * Calculates the anchor point for a tick label.

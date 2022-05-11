@@ -61,14 +61,10 @@ import java.util.List;
 public class SubCategoryAxis extends CategoryAxis
         implements Cloneable, Serializable {
 
-    /** For serialization. */
+    private SubCategoryAxisProduct subCategoryAxisProduct = new SubCategoryAxisProduct();
+
+	/** For serialization. */
     private static final long serialVersionUID = -1279463299793228344L;
-
-    /** Storage for the sub-categories (these need to be set manually). */
-    private List subCategories;
-
-    /** The font for the sub-category labels. */
-    private Font subLabelFont = new Font("SansSerif", Font.PLAIN, 10);
 
     /** The paint for the sub-category labels. */
     private transient Paint subLabelPaint = Color.BLACK;
@@ -80,7 +76,7 @@ public class SubCategoryAxis extends CategoryAxis
      */
     public SubCategoryAxis(String label) {
         super(label);
-        this.subCategories = new java.util.ArrayList();
+        subCategoryAxisProduct.setSubCategories(new java.util.ArrayList());
     }
 
     /**
@@ -90,9 +86,7 @@ public class SubCategoryAxis extends CategoryAxis
      * @param subCategory  the sub-category ({@code null} not permitted).
      */
     public void addSubCategory(Comparable subCategory) {
-        Args.nullNotPermitted(subCategory, "subCategory");
-        this.subCategories.add(subCategory);
-        notifyListeners(new AxisChangeEvent(this));
+        subCategoryAxisProduct.addSubCategory(subCategory, this);
     }
 
     /**
@@ -103,7 +97,7 @@ public class SubCategoryAxis extends CategoryAxis
      * @see #setSubLabelFont(Font)
      */
     public Font getSubLabelFont() {
-        return this.subLabelFont;
+        return this.subCategoryAxisProduct.getSubLabelFont();
     }
 
     /**
@@ -115,9 +109,7 @@ public class SubCategoryAxis extends CategoryAxis
      * @see #getSubLabelFont()
      */
     public void setSubLabelFont(Font font) {
-        Args.nullNotPermitted(font, "font");
-        this.subLabelFont = font;
-        notifyListeners(new AxisChangeEvent(this));
+        subCategoryAxisProduct.setSubLabelFont(font, this);
     }
 
     /**
@@ -192,9 +184,9 @@ public class SubCategoryAxis extends CategoryAxis
      */
     private double getMaxDim(Graphics2D g2, RectangleEdge edge) {
         double result = 0.0;
-        g2.setFont(this.subLabelFont);
+        g2.setFont(this.subCategoryAxisProduct.getSubLabelFont());
         FontMetrics fm = g2.getFontMetrics();
-        for (Object subCategory : this.subCategories) {
+        for (Object subCategory : this.subCategoryAxisProduct.getSubCategories()) {
             Comparable subcategory = (Comparable) subCategory;
             String label = subcategory.toString();
             Rectangle2D bounds = TextUtils.getTextBounds(label, g2, fm);
@@ -276,7 +268,7 @@ public class SubCategoryAxis extends CategoryAxis
 
         Args.nullNotPermitted(state, "state");
 
-        g2.setFont(this.subLabelFont);
+        g2.setFont(this.subCategoryAxisProduct.getSubLabelFont());
         g2.setPaint(this.subLabelPaint);
         int categoryCount = categoryCount();
 		double maxdim = getMaxDim(g2, edge);
@@ -321,7 +313,7 @@ public class SubCategoryAxis extends CategoryAxis
             }
             Rectangle2D area = new Rectangle2D.Double(x0, y0, (x1 - x0),
                     (y1 - y0));
-            int subCategoryCount = this.subCategories.size();
+            int subCategoryCount = this.subCategoryAxisProduct.getSubCategories().size();
             float width = (float) ((x1 - x0) / subCategoryCount);
             float height = (float) ((y1 - y0) / subCategoryCount);
             float xx, yy;
@@ -334,7 +326,7 @@ public class SubCategoryAxis extends CategoryAxis
                     xx = (float) area.getCenterX();
                     yy = (float) (y0 + (i + 0.5) * height);
                 }
-                String label = this.subCategories.get(i).toString();
+                String label = this.subCategoryAxisProduct.getSubCategories().get(i).toString();
                 TextUtils.drawRotatedString(label, g2, xx, yy,
                         TextAnchor.CENTER, 0.0, TextAnchor.CENTER);
             }
@@ -383,10 +375,10 @@ public class SubCategoryAxis extends CategoryAxis
         }
         if (obj instanceof SubCategoryAxis && super.equals(obj)) {
             SubCategoryAxis axis = (SubCategoryAxis) obj;
-            if (!this.subCategories.equals(axis.subCategories)) {
+            if (!this.subCategoryAxisProduct.getSubCategories().equals(axis.subCategoryAxisProduct.getSubCategories())) {
                 return false;
             }
-            if (!this.subLabelFont.equals(axis.subLabelFont)) {
+            if (!this.subCategoryAxisProduct.getSubLabelFont().equals(axis.subCategoryAxisProduct.getSubLabelFont())) {
                 return false;
             }
             if (!this.subLabelPaint.equals(axis.subLabelPaint)) {
@@ -432,5 +424,11 @@ public class SubCategoryAxis extends CategoryAxis
         stream.defaultReadObject();
         this.subLabelPaint = SerialUtils.readPaint(stream);
     }
+
+	public Object clone() throws java.lang.CloneNotSupportedException {
+		SubCategoryAxis clone = (SubCategoryAxis) super.clone();
+		clone.subCategoryAxisProduct = (SubCategoryAxisProduct) this.subCategoryAxisProduct.clone();
+		return clone;
+	}
 
 }

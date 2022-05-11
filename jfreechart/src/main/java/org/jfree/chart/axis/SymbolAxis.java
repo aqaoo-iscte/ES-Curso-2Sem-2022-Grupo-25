@@ -306,14 +306,8 @@ public class SymbolAxis extends NumberAxis implements Serializable {
         double yy = dataArea.getY();
         double xx1, xx2;
 
-        //gets the outline stroke width of the plot
-        double outlineStrokeWidth = 1.0;
-        Stroke outlineStroke = getPlot().getOutlineStroke();
-        if (outlineStroke != null && outlineStroke instanceof BasicStroke) {
-            outlineStrokeWidth = ((BasicStroke) outlineStroke).getLineWidth();
-        }
-
-        Iterator iterator = ticks.iterator();
+        double outlineStrokeWidth = outlineStrokeWidth();
+		Iterator iterator = ticks.iterator();
         ValueTick tick;
         Rectangle2D band;
         while (iterator.hasNext()) {
@@ -334,6 +328,15 @@ public class SymbolAxis extends NumberAxis implements Serializable {
             currentGridBandIsDark = !currentGridBandIsDark;
         }
     }
+
+	private double outlineStrokeWidth() {
+		double outlineStrokeWidth = 1.0;
+		Stroke outlineStroke = getPlot().getOutlineStroke();
+		if (outlineStroke != null && outlineStroke instanceof BasicStroke) {
+			outlineStrokeWidth = ((BasicStroke) outlineStroke).getLineWidth();
+		}
+		return outlineStrokeWidth;
+	}
 
     /**
      * Draws the grid bands for an axis that is aligned to the left or

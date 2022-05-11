@@ -174,16 +174,20 @@ public class LegendItemBlockContainer extends BlockContainer {
             ebp = (EntityBlockParams) params;
             if (ebp.getGenerateEntities()) {
                 EntityCollection ec = new StandardEntityCollection();
-                LegendItemEntity entity = new LegendItemEntity(
-                        (Shape) area.clone());
-                entity.setSeriesKey(this.seriesKey);
-                entity.setDataset(this.dataset);
-                entity.setToolTipText(getToolTipText());
-                entity.setURLText(getURLText());
-                ec.add(entity);
+                LegendItemEntity entity = entity(area);
+				ec.add(entity);
                 r.setEntityCollection(ec);
             }
         }
         return r;
     }
+
+	private LegendItemEntity entity(Rectangle2D area) {
+		LegendItemEntity entity = new LegendItemEntity((Shape) area.clone());
+		entity.setSeriesKey(this.seriesKey);
+		entity.setDataset(this.dataset);
+		entity.setToolTipText(getToolTipText());
+		entity.setURLText(getURLText());
+		return entity;
+	}
 }

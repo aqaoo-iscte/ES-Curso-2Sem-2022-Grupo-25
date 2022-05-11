@@ -626,31 +626,9 @@ public abstract class ValueAxis extends Axis
                     TickType.MAJOR)) || (isMinorTickMarksVisible()
                     && tick.getTickType().equals(TickType.MINOR))) {
 
-                double ol = (tick.getTickType().equals(TickType.MINOR))
-                        ? getMinorTickMarkOutsideLength()
-                        : getTickMarkOutsideLength();
-
-                double il = (tick.getTickType().equals(TickType.MINOR))
-                        ? getMinorTickMarkInsideLength()
-                        : getTickMarkInsideLength();
-
-                float xx = (float) valueToJava2D(tick.getValue(), dataArea,
-                        edge);
-                Line2D mark = null;
-                g2.setStroke(getTickMarkStroke());
+                Line2D mark = mark(cursor, dataArea, edge, tick);
+				g2.setStroke(getTickMarkStroke());
                 g2.setPaint(getTickMarkPaint());
-                if (edge == RectangleEdge.LEFT) {
-                    mark = new Line2D.Double(cursor - ol, xx, cursor + il, xx);
-                }
-                else if (edge == RectangleEdge.RIGHT) {
-                    mark = new Line2D.Double(cursor + ol, xx, cursor - il, xx);
-                }
-                else if (edge == RectangleEdge.TOP) {
-                    mark = new Line2D.Double(xx, cursor - ol, xx, cursor + il);
-                }
-                else if (edge == RectangleEdge.BOTTOM) {
-                    mark = new Line2D.Double(xx, cursor + ol, xx, cursor - il);
-                }
                 g2.draw(mark);
             }
         }
@@ -681,6 +659,25 @@ public abstract class ValueAxis extends Axis
 
         return state;
     }
+
+	private Line2D mark(double cursor, Rectangle2D dataArea, RectangleEdge edge, ValueTick tick) {
+		double ol = (tick.getTickType().equals(TickType.MINOR)) ? getMinorTickMarkOutsideLength()
+				: getTickMarkOutsideLength();
+		double il = (tick.getTickType().equals(TickType.MINOR)) ? getMinorTickMarkInsideLength()
+				: getTickMarkInsideLength();
+		float xx = (float) valueToJava2D(tick.getValue(), dataArea, edge);
+		Line2D mark = null;
+		if (edge == RectangleEdge.LEFT) {
+			mark = new Line2D.Double(cursor - ol, xx, cursor + il, xx);
+		} else if (edge == RectangleEdge.RIGHT) {
+			mark = new Line2D.Double(cursor + ol, xx, cursor - il, xx);
+		} else if (edge == RectangleEdge.TOP) {
+			mark = new Line2D.Double(xx, cursor - ol, xx, cursor + il);
+		} else if (edge == RectangleEdge.BOTTOM) {
+			mark = new Line2D.Double(xx, cursor + ol, xx, cursor - il);
+		}
+		return mark;
+	}
 
     /**
      * Returns the space required to draw the axis.

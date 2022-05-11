@@ -739,16 +739,17 @@ public class PeriodAxis extends ValueAxis
             t.peg(this.calendar);
             t0 = t.getFirstMillisecond();
         }
-        if (edge == RectangleEdge.TOP) {
-            state.cursorUp(Math.max(outsideLength,
-                    this.minorTickMarkOutsideLength));
-        }
-        else if (edge == RectangleEdge.BOTTOM) {
-            state.cursorDown(Math.max(outsideLength,
-                    this.minorTickMarkOutsideLength));
-        }
-        state.setTicks(ticks);
+        state(state, edge, ticks, outsideLength);
     }
+
+	private void state(AxisState state, RectangleEdge edge, List ticks, double outsideLength) {
+		if (edge == RectangleEdge.TOP) {
+			state.cursorUp(Math.max(outsideLength, this.minorTickMarkOutsideLength));
+		} else if (edge == RectangleEdge.BOTTOM) {
+			state.cursorDown(Math.max(outsideLength, this.minorTickMarkOutsideLength));
+		}
+		state.setTicks(ticks);
+	}
 
     /**
      * Draws the tick marks for a vertical axis.

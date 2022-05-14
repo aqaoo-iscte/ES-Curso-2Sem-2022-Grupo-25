@@ -1,0 +1,1619 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>ThermometerPlot.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (1) (14 May 2022 17:53:42)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">ignored</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart.plot</a> &gt; <span class="el_source">ThermometerPlot.java</span></div><h1>ThermometerPlot.java</h1><pre class="source lang-java linenums">/* ===========================================================
+ * JFreeChart : a free chart library for the Java(tm) platform
+ * ===========================================================
+ *
+ * (C) Copyright 2000-2022, by David Gilbert and Contributors.
+ *
+ * Project Info:  http://www.jfree.org/jfreechart/index.html
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ *
+ * [Oracle and Java are registered trademarks of Oracle and/or its affiliates. 
+ * Other names may be trademarks of their respective owners.]
+ *
+ * --------------------
+ * ThermometerPlot.java
+ * --------------------
+ *
+ * (C) Copyright 2000-2021, by Bryan Scott and Contributors.
+ *
+ * Original Author:  Bryan Scott (based on MeterPlot by Hari).
+ * Contributor(s):   David Gilbert.
+ *                   Arnaud Lelievre;
+ *                   Julien Henry (see patch 1769088) (DG);
+ *
+ */
+
+package org.jfree.chart.plot;
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
+import java.awt.Paint;
+import java.awt.Stroke;
+import java.awt.geom.Area;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.ResourceBundle;
+import org.jfree.chart.ChartElementVisitor;
+
+import org.jfree.chart.legend.LegendItemCollection;
+import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.event.PlotChangeEvent;
+import org.jfree.chart.api.RectangleEdge;
+import org.jfree.chart.api.RectangleInsets;
+import org.jfree.chart.internal.CloneUtils;
+import org.jfree.chart.internal.PaintUtils;
+import org.jfree.chart.internal.Args;
+import org.jfree.chart.internal.SerialUtils;
+import org.jfree.chart.api.UnitType;
+import org.jfree.data.Range;
+import org.jfree.data.general.DatasetChangeEvent;
+import org.jfree.data.general.DefaultValueDataset;
+import org.jfree.data.general.ValueDataset;
+
+/**
+ * A plot that displays a single value (from a {@link ValueDataset}) in a
+ * thermometer type display.
+ * &lt;p&gt;
+ * This plot supports a number of options:
+ * &lt;ol&gt;
+ * &lt;li&gt;three sub-ranges which could be viewed as 'Normal', 'Warning'
+ *   and 'Critical' ranges.&lt;/li&gt;
+ * &lt;li&gt;the thermometer can be run in two modes:
+ *      &lt;ul&gt;
+ *      &lt;li&gt;fixed range, or&lt;/li&gt;
+ *      &lt;li&gt;range adjusts to current sub-range.&lt;/li&gt;
+ *      &lt;/ul&gt;
+ * &lt;/li&gt;
+ * &lt;li&gt;settable units to be displayed.&lt;/li&gt;
+ * &lt;li&gt;settable display location for the value text.&lt;/li&gt;
+ * &lt;/ol&gt;
+ */
+public class ThermometerPlot extends Plot implements ValueAxisPlot,
+        Zoomable, Cloneable, Serializable {
+
+    /** For serialization. */
+    private static final long serialVersionUID = 4087093313147984390L;
+
+    /** A constant for unit type 'None'. */
+    public static final int UNITS_NONE = 0;
+
+    /** A constant for unit type 'Fahrenheit'. */
+    public static final int UNITS_FAHRENHEIT = 1;
+
+    /** A constant for unit type 'Celcius'. */
+    public static final int UNITS_CELCIUS = 2;
+
+    /** A constant for unit type 'Kelvin'. */
+    public static final int UNITS_KELVIN = 3;
+
+    /** A constant for the value label position (no label). */
+    public static final int NONE = 0;
+
+    /** A constant for the value label position (right of the thermometer). */
+    public static final int RIGHT = 1;
+
+    /** A constant for the value label position (left of the thermometer). */
+    public static final int LEFT = 2;
+
+    /** A constant for the value label position (in the thermometer bulb). */
+    public static final int BULB = 3;
+
+    /** A constant for the 'normal' range. */
+    public static final int NORMAL = 0;
+
+    /** A constant for the 'warning' range. */
+    public static final int WARNING = 1;
+
+    /** A constant for the 'critical' range. */
+    public static final int CRITICAL = 2;
+
+    /** The axis gap. */
+    protected static final int AXIS_GAP = 10;
+
+    /** The unit strings. */
+<span class="nc" id="L143">    protected static final String[] UNITS = {&quot;&quot;, &quot;\u00B0F&quot;, &quot;\u00B0C&quot;,</span>
+<span class="nc" id="L144">            &quot;\u00B0K&quot;};</span>
+
+    /** Index for low value in subrangeInfo matrix. */
+    protected static final int RANGE_LOW = 0;
+
+    /** Index for high value in subrangeInfo matrix. */
+    protected static final int RANGE_HIGH = 1;
+
+    /** Index for display low value in subrangeInfo matrix. */
+    protected static final int DISPLAY_LOW = 2;
+
+    /** Index for display high value in subrangeInfo matrix. */
+    protected static final int DISPLAY_HIGH = 3;
+
+    /** The default lower bound. */
+    protected static final double DEFAULT_LOWER_BOUND = 0.0;
+
+    /** The default upper bound. */
+    protected static final double DEFAULT_UPPER_BOUND = 100.0;
+
+    /**
+     * The default bulb radius.
+     */
+    protected static final int DEFAULT_BULB_RADIUS = 40;
+
+    /**
+     * The default column radius.
+     */
+    protected static final int DEFAULT_COLUMN_RADIUS = 20;
+
+    /**
+     * The default gap between the outlines representing the thermometer.
+     */
+    protected static final int DEFAULT_GAP = 5;
+
+    /** The dataset for the plot. */
+    private ValueDataset dataset;
+
+    /** The range axis. */
+    private ValueAxis rangeAxis;
+
+    /** The lower bound for the thermometer. */
+<span class="nc" id="L186">    private double lowerBound = DEFAULT_LOWER_BOUND;</span>
+
+    /** The upper bound for the thermometer. */
+<span class="nc" id="L189">    private double upperBound = DEFAULT_UPPER_BOUND;</span>
+
+    /**
+     * The value label position.
+     */
+<span class="nc" id="L194">    private int bulbRadius = DEFAULT_BULB_RADIUS;</span>
+
+    /**
+     * The column radius.
+     */
+<span class="nc" id="L199">    private int columnRadius = DEFAULT_COLUMN_RADIUS;</span>
+
+    /**
+     * The gap between the two outlines the represent the thermometer.
+     */
+<span class="nc" id="L204">    private int gap = DEFAULT_GAP;</span>
+
+    /**
+     * Blank space inside the plot area around the outside of the thermometer.
+     */
+    private RectangleInsets padding;
+
+    /** Stroke for drawing the thermometer */
+<span class="nc" id="L212">    private transient Stroke thermometerStroke = new BasicStroke(1.0f);</span>
+
+    /** Paint for drawing the thermometer */
+<span class="nc" id="L215">    private transient Paint thermometerPaint = Color.BLACK;</span>
+
+    /** The display units */
+<span class="nc" id="L218">    private int units = UNITS_CELCIUS;</span>
+
+    /** The value label position. */
+<span class="nc" id="L221">    private int valueLocation = BULB;</span>
+
+    /** The position of the axis **/
+<span class="nc" id="L224">    private int axisLocation = LEFT;</span>
+
+    /** The font to write the value in */
+<span class="nc" id="L227">    private Font valueFont = new Font(&quot;SansSerif&quot;, Font.BOLD, 16);</span>
+
+    /** Colour that the value is written in */
+<span class="nc" id="L230">    private transient Paint valuePaint = Color.WHITE;</span>
+
+    /** Number format for the value */
+<span class="nc" id="L233">    private NumberFormat valueFormat = new DecimalFormat();</span>
+
+    /** The default paint for the mercury in the thermometer. */
+<span class="nc" id="L236">    private transient Paint mercuryPaint = Color.LIGHT_GRAY;</span>
+
+    /** A flag that controls whether value lines are drawn. */
+<span class="nc" id="L239">    private boolean showValueLines = false;</span>
+
+    /** The display sub-range. */
+<span class="nc" id="L242">    private int subrange = -1;</span>
+
+    /** The start and end values for the subranges. */
+<span class="nc" id="L245">    private double[][] subrangeInfo = {</span>
+<span class="nc" id="L246">        {0.0, 50.0, 0.0, 50.0},</span>
+<span class="nc" id="L247">        {50.0, 75.0, 50.0, 75.0},</span>
+<span class="nc" id="L248">        {75.0, 100.0, 75.0, 100.0}</span>
+    };
+
+    /**
+     * A flag that controls whether or not the axis range adjusts to the
+     * sub-ranges.
+     */
+<span class="nc" id="L255">    private boolean followDataInSubranges = false;</span>
+
+    /**
+     * A flag that controls whether or not the mercury paint changes with
+     * the subranges.
+     */
+<span class="nc" id="L261">    private boolean useSubrangePaint = true;</span>
+
+    /** Paint for each range */
+<span class="nc" id="L264">    private transient Paint[] subrangePaint = {Color.GREEN, Color.ORANGE,</span>
+<span class="nc" id="L265">            Color.RED};</span>
+
+    /** A flag that controls whether the sub-range indicators are visible. */
+<span class="nc" id="L268">    private boolean subrangeIndicatorsVisible = true;</span>
+
+    /** The stroke for the sub-range indicators. */
+<span class="nc" id="L271">    private transient Stroke subrangeIndicatorStroke = new BasicStroke(2.0f);</span>
+
+    /** The range indicator stroke. */
+<span class="nc" id="L274">    private transient Stroke rangeIndicatorStroke = new BasicStroke(3.0f);</span>
+
+    /** The resourceBundle for the localization. */
+<span class="nc" id="L277">    protected static ResourceBundle localizationResources</span>
+<span class="nc" id="L278">            = ResourceBundle.getBundle(&quot;org.jfree.chart.plot.LocalizationBundle&quot;);</span>
+
+    /**
+     * Creates a new thermometer plot.
+     */
+    public ThermometerPlot() {
+<span class="nc" id="L284">        this(new DefaultValueDataset());</span>
+<span class="nc" id="L285">    }</span>
+
+    /**
+     * Creates a new thermometer plot, using default attributes where necessary.
+     *
+     * @param dataset  the data set.
+     */
+    public ThermometerPlot(ValueDataset dataset) {
+
+<span class="nc" id="L294">        super();</span>
+
+<span class="nc" id="L296">        this.padding = new RectangleInsets(UnitType.RELATIVE, 0.05, 0.05, 0.05,</span>
+<span class="nc" id="L297">                0.05);</span>
+<span class="nc" id="L298">        this.dataset = dataset;</span>
+<span class="nc bnc" id="L299" title="All 2 branches missed.">        if (dataset != null) {</span>
+<span class="nc" id="L300">            dataset.addChangeListener(this);</span>
+        }
+<span class="nc" id="L302">        NumberAxis axis = new NumberAxis(null);</span>
+<span class="nc" id="L303">        axis.setStandardTickUnits(NumberAxis.createIntegerTickUnits());</span>
+<span class="nc" id="L304">        axis.setAxisLineVisible(false);</span>
+<span class="nc" id="L305">        axis.setPlot(this);</span>
+<span class="nc" id="L306">        axis.addChangeListener(this);</span>
+<span class="nc" id="L307">        this.rangeAxis = axis;</span>
+<span class="nc" id="L308">        setAxisRange();</span>
+<span class="nc" id="L309">    }</span>
+
+    /**
+     * Returns the dataset for the plot.
+     *
+     * @return The dataset (possibly {@code null}).
+     *
+     * @see #setDataset(ValueDataset)
+     */
+    public ValueDataset getDataset() {
+<span class="nc" id="L319">        return this.dataset;</span>
+    }
+
+    /**
+     * Sets the dataset for the plot, replacing the existing dataset if there
+     * is one, and sends a {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param dataset  the dataset ({@code null} permitted).
+     *
+     * @see #getDataset()
+     */
+    public void setDataset(ValueDataset dataset) {
+
+        // if there is an existing dataset, remove the plot from the list
+        // of change listeners...
+<span class="nc" id="L334">        ValueDataset existing = this.dataset;</span>
+<span class="nc bnc" id="L335" title="All 2 branches missed.">        if (existing != null) {</span>
+<span class="nc" id="L336">            existing.removeChangeListener(this);</span>
+        }
+
+        // set the new dataset, and register the chart as a change listener...
+<span class="nc" id="L340">        this.dataset = dataset;</span>
+<span class="nc bnc" id="L341" title="All 2 branches missed.">        if (dataset != null) {</span>
+<span class="nc" id="L342">            dataset.addChangeListener(this);</span>
+        }
+
+        // send a dataset change event to self...
+<span class="nc" id="L346">        DatasetChangeEvent event = new DatasetChangeEvent(this, dataset);</span>
+<span class="nc" id="L347">        datasetChanged(event);</span>
+
+<span class="nc" id="L349">    }</span>
+
+    /**
+     * Returns the range axis.
+     *
+     * @return The range axis (never {@code null}).
+     *
+     * @see #setRangeAxis(ValueAxis)
+     */
+    public ValueAxis getRangeAxis() {
+<span class="nc" id="L359">        return this.rangeAxis;</span>
+    }
+
+    /**
+     * Sets the range axis for the plot and sends a {@link PlotChangeEvent} to
+     * all registered listeners.
+     *
+     * @param axis  the new axis ({@code null} not permitted).
+     *
+     * @see #getRangeAxis()
+     */
+    public void setRangeAxis(ValueAxis axis) {
+<span class="nc" id="L371">        Args.nullNotPermitted(axis, &quot;axis&quot;);</span>
+        // plot is registered as a listener with the existing axis...
+<span class="nc" id="L373">        this.rangeAxis.removeChangeListener(this);</span>
+
+<span class="nc" id="L375">        axis.setPlot(this);</span>
+<span class="nc" id="L376">        axis.addChangeListener(this);</span>
+<span class="nc" id="L377">        this.rangeAxis = axis;</span>
+<span class="nc" id="L378">        fireChangeEvent();</span>
+<span class="nc" id="L379">    }</span>
+
+    /**
+     * Returns the lower bound for the thermometer.  The data value can be set
+     * lower than this, but it will not be shown in the thermometer.
+     *
+     * @return The lower bound.
+     *
+     * @see #setLowerBound(double)
+     */
+    public double getLowerBound() {
+<span class="nc" id="L390">        return this.lowerBound;</span>
+    }
+
+    /**
+     * Sets the lower bound for the thermometer.
+     *
+     * @param lower the lower bound.
+     *
+     * @see #getLowerBound()
+     */
+    public void setLowerBound(double lower) {
+<span class="nc" id="L401">        this.lowerBound = lower;</span>
+<span class="nc" id="L402">        setAxisRange();</span>
+<span class="nc" id="L403">    }</span>
+
+    /**
+     * Returns the upper bound for the thermometer.  The data value can be set
+     * higher than this, but it will not be shown in the thermometer.
+     *
+     * @return The upper bound.
+     *
+     * @see #setUpperBound(double)
+     */
+    public double getUpperBound() {
+<span class="nc" id="L414">        return this.upperBound;</span>
+    }
+
+    /**
+     * Sets the upper bound for the thermometer.
+     *
+     * @param upper the upper bound.
+     *
+     * @see #getUpperBound()
+     */
+    public void setUpperBound(double upper) {
+<span class="nc" id="L425">        this.upperBound = upper;</span>
+<span class="nc" id="L426">        setAxisRange();</span>
+<span class="nc" id="L427">    }</span>
+
+    /**
+     * Sets the lower and upper bounds for the thermometer.
+     *
+     * @param lower  the lower bound.
+     * @param upper  the upper bound.
+     */
+    public void setRange(double lower, double upper) {
+<span class="nc" id="L436">        this.lowerBound = lower;</span>
+<span class="nc" id="L437">        this.upperBound = upper;</span>
+<span class="nc" id="L438">        setAxisRange();</span>
+<span class="nc" id="L439">    }</span>
+
+    /**
+     * Returns the padding for the thermometer.  This is the space inside the
+     * plot area.
+     *
+     * @return The padding (never {@code null}).
+     *
+     * @see #setPadding(RectangleInsets)
+     */
+    public RectangleInsets getPadding() {
+<span class="nc" id="L450">        return this.padding;</span>
+    }
+
+    /**
+     * Sets the padding for the thermometer and sends a {@link PlotChangeEvent}
+     * to all registered listeners.
+     *
+     * @param padding  the padding ({@code null} not permitted).
+     *
+     * @see #getPadding()
+     */
+    public void setPadding(RectangleInsets padding) {
+<span class="nc" id="L462">        Args.nullNotPermitted(padding, &quot;padding&quot;);</span>
+<span class="nc" id="L463">        this.padding = padding;</span>
+<span class="nc" id="L464">        fireChangeEvent();</span>
+<span class="nc" id="L465">    }</span>
+
+    /**
+     * Returns the stroke used to draw the thermometer outline.
+     *
+     * @return The stroke (never {@code null}).
+     *
+     * @see #setThermometerStroke(Stroke)
+     * @see #getThermometerPaint()
+     */
+    public Stroke getThermometerStroke() {
+<span class="nc" id="L476">        return this.thermometerStroke;</span>
+    }
+
+    /**
+     * Sets the stroke used to draw the thermometer outline and sends a
+     * {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param s  the new stroke ({@code null} ignored).
+     *
+     * @see #getThermometerStroke()
+     */
+    public void setThermometerStroke(Stroke s) {
+<span class="nc bnc" id="L488" title="All 2 branches missed.">        if (s != null) {</span>
+<span class="nc" id="L489">            this.thermometerStroke = s;</span>
+<span class="nc" id="L490">            fireChangeEvent();</span>
+        }
+<span class="nc" id="L492">    }</span>
+
+    /**
+     * Returns the paint used to draw the thermometer outline.
+     *
+     * @return The paint (never {@code null}).
+     *
+     * @see #setThermometerPaint(Paint)
+     * @see #getThermometerStroke()
+     */
+    public Paint getThermometerPaint() {
+<span class="nc" id="L503">        return this.thermometerPaint;</span>
+    }
+
+    /**
+     * Sets the paint used to draw the thermometer outline and sends a
+     * {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param paint  the new paint ({@code null} ignored).
+     *
+     * @see #getThermometerPaint()
+     */
+    public void setThermometerPaint(Paint paint) {
+<span class="nc bnc" id="L515" title="All 2 branches missed.">        if (paint != null) {</span>
+<span class="nc" id="L516">            this.thermometerPaint = paint;</span>
+<span class="nc" id="L517">            fireChangeEvent();</span>
+        }
+<span class="nc" id="L519">    }</span>
+
+    /**
+     * Returns a code indicating the unit display type.  This is one of
+     * {@link #UNITS_NONE}, {@link #UNITS_FAHRENHEIT}, {@link #UNITS_CELCIUS}
+     * and {@link #UNITS_KELVIN}.
+     *
+     * @return The units type.
+     *
+     * @see #setUnits(int)
+     */
+    public int getUnits() {
+<span class="nc" id="L531">        return this.units;</span>
+    }
+
+    /**
+     * Sets the units to be displayed in the thermometer. Use one of the
+     * following constants:
+     *
+     * &lt;ul&gt;
+     * &lt;li&gt;UNITS_NONE : no units displayed.&lt;/li&gt;
+     * &lt;li&gt;UNITS_FAHRENHEIT : units displayed in Fahrenheit.&lt;/li&gt;
+     * &lt;li&gt;UNITS_CELCIUS : units displayed in Celcius.&lt;/li&gt;
+     * &lt;li&gt;UNITS_KELVIN : units displayed in Kelvin.&lt;/li&gt;
+     * &lt;/ul&gt;
+     *
+     * @param u  the new unit type.
+     *
+     * @see #getUnits()
+     */
+    public void setUnits(int u) {
+<span class="nc bnc" id="L550" title="All 4 branches missed.">        if ((u &gt;= 0) &amp;&amp; (u &lt; UNITS.length)) {</span>
+<span class="nc bnc" id="L551" title="All 2 branches missed.">            if (this.units != u) {</span>
+<span class="nc" id="L552">                this.units = u;</span>
+<span class="nc" id="L553">                fireChangeEvent();</span>
+            }
+        }
+<span class="nc" id="L556">    }</span>
+
+    /**
+     * Returns a code indicating the location at which the value label is
+     * displayed.
+     *
+     * @return The location (one of {@link #NONE}, {@link #RIGHT},
+     *         {@link #LEFT} and {@link #BULB}.).
+     */
+    public int getValueLocation() {
+<span class="nc" id="L566">        return this.valueLocation;</span>
+    }
+
+    /**
+     * Sets the location at which the current value is displayed and sends a
+     * {@link PlotChangeEvent} to all registered listeners.
+     * &lt;P&gt;
+     * The location can be one of the constants: {@code NONE}, {@code RIGHT},
+     * {@code LEFT} and {@code BULB}.
+     *
+     * @param location  the location.
+     */
+    public void setValueLocation(int location) {
+<span class="nc bnc" id="L579" title="All 4 branches missed.">        if ((location &gt;= 0) &amp;&amp; (location &lt; 4)) {</span>
+<span class="nc" id="L580">            this.valueLocation = location;</span>
+<span class="nc" id="L581">            fireChangeEvent();</span>
+<span class="nc" id="L582">        }</span>
+        else {
+<span class="nc" id="L584">            throw new IllegalArgumentException(&quot;Location not recognised.&quot;);</span>
+        }
+<span class="nc" id="L586">    }</span>
+
+    /**
+     * Returns the axis location.
+     *
+     * @return The location (one of {@link #NONE}, {@link #LEFT} and
+     *         {@link #RIGHT}).
+     *
+     * @see #setAxisLocation(int)
+     */
+    public int getAxisLocation() {
+<span class="nc" id="L597">        return this.axisLocation;</span>
+    }
+
+    /**
+     * Sets the location at which the axis is displayed relative to the
+     * thermometer, and sends a {@link PlotChangeEvent} to all registered
+     * listeners.
+     *
+     * @param location  the location (one of {@link #NONE}, {@link #LEFT} and
+     *         {@link #RIGHT}).
+     *
+     * @see #getAxisLocation()
+     */
+    public void setAxisLocation(int location) {
+<span class="nc bnc" id="L611" title="All 4 branches missed.">        if ((location &gt;= 0) &amp;&amp; (location &lt; 3)) {</span>
+<span class="nc" id="L612">            this.axisLocation = location;</span>
+<span class="nc" id="L613">            fireChangeEvent();</span>
+<span class="nc" id="L614">        }</span>
+        else {
+<span class="nc" id="L616">            throw new IllegalArgumentException(&quot;Location not recognised.&quot;);</span>
+        }
+<span class="nc" id="L618">    }</span>
+
+    /**
+     * Gets the font used to display the current value.
+     *
+     * @return The font.
+     *
+     * @see #setValueFont(Font)
+     */
+    public Font getValueFont() {
+<span class="nc" id="L628">        return this.valueFont;</span>
+    }
+
+    /**
+     * Sets the font used to display the current value.
+     *
+     * @param f  the new font ({@code null} not permitted).
+     *
+     * @see #getValueFont()
+     */
+    public void setValueFont(Font f) {
+<span class="nc" id="L639">        Args.nullNotPermitted(f, &quot;f&quot;);</span>
+<span class="nc bnc" id="L640" title="All 2 branches missed.">        if (!this.valueFont.equals(f)) {</span>
+<span class="nc" id="L641">            this.valueFont = f;</span>
+<span class="nc" id="L642">            fireChangeEvent();</span>
+        }
+<span class="nc" id="L644">    }</span>
+
+    /**
+     * Gets the paint used to display the current value.
+    *
+     * @return The paint.
+     *
+     * @see #setValuePaint(Paint)
+     */
+    public Paint getValuePaint() {
+<span class="nc" id="L654">        return this.valuePaint;</span>
+    }
+
+    /**
+     * Sets the paint used to display the current value and sends a
+     * {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param paint  the new paint ({@code null} not permitted).
+     *
+     * @see #getValuePaint()
+     */
+    public void setValuePaint(Paint paint) {
+<span class="nc" id="L666">        Args.nullNotPermitted(paint, &quot;paint&quot;);</span>
+<span class="nc bnc" id="L667" title="All 2 branches missed.">        if (!this.valuePaint.equals(paint)) {</span>
+<span class="nc" id="L668">            this.valuePaint = paint;</span>
+<span class="nc" id="L669">            fireChangeEvent();</span>
+        }
+<span class="nc" id="L671">    }</span>
+
+    // FIXME: No getValueFormat() method?
+
+    /**
+     * Sets the formatter for the value label and sends a
+     * {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param formatter  the new formatter ({@code null} not permitted).
+     */
+    public void setValueFormat(NumberFormat formatter) {
+<span class="nc" id="L682">        Args.nullNotPermitted(formatter, &quot;formatter&quot;);</span>
+<span class="nc" id="L683">        this.valueFormat = formatter;</span>
+<span class="nc" id="L684">        fireChangeEvent();</span>
+<span class="nc" id="L685">    }</span>
+
+    /**
+     * Returns the default mercury paint.
+     *
+     * @return The paint (never {@code null}).
+     *
+     * @see #setMercuryPaint(Paint)
+     */
+    public Paint getMercuryPaint() {
+<span class="nc" id="L695">        return this.mercuryPaint;</span>
+    }
+
+    /**
+     * Sets the default mercury paint and sends a {@link PlotChangeEvent} to
+     * all registered listeners.
+     *
+     * @param paint  the new paint ({@code null} not permitted).
+     *
+     * @see #getMercuryPaint()
+     */
+    public void setMercuryPaint(Paint paint) {
+<span class="nc" id="L707">        Args.nullNotPermitted(paint, &quot;paint&quot;);</span>
+<span class="nc" id="L708">        this.mercuryPaint = paint;</span>
+<span class="nc" id="L709">        fireChangeEvent();</span>
+<span class="nc" id="L710">    }</span>
+
+    /**
+     * Sets information for a particular range.
+     *
+     * @param range  the range to specify information about.
+     * @param low  the low value for the range
+     * @param hi  the high value for the range
+     */
+    public void setSubrangeInfo(int range, double low, double hi) {
+<span class="nc" id="L720">        setSubrangeInfo(range, low, hi, low, hi);</span>
+<span class="nc" id="L721">    }</span>
+
+    /**
+     * Sets the subrangeInfo attribute of the ThermometerPlot object
+     *
+     * @param range  the new rangeInfo value.
+     * @param rangeLow  the new rangeInfo value
+     * @param rangeHigh  the new rangeInfo value
+     * @param displayLow  the new rangeInfo value
+     * @param displayHigh  the new rangeInfo value
+     */
+    public void setSubrangeInfo(int range,
+                                double rangeLow, double rangeHigh,
+                                double displayLow, double displayHigh) {
+
+<span class="nc bnc" id="L736" title="All 4 branches missed.">        if ((range &gt;= 0) &amp;&amp; (range &lt; 3)) {</span>
+<span class="nc" id="L737">            setSubrange(range, rangeLow, rangeHigh);</span>
+<span class="nc" id="L738">            setDisplayRange(range, displayLow, displayHigh);</span>
+<span class="nc" id="L739">            setAxisRange();</span>
+<span class="nc" id="L740">            fireChangeEvent();</span>
+        }
+
+<span class="nc" id="L743">    }</span>
+
+    /**
+     * Sets the bounds for a subrange.
+     *
+     * @param range  the range type.
+     * @param low  the low value.
+     * @param high  the high value.
+     */
+    public void setSubrange(int range, double low, double high) {
+<span class="nc bnc" id="L753" title="All 4 branches missed.">        if ((range &gt;= 0) &amp;&amp; (range &lt; 3)) {</span>
+<span class="nc" id="L754">            this.subrangeInfo[range][RANGE_HIGH] = high;</span>
+<span class="nc" id="L755">            this.subrangeInfo[range][RANGE_LOW] = low;</span>
+        }
+<span class="nc" id="L757">    }</span>
+
+    /**
+     * Sets the displayed bounds for a sub range.
+     *
+     * @param range  the range type.
+     * @param low  the low value.
+     * @param high  the high value.
+     */
+    public void setDisplayRange(int range, double low, double high) {
+
+<span class="nc bnc" id="L768" title="All 4 branches missed.">        if ((range &gt;= 0) &amp;&amp; (range &lt; this.subrangeInfo.length)</span>
+<span class="nc bnc" id="L769" title="All 4 branches missed.">            &amp;&amp; isValidNumber(high) &amp;&amp; isValidNumber(low)) {</span>
+
+<span class="nc bnc" id="L771" title="All 2 branches missed.">            if (high &gt; low) {</span>
+<span class="nc" id="L772">                this.subrangeInfo[range][DISPLAY_HIGH] = high;</span>
+<span class="nc" id="L773">                this.subrangeInfo[range][DISPLAY_LOW] = low;</span>
+<span class="nc" id="L774">            }</span>
+            else {
+<span class="nc" id="L776">                this.subrangeInfo[range][DISPLAY_HIGH] = low;</span>
+<span class="nc" id="L777">                this.subrangeInfo[range][DISPLAY_LOW] = high;</span>
+            }
+
+        }
+
+<span class="nc" id="L782">    }</span>
+
+    /**
+     * Gets the paint used for a particular subrange.
+     *
+     * @param range  the range (.
+     *
+     * @return The paint.
+     *
+     * @see #setSubrangePaint(int, Paint)
+     */
+    public Paint getSubrangePaint(int range) {
+<span class="nc bnc" id="L794" title="All 4 branches missed.">        if ((range &gt;= 0) &amp;&amp; (range &lt; this.subrangePaint.length)) {</span>
+<span class="nc" id="L795">            return this.subrangePaint[range];</span>
+        }
+        else {
+<span class="nc" id="L798">            return this.mercuryPaint;</span>
+        }
+    }
+
+    /**
+     * Sets the paint to be used for a subrange and sends a
+     * {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param range  the range (0, 1 or 2).
+     * @param paint  the paint to be applied ({@code null} not permitted).
+     *
+     * @see #getSubrangePaint(int)
+     */
+    public void setSubrangePaint(int range, Paint paint) {
+<span class="nc bnc" id="L812" title="All 2 branches missed.">        if ((range &gt;= 0)</span>
+<span class="nc bnc" id="L813" title="All 4 branches missed.">                &amp;&amp; (range &lt; this.subrangePaint.length) &amp;&amp; (paint != null)) {</span>
+<span class="nc" id="L814">            this.subrangePaint[range] = paint;</span>
+<span class="nc" id="L815">            fireChangeEvent();</span>
+        }
+<span class="nc" id="L817">    }</span>
+
+    /**
+     * Returns a flag that controls whether or not the thermometer axis zooms
+     * to display the subrange within which the data value falls.
+     *
+     * @return The flag.
+     */
+    public boolean getFollowDataInSubranges() {
+<span class="nc" id="L826">        return this.followDataInSubranges;</span>
+    }
+
+    /**
+     * Sets the flag that controls whether or not the thermometer axis zooms
+     * to display the subrange within which the data value falls.
+     *
+     * @param flag  the flag.
+     */
+    public void setFollowDataInSubranges(boolean flag) {
+<span class="nc" id="L836">        this.followDataInSubranges = flag;</span>
+<span class="nc" id="L837">        fireChangeEvent();</span>
+<span class="nc" id="L838">    }</span>
+
+    /**
+     * Returns a flag that controls whether or not the mercury color changes
+     * for each subrange.
+     *
+     * @return The flag.
+     *
+     * @see #setUseSubrangePaint(boolean)
+     */
+    public boolean getUseSubrangePaint() {
+<span class="nc" id="L849">        return this.useSubrangePaint;</span>
+    }
+
+    /**
+     * Sets the range colour change option.
+     *
+     * @param flag the new range colour change option
+     *
+     * @see #getUseSubrangePaint()
+     */
+    public void setUseSubrangePaint(boolean flag) {
+<span class="nc" id="L860">        this.useSubrangePaint = flag;</span>
+<span class="nc" id="L861">        fireChangeEvent();</span>
+<span class="nc" id="L862">    }</span>
+
+    /**
+     * Returns the bulb radius, in Java2D units.
+
+     * @return The bulb radius.
+     */
+    public int getBulbRadius() {
+<span class="nc" id="L870">        return this.bulbRadius;</span>
+    }
+
+    /**
+     * Sets the bulb radius (in Java2D units) and sends a
+     * {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param r  the new radius (in Java2D units).
+     *
+     * @see #getBulbRadius()
+     */
+    public void setBulbRadius(int r) {
+<span class="nc" id="L882">        this.bulbRadius = r;</span>
+<span class="nc" id="L883">        fireChangeEvent();</span>
+<span class="nc" id="L884">    }</span>
+
+    /**
+     * Returns the bulb diameter, which is always twice the value returned
+     * by {@link #getBulbRadius()}.
+     *
+     * @return The bulb diameter.
+     */
+    public int getBulbDiameter() {
+<span class="nc" id="L893">        return getBulbRadius() * 2;</span>
+    }
+
+    /**
+     * Returns the column radius, in Java2D units.
+     *
+     * @return The column radius.
+     *
+     * @see #setColumnRadius(int)
+     */
+    public int getColumnRadius() {
+<span class="nc" id="L904">        return this.columnRadius;</span>
+    }
+
+    /**
+     * Sets the column radius (in Java2D units) and sends a
+     * {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param r  the new radius.
+     *
+     * @see #getColumnRadius()
+     */
+    public void setColumnRadius(int r) {
+<span class="nc" id="L916">        this.columnRadius = r;</span>
+<span class="nc" id="L917">        fireChangeEvent();</span>
+<span class="nc" id="L918">    }</span>
+
+    /**
+     * Returns the column diameter, which is always twice the value returned
+     * by {@link #getColumnRadius()}.
+     *
+     * @return The column diameter.
+     */
+    public int getColumnDiameter() {
+<span class="nc" id="L927">        return getColumnRadius() * 2;</span>
+    }
+
+    /**
+     * Returns the gap, in Java2D units, between the two outlines that
+     * represent the thermometer.
+     *
+     * @return The gap.
+     *
+     * @see #setGap(int)
+     */
+    public int getGap() {
+<span class="nc" id="L939">        return this.gap;</span>
+    }
+
+    /**
+     * Sets the gap (in Java2D units) between the two outlines that represent
+     * the thermometer, and sends a {@link PlotChangeEvent} to all registered
+     * listeners.
+     *
+     * @param gap  the new gap.
+     *
+     * @see #getGap()
+     */
+    public void setGap(int gap) {
+<span class="nc" id="L952">        this.gap = gap;</span>
+<span class="nc" id="L953">        fireChangeEvent();</span>
+<span class="nc" id="L954">    }</span>
+
+    /**
+     * Receives a chart element visitor.
+     * 
+     * @param visitor  the visitor ({@code null} not permitted).
+     */
+    @Override
+    public void receive(ChartElementVisitor visitor) {
+<span class="nc" id="L963">        this.rangeAxis.receive(visitor);</span>
+<span class="nc" id="L964">        super.receive(visitor);</span>
+<span class="nc" id="L965">    }</span>
+
+    /**
+     * Draws the plot on a Java 2D graphics device (such as the screen or a
+     * printer).
+     *
+     * @param g2  the graphics device.
+     * @param area  the area within which the plot should be drawn.
+     * @param anchor  the anchor point ({@code null} permitted).
+     * @param parentState  the state from the parent plot, if there is one.
+     * @param info  collects info about the drawing.
+     */
+    @Override
+    public void draw(Graphics2D g2, Rectangle2D area, Point2D anchor,
+            PlotState parentState, PlotRenderingInfo info) {
+
+<span class="nc" id="L981">        RoundRectangle2D outerStem = new RoundRectangle2D.Double();</span>
+<span class="nc" id="L982">        RoundRectangle2D innerStem = new RoundRectangle2D.Double();</span>
+<span class="nc" id="L983">        RoundRectangle2D mercuryStem = new RoundRectangle2D.Double();</span>
+<span class="nc" id="L984">        Ellipse2D outerBulb = new Ellipse2D.Double();</span>
+<span class="nc" id="L985">        Ellipse2D innerBulb = new Ellipse2D.Double();</span>
+        String temp;
+        FontMetrics metrics;
+<span class="nc bnc" id="L988" title="All 2 branches missed.">        if (info != null) {</span>
+<span class="nc" id="L989">            info.setPlotArea(area);</span>
+        }
+
+        // adjust for insets...
+<span class="nc" id="L993">        RectangleInsets insets = getInsets();</span>
+<span class="nc" id="L994">        insets.trim(area);</span>
+<span class="nc" id="L995">        drawBackground(g2, area);</span>
+
+        // adjust for padding...
+<span class="nc" id="L998">        Rectangle2D interior = (Rectangle2D) area.clone();</span>
+<span class="nc" id="L999">        this.padding.trim(interior);</span>
+<span class="nc" id="L1000">        int midX = (int) (interior.getX() + (interior.getWidth() / 2));</span>
+<span class="nc" id="L1001">        int midY = (int) (interior.getY() + (interior.getHeight() / 2));</span>
+<span class="nc" id="L1002">        int stemTop = (int) (interior.getMinY() + getBulbRadius());</span>
+<span class="nc" id="L1003">        int stemBottom = (int) (interior.getMaxY() - getBulbDiameter());</span>
+<span class="nc" id="L1004">        Rectangle2D dataArea = new Rectangle2D.Double(midX - getColumnRadius(),</span>
+<span class="nc" id="L1005">                stemTop, getColumnRadius(), stemBottom - stemTop);</span>
+
+<span class="nc" id="L1007">        outerBulb.setFrame(midX - getBulbRadius(), stemBottom,</span>
+<span class="nc" id="L1008">                getBulbDiameter(), getBulbDiameter());</span>
+
+<span class="nc" id="L1010">        outerStem.setRoundRect(midX - getColumnRadius(), interior.getMinY(),</span>
+<span class="nc" id="L1011">                getColumnDiameter(), stemBottom + getBulbDiameter() - stemTop,</span>
+<span class="nc" id="L1012">                getColumnDiameter(), getColumnDiameter());</span>
+
+<span class="nc" id="L1014">        Area outerThermometer = new Area(outerBulb);</span>
+<span class="nc" id="L1015">        Area tempArea = new Area(outerStem);</span>
+<span class="nc" id="L1016">        outerThermometer.add(tempArea);</span>
+
+<span class="nc" id="L1018">        innerBulb.setFrame(midX - getBulbRadius() + getGap(), stemBottom</span>
+<span class="nc" id="L1019">                + getGap(), getBulbDiameter() - getGap() * 2, getBulbDiameter()</span>
+<span class="nc" id="L1020">                - getGap() * 2);</span>
+
+<span class="nc" id="L1022">        innerStem.setRoundRect(midX - getColumnRadius() + getGap(),</span>
+<span class="nc" id="L1023">                interior.getMinY() + getGap(), getColumnDiameter()</span>
+<span class="nc" id="L1024">                - getGap() * 2, stemBottom + getBulbDiameter() - getGap() * 2</span>
+<span class="nc" id="L1025">                - stemTop, getColumnDiameter() - getGap() * 2,</span>
+<span class="nc" id="L1026">                getColumnDiameter() - getGap() * 2);</span>
+
+<span class="nc" id="L1028">        Area innerThermometer = new Area(innerBulb);</span>
+<span class="nc" id="L1029">        tempArea = new Area(innerStem);</span>
+<span class="nc" id="L1030">        innerThermometer.add(tempArea);</span>
+
+<span class="nc bnc" id="L1032" title="All 4 branches missed.">        if ((this.dataset != null) &amp;&amp; (this.dataset.getValue() != null)) {</span>
+<span class="nc" id="L1033">            double current = this.dataset.getValue().doubleValue();</span>
+<span class="nc" id="L1034">            double ds = this.rangeAxis.valueToJava2D(current, dataArea,</span>
+<span class="nc" id="L1035">                    RectangleEdge.LEFT);</span>
+
+<span class="nc" id="L1037">            int i = getColumnDiameter() - getGap() * 2; // already calculated</span>
+<span class="nc" id="L1038">            int j = getColumnRadius() - getGap(); // already calculated</span>
+<span class="nc" id="L1039">            int l = (i / 2);</span>
+<span class="nc" id="L1040">            int k = (int) Math.round(ds);</span>
+<span class="nc bnc" id="L1041" title="All 2 branches missed.">            if (k &lt; (getGap() + interior.getMinY())) {</span>
+<span class="nc" id="L1042">                k = (int) (getGap() + interior.getMinY());</span>
+<span class="nc" id="L1043">                l = getBulbRadius();</span>
+            }
+
+<span class="nc" id="L1046">            Area mercury = new Area(innerBulb);</span>
+
+<span class="nc bnc" id="L1048" title="All 2 branches missed.">            if (k &lt; (stemBottom + getBulbRadius())) {</span>
+<span class="nc" id="L1049">                mercuryStem.setRoundRect(midX - j, k, i,</span>
+<span class="nc" id="L1050">                        (stemBottom + getBulbRadius()) - k, l, l);</span>
+<span class="nc" id="L1051">                tempArea = new Area(mercuryStem);</span>
+<span class="nc" id="L1052">                mercury.add(tempArea);</span>
+            }
+
+<span class="nc" id="L1055">            g2.setPaint(getCurrentPaint());</span>
+<span class="nc" id="L1056">            g2.fill(mercury);</span>
+
+            // draw range indicators...
+<span class="nc bnc" id="L1059" title="All 2 branches missed.">            if (this.subrangeIndicatorsVisible) {</span>
+<span class="nc" id="L1060">                g2.setStroke(this.subrangeIndicatorStroke);</span>
+<span class="nc" id="L1061">                Range range = this.rangeAxis.getRange();</span>
+
+                // draw start of normal range
+<span class="nc" id="L1064">                double value = this.subrangeInfo[NORMAL][RANGE_LOW];</span>
+<span class="nc bnc" id="L1065" title="All 2 branches missed.">                if (range.contains(value)) {</span>
+<span class="nc" id="L1066">                    double x = midX + getColumnRadius() + 2;</span>
+<span class="nc" id="L1067">                    double y = this.rangeAxis.valueToJava2D(value, dataArea,</span>
+<span class="nc" id="L1068">                            RectangleEdge.LEFT);</span>
+<span class="nc" id="L1069">                    Line2D line = new Line2D.Double(x, y, x + 10, y);</span>
+<span class="nc" id="L1070">                    g2.setPaint(this.subrangePaint[NORMAL]);</span>
+<span class="nc" id="L1071">                    g2.draw(line);</span>
+                }
+
+                // draw start of warning range
+<span class="nc" id="L1075">                value = this.subrangeInfo[WARNING][RANGE_LOW];</span>
+<span class="nc bnc" id="L1076" title="All 2 branches missed.">                if (range.contains(value)) {</span>
+<span class="nc" id="L1077">                    double x = midX + getColumnRadius() + 2;</span>
+<span class="nc" id="L1078">                    double y = this.rangeAxis.valueToJava2D(value, dataArea,</span>
+<span class="nc" id="L1079">                            RectangleEdge.LEFT);</span>
+<span class="nc" id="L1080">                    Line2D line = new Line2D.Double(x, y, x + 10, y);</span>
+<span class="nc" id="L1081">                    g2.setPaint(this.subrangePaint[WARNING]);</span>
+<span class="nc" id="L1082">                    g2.draw(line);</span>
+                }
+
+                // draw start of critical range
+<span class="nc" id="L1086">                value = this.subrangeInfo[CRITICAL][RANGE_LOW];</span>
+<span class="nc bnc" id="L1087" title="All 2 branches missed.">                if (range.contains(value)) {</span>
+<span class="nc" id="L1088">                    double x = midX + getColumnRadius() + 2;</span>
+<span class="nc" id="L1089">                    double y = this.rangeAxis.valueToJava2D(value, dataArea,</span>
+<span class="nc" id="L1090">                            RectangleEdge.LEFT);</span>
+<span class="nc" id="L1091">                    Line2D line = new Line2D.Double(x, y, x + 10, y);</span>
+<span class="nc" id="L1092">                    g2.setPaint(this.subrangePaint[CRITICAL]);</span>
+<span class="nc" id="L1093">                    g2.draw(line);</span>
+                }
+            }
+
+            // draw the axis...
+<span class="nc bnc" id="L1098" title="All 4 branches missed.">            if ((this.rangeAxis != null) &amp;&amp; (this.axisLocation != NONE)) {</span>
+<span class="nc" id="L1099">                int drawWidth = AXIS_GAP;</span>
+<span class="nc bnc" id="L1100" title="All 2 branches missed.">                if (this.showValueLines) {</span>
+<span class="nc" id="L1101">                    drawWidth += getColumnDiameter();</span>
+                }
+                Rectangle2D drawArea;
+                double cursor;
+
+<span class="nc bnc" id="L1106" title="All 2 branches missed.">                switch (this.axisLocation) {</span>
+                    case RIGHT:
+<span class="nc" id="L1108">                        cursor = midX + getColumnRadius();</span>
+<span class="nc" id="L1109">                        drawArea = new Rectangle2D.Double(cursor,</span>
+<span class="nc" id="L1110">                                stemTop, drawWidth, (stemBottom - stemTop + 1));</span>
+<span class="nc" id="L1111">                        this.rangeAxis.draw(g2, cursor, area, drawArea,</span>
+<span class="nc" id="L1112">                                RectangleEdge.RIGHT, null);</span>
+<span class="nc" id="L1113">                        break;</span>
+
+                    case LEFT:
+                    default:
+                        //cursor = midX - COLUMN_RADIUS - AXIS_GAP;
+<span class="nc" id="L1118">                        cursor = midX - getColumnRadius();</span>
+<span class="nc" id="L1119">                        drawArea = new Rectangle2D.Double(cursor, stemTop,</span>
+<span class="nc" id="L1120">                                drawWidth, (stemBottom - stemTop + 1));</span>
+<span class="nc" id="L1121">                        this.rangeAxis.draw(g2, cursor, area, drawArea,</span>
+<span class="nc" id="L1122">                                RectangleEdge.LEFT, null);</span>
+                        break;
+                }
+
+            }
+
+            // draw text value on screen
+<span class="nc" id="L1129">            g2.setFont(this.valueFont);</span>
+<span class="nc" id="L1130">            g2.setPaint(this.valuePaint);</span>
+<span class="nc" id="L1131">            metrics = g2.getFontMetrics();</span>
+<span class="nc bnc" id="L1132" title="All 4 branches missed.">            switch (this.valueLocation) {</span>
+                case RIGHT:
+<span class="nc" id="L1134">                    g2.drawString(this.valueFormat.format(current),</span>
+<span class="nc" id="L1135">                            midX + getColumnRadius() + getGap(), midY);</span>
+<span class="nc" id="L1136">                    break;</span>
+                case LEFT:
+<span class="nc" id="L1138">                    String valueString = this.valueFormat.format(current);</span>
+<span class="nc" id="L1139">                    int stringWidth = metrics.stringWidth(valueString);</span>
+<span class="nc" id="L1140">                    g2.drawString(valueString, midX - getColumnRadius()</span>
+<span class="nc" id="L1141">                            - getGap() - stringWidth, midY);</span>
+<span class="nc" id="L1142">                    break;</span>
+                case BULB:
+<span class="nc" id="L1144">                    temp = this.valueFormat.format(current);</span>
+<span class="nc" id="L1145">                    i = metrics.stringWidth(temp) / 2;</span>
+<span class="nc" id="L1146">                    g2.drawString(temp, midX - i,</span>
+<span class="nc" id="L1147">                            stemBottom + getBulbRadius() + getGap());</span>
+                    break;
+                default:
+            }
+            /***/
+        }
+
+<span class="nc" id="L1154">        g2.setPaint(this.thermometerPaint);</span>
+<span class="nc" id="L1155">        g2.setFont(this.valueFont);</span>
+
+        //  draw units indicator
+<span class="nc" id="L1158">        metrics = g2.getFontMetrics();</span>
+<span class="nc" id="L1159">        int tickX1 = midX - getColumnRadius() - getGap() * 2</span>
+<span class="nc" id="L1160">                     - metrics.stringWidth(UNITS[this.units]);</span>
+<span class="nc bnc" id="L1161" title="All 2 branches missed.">        if (tickX1 &gt; area.getMinX()) {</span>
+<span class="nc" id="L1162">            g2.drawString(UNITS[this.units], tickX1,</span>
+<span class="nc" id="L1163">                    (int) (area.getMinY() + 20));</span>
+        }
+
+        // draw thermometer outline
+<span class="nc" id="L1167">        g2.setStroke(this.thermometerStroke);</span>
+<span class="nc" id="L1168">        g2.draw(outerThermometer);</span>
+<span class="nc" id="L1169">        g2.draw(innerThermometer);</span>
+
+<span class="nc" id="L1171">        drawOutline(g2, area);</span>
+<span class="nc" id="L1172">    }</span>
+
+    /**
+     * A zoom method that does nothing.  Plots are required to support the
+     * zoom operation.  In the case of a thermometer chart, it doesn't make
+     * sense to zoom in or out, so the method is empty.
+     *
+     * @param percent  the zoom percentage.
+     */
+    @Override
+    public void zoom(double percent) {
+        // intentionally blank
+<span class="nc" id="L1184">   }</span>
+
+    /**
+     * Returns a short string describing the type of plot.
+     *
+     * @return A short string describing the type of plot.
+     */
+    @Override
+    public String getPlotType() {
+<span class="nc" id="L1193">        return localizationResources.getString(&quot;Thermometer_Plot&quot;);</span>
+    }
+
+    /**
+     * Checks to see if a new value means the axis range needs adjusting.
+     *
+     * @param event  the dataset change event.
+     */
+    @Override
+    public void datasetChanged(DatasetChangeEvent event) {
+<span class="nc bnc" id="L1203" title="All 2 branches missed.">        if (this.dataset != null) {</span>
+<span class="nc" id="L1204">            Number vn = this.dataset.getValue();</span>
+<span class="nc bnc" id="L1205" title="All 2 branches missed.">            if (vn != null) {</span>
+<span class="nc" id="L1206">                double value = vn.doubleValue();</span>
+<span class="nc bnc" id="L1207" title="All 2 branches missed.">                if (inSubrange(NORMAL, value)) {</span>
+<span class="nc" id="L1208">                    this.subrange = NORMAL;</span>
+<span class="nc" id="L1209">                }</span>
+<span class="nc bnc" id="L1210" title="All 2 branches missed.">                else if (inSubrange(WARNING, value)) {</span>
+<span class="nc" id="L1211">                   this.subrange = WARNING;</span>
+<span class="nc" id="L1212">                }</span>
+<span class="nc bnc" id="L1213" title="All 2 branches missed.">                else if (inSubrange(CRITICAL, value)) {</span>
+<span class="nc" id="L1214">                    this.subrange = CRITICAL;</span>
+<span class="nc" id="L1215">                }</span>
+                else {
+<span class="nc" id="L1217">                    this.subrange = -1;</span>
+                }
+<span class="nc" id="L1219">                setAxisRange();</span>
+            }
+        }
+<span class="nc" id="L1222">        super.datasetChanged(event);</span>
+<span class="nc" id="L1223">    }</span>
+
+    /**
+     * Returns the data range.
+     *
+     * @param axis  the axis.
+     *
+     * @return The range of data displayed.
+     */
+    @Override
+    public Range getDataRange(ValueAxis axis) {
+<span class="nc" id="L1234">       return new Range(this.lowerBound, this.upperBound);</span>
+    }
+
+    /**
+     * Sets the axis range to the current values in the rangeInfo array.
+     */
+    protected void setAxisRange() {
+<span class="nc bnc" id="L1241" title="All 4 branches missed.">        if ((this.subrange &gt;= 0) &amp;&amp; (this.followDataInSubranges)) {</span>
+<span class="nc" id="L1242">            this.rangeAxis.setRange(</span>
+<span class="nc" id="L1243">                    new Range(this.subrangeInfo[this.subrange][DISPLAY_LOW],</span>
+<span class="nc" id="L1244">                    this.subrangeInfo[this.subrange][DISPLAY_HIGH]));</span>
+<span class="nc" id="L1245">        }</span>
+        else {
+<span class="nc" id="L1247">            this.rangeAxis.setRange(this.lowerBound, this.upperBound);</span>
+        }
+<span class="nc" id="L1249">    }</span>
+
+    /**
+     * Returns the legend items for the plot.
+     *
+     * @return {@code null}.
+     */
+    @Override
+    public LegendItemCollection getLegendItems() {
+<span class="nc" id="L1258">        return null;</span>
+    }
+
+    /**
+     * Returns the orientation of the plot.
+     *
+     * @return The orientation (always {@link PlotOrientation#VERTICAL}).
+     */
+    @Override
+    public PlotOrientation getOrientation() {
+<span class="nc" id="L1268">        return PlotOrientation.VERTICAL;</span>
+    }
+
+    /**
+     * Determine whether a number is valid and finite.
+     *
+     * @param d  the number to be tested.
+     *
+     * @return {@code true} if the number is valid and finite, and
+     *         {@code false} otherwise.
+     */
+    protected static boolean isValidNumber(double d) {
+<span class="nc bnc" id="L1280" title="All 4 branches missed.">        return (!(Double.isNaN(d) || Double.isInfinite(d)));</span>
+    }
+
+    /**
+     * Returns true if the value is in the specified range, and false otherwise.
+     *
+     * @param subrange  the subrange.
+     * @param value  the value to check.
+     *
+     * @return A boolean.
+     */
+    private boolean inSubrange(int subrange, double value) {
+<span class="nc bnc" id="L1292" title="All 4 branches missed.">        return (value &gt; this.subrangeInfo[subrange][RANGE_LOW]</span>
+<span class="nc" id="L1293">            &amp;&amp; value &lt;= this.subrangeInfo[subrange][RANGE_HIGH]);</span>
+    }
+
+    /**
+     * Returns the mercury paint corresponding to the current data value.
+     * Called from the {@link #draw(Graphics2D, Rectangle2D, Point2D,
+     * PlotState, PlotRenderingInfo)} method.
+     *
+     * @return The paint (never {@code null}).
+     */
+    private Paint getCurrentPaint() {
+<span class="nc" id="L1304">        Paint result = this.mercuryPaint;</span>
+<span class="nc bnc" id="L1305" title="All 2 branches missed.">        if (this.useSubrangePaint) {</span>
+<span class="nc" id="L1306">            double value = this.dataset.getValue().doubleValue();</span>
+<span class="nc bnc" id="L1307" title="All 2 branches missed.">            if (inSubrange(NORMAL, value)) {</span>
+<span class="nc" id="L1308">                result = this.subrangePaint[NORMAL];</span>
+<span class="nc" id="L1309">            }</span>
+<span class="nc bnc" id="L1310" title="All 2 branches missed.">            else if (inSubrange(WARNING, value)) {</span>
+<span class="nc" id="L1311">                result = this.subrangePaint[WARNING];</span>
+<span class="nc" id="L1312">            }</span>
+<span class="nc bnc" id="L1313" title="All 2 branches missed.">            else if (inSubrange(CRITICAL, value)) {</span>
+<span class="nc" id="L1314">                result = this.subrangePaint[CRITICAL];</span>
+            }
+        }
+<span class="nc" id="L1317">        return result;</span>
+    }
+
+    /**
+     * Tests this plot for equality with another object.  The plot's dataset
+     * is not considered in the test.
+     *
+     * @param obj  the object ({@code null} permitted).
+     *
+     * @return {@code true} or {@code false}.
+     */
+    @Override
+    public boolean equals(Object obj) {
+<span class="nc bnc" id="L1330" title="All 2 branches missed.">        if (obj == this) {</span>
+<span class="nc" id="L1331">            return true;</span>
+        }
+<span class="nc bnc" id="L1333" title="All 2 branches missed.">        if (!(obj instanceof ThermometerPlot)) {</span>
+<span class="nc" id="L1334">            return false;</span>
+        }
+<span class="nc" id="L1336">        ThermometerPlot that = (ThermometerPlot) obj;</span>
+<span class="nc bnc" id="L1337" title="All 2 branches missed.">        if (!super.equals(obj)) {</span>
+<span class="nc" id="L1338">            return false;</span>
+        }
+<span class="nc bnc" id="L1340" title="All 2 branches missed.">        if (!Objects.equals(this.rangeAxis, that.rangeAxis)) {</span>
+<span class="nc" id="L1341">            return false;</span>
+        }
+<span class="nc bnc" id="L1343" title="All 2 branches missed.">        if (this.axisLocation != that.axisLocation) {</span>
+<span class="nc" id="L1344">            return false;</span>
+        }
+<span class="nc bnc" id="L1346" title="All 2 branches missed.">        if (this.lowerBound != that.lowerBound) {</span>
+<span class="nc" id="L1347">            return false;</span>
+        }
+<span class="nc bnc" id="L1349" title="All 2 branches missed.">        if (this.upperBound != that.upperBound) {</span>
+<span class="nc" id="L1350">            return false;</span>
+        }
+<span class="nc bnc" id="L1352" title="All 2 branches missed.">        if (!Objects.equals(this.padding, that.padding)) {</span>
+<span class="nc" id="L1353">            return false;</span>
+        }
+<span class="nc bnc" id="L1355" title="All 2 branches missed.">        if (!Objects.equals(this.thermometerStroke, that.thermometerStroke)) {</span>
+<span class="nc" id="L1356">            return false;</span>
+        }
+<span class="nc" id="L1358">        if (!PaintUtils.equal(this.thermometerPaint,</span>
+<span class="nc bnc" id="L1359" title="All 2 branches missed.">                that.thermometerPaint)) {</span>
+<span class="nc" id="L1360">            return false;</span>
+        }
+<span class="nc bnc" id="L1362" title="All 2 branches missed.">        if (this.units != that.units) {</span>
+<span class="nc" id="L1363">            return false;</span>
+        }
+<span class="nc bnc" id="L1365" title="All 2 branches missed.">        if (this.valueLocation != that.valueLocation) {</span>
+<span class="nc" id="L1366">            return false;</span>
+        }
+<span class="nc bnc" id="L1368" title="All 2 branches missed.">        if (!Objects.equals(this.valueFont, that.valueFont)) {</span>
+<span class="nc" id="L1369">            return false;</span>
+        }
+<span class="nc bnc" id="L1371" title="All 2 branches missed.">        if (!PaintUtils.equal(this.valuePaint, that.valuePaint)) {</span>
+<span class="nc" id="L1372">            return false;</span>
+        }
+<span class="nc bnc" id="L1374" title="All 2 branches missed.">        if (!Objects.equals(this.valueFormat, that.valueFormat)) {</span>
+<span class="nc" id="L1375">            return false;</span>
+        }
+<span class="nc bnc" id="L1377" title="All 2 branches missed.">        if (!PaintUtils.equal(this.mercuryPaint, that.mercuryPaint)) {</span>
+<span class="nc" id="L1378">            return false;</span>
+        }
+<span class="nc bnc" id="L1380" title="All 2 branches missed.">        if (this.showValueLines != that.showValueLines) {</span>
+<span class="nc" id="L1381">            return false;</span>
+        }
+<span class="nc bnc" id="L1383" title="All 2 branches missed.">        if (this.subrange != that.subrange) {</span>
+<span class="nc" id="L1384">            return false;</span>
+        }
+<span class="nc bnc" id="L1386" title="All 2 branches missed.">        if (this.followDataInSubranges != that.followDataInSubranges) {</span>
+<span class="nc" id="L1387">            return false;</span>
+        }
+<span class="nc bnc" id="L1389" title="All 2 branches missed.">        if (!equal(this.subrangeInfo, that.subrangeInfo)) {</span>
+<span class="nc" id="L1390">            return false;</span>
+        }
+<span class="nc bnc" id="L1392" title="All 2 branches missed.">        if (this.useSubrangePaint != that.useSubrangePaint) {</span>
+<span class="nc" id="L1393">            return false;</span>
+        }
+<span class="nc bnc" id="L1395" title="All 2 branches missed.">        if (this.bulbRadius != that.bulbRadius) {</span>
+<span class="nc" id="L1396">            return false;</span>
+        }
+<span class="nc bnc" id="L1398" title="All 2 branches missed.">        if (this.columnRadius != that.columnRadius) {</span>
+<span class="nc" id="L1399">            return false;</span>
+        }
+<span class="nc bnc" id="L1401" title="All 2 branches missed.">        if (this.gap != that.gap) {</span>
+<span class="nc" id="L1402">            return false;</span>
+        }
+<span class="nc bnc" id="L1404" title="All 2 branches missed.">        for (int i = 0; i &lt; this.subrangePaint.length; i++) {</span>
+<span class="nc" id="L1405">            if (!PaintUtils.equal(this.subrangePaint[i],</span>
+<span class="nc bnc" id="L1406" title="All 2 branches missed.">                    that.subrangePaint[i])) {</span>
+<span class="nc" id="L1407">                return false;</span>
+            }
+        }
+<span class="nc" id="L1410">        return true;</span>
+    }
+
+    /**
+     * Tests two double[][] arrays for equality.
+     *
+     * @param array1  the first array ({@code null} permitted).
+     * @param array2  the second arrray ({@code null} permitted).
+     *
+     * @return A boolean.
+     */
+    private static boolean equal(double[][] array1, double[][] array2) {
+<span class="nc bnc" id="L1422" title="All 2 branches missed.">        if (array1 == null) {</span>
+<span class="nc bnc" id="L1423" title="All 2 branches missed.">            return (array2 == null);</span>
+        }
+<span class="nc bnc" id="L1425" title="All 2 branches missed.">        if (array2 == null) {</span>
+<span class="nc" id="L1426">            return false;</span>
+        }
+<span class="nc bnc" id="L1428" title="All 2 branches missed.">        if (array1.length != array2.length) {</span>
+<span class="nc" id="L1429">            return false;</span>
+        }
+<span class="nc bnc" id="L1431" title="All 2 branches missed.">        for (int i = 0; i &lt; array1.length; i++) {</span>
+<span class="nc bnc" id="L1432" title="All 2 branches missed.">            if (!Arrays.equals(array1[i], array2[i])) {</span>
+<span class="nc" id="L1433">                return false;</span>
+            }
+        }
+<span class="nc" id="L1436">        return true;</span>
+    }
+
+    /**
+     * Returns a clone of the plot.
+     *
+     * @return A clone.
+     *
+     * @throws CloneNotSupportedException  if the plot cannot be cloned.
+     */
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+
+<span class="nc" id="L1449">        ThermometerPlot clone = (ThermometerPlot) super.clone();</span>
+
+<span class="nc bnc" id="L1451" title="All 2 branches missed.">        if (clone.dataset != null) {</span>
+<span class="nc" id="L1452">            clone.dataset.addChangeListener(clone);</span>
+        }
+<span class="nc" id="L1454">        clone.rangeAxis = CloneUtils.clone(this.rangeAxis);</span>
+<span class="nc bnc" id="L1455" title="All 2 branches missed.">        if (clone.rangeAxis != null) {</span>
+<span class="nc" id="L1456">            clone.rangeAxis.setPlot(clone);</span>
+<span class="nc" id="L1457">            clone.rangeAxis.addChangeListener(clone);</span>
+        }
+<span class="nc" id="L1459">        clone.valueFormat = (NumberFormat) this.valueFormat.clone();</span>
+<span class="nc" id="L1460">        clone.subrangePaint = (Paint[]) this.subrangePaint.clone();</span>
+
+<span class="nc" id="L1462">        return clone;</span>
+
+    }
+
+    /**
+     * Provides serialization support.
+     *
+     * @param stream  the output stream.
+     *
+     * @throws IOException  if there is an I/O error.
+     */
+    private void writeObject(ObjectOutputStream stream) throws IOException {
+<span class="nc" id="L1474">        stream.defaultWriteObject();</span>
+<span class="nc" id="L1475">        SerialUtils.writeStroke(this.thermometerStroke, stream);</span>
+<span class="nc" id="L1476">        SerialUtils.writePaint(this.thermometerPaint, stream);</span>
+<span class="nc" id="L1477">        SerialUtils.writePaint(this.valuePaint, stream);</span>
+<span class="nc" id="L1478">        SerialUtils.writePaint(this.mercuryPaint, stream);</span>
+<span class="nc" id="L1479">        SerialUtils.writeStroke(this.subrangeIndicatorStroke, stream);</span>
+<span class="nc" id="L1480">        SerialUtils.writeStroke(this.rangeIndicatorStroke, stream);</span>
+<span class="nc bnc" id="L1481" title="All 2 branches missed.">        for (int i = 0; i &lt; 3; i++) {</span>
+<span class="nc" id="L1482">            SerialUtils.writePaint(this.subrangePaint[i], stream);</span>
+        }
+<span class="nc" id="L1484">    }</span>
+
+    /**
+     * Provides serialization support.
+     *
+     * @param stream  the input stream.
+     *
+     * @throws IOException  if there is an I/O error.
+     * @throws ClassNotFoundException  if there is a classpath problem.
+     */
+    private void readObject(ObjectInputStream stream) throws IOException,
+            ClassNotFoundException {
+<span class="nc" id="L1496">        stream.defaultReadObject();</span>
+<span class="nc" id="L1497">        this.thermometerStroke = SerialUtils.readStroke(stream);</span>
+<span class="nc" id="L1498">        this.thermometerPaint = SerialUtils.readPaint(stream);</span>
+<span class="nc" id="L1499">        this.valuePaint = SerialUtils.readPaint(stream);</span>
+<span class="nc" id="L1500">        this.mercuryPaint = SerialUtils.readPaint(stream);</span>
+<span class="nc" id="L1501">        this.subrangeIndicatorStroke = SerialUtils.readStroke(stream);</span>
+<span class="nc" id="L1502">        this.rangeIndicatorStroke = SerialUtils.readStroke(stream);</span>
+<span class="nc" id="L1503">        this.subrangePaint = new Paint[3];</span>
+<span class="nc bnc" id="L1504" title="All 2 branches missed.">        for (int i = 0; i &lt; 3; i++) {</span>
+<span class="nc" id="L1505">            this.subrangePaint[i] = SerialUtils.readPaint(stream);</span>
+        }
+<span class="nc bnc" id="L1507" title="All 2 branches missed.">        if (this.rangeAxis != null) {</span>
+<span class="nc" id="L1508">            this.rangeAxis.addChangeListener(this);</span>
+        }
+<span class="nc" id="L1510">    }</span>
+
+    /**
+     * Multiplies the range on the domain axis/axes by the specified factor.
+     *
+     * @param factor  the zoom factor.
+     * @param state  the plot state.
+     * @param source  the source point.
+     */
+    @Override
+    public void zoomDomainAxes(double factor, PlotRenderingInfo state,
+                               Point2D source) {
+        // no domain axis to zoom
+<span class="nc" id="L1523">    }</span>
+
+    /**
+     * Multiplies the range on the domain axis/axes by the specified factor.
+     *
+     * @param factor  the zoom factor.
+     * @param state  the plot state.
+     * @param source  the source point.
+     * @param useAnchor  a flag that controls whether or not the source point
+     *         is used for the zoom anchor.
+     */
+    @Override
+    public void zoomDomainAxes(double factor, PlotRenderingInfo state,
+                               Point2D source, boolean useAnchor) {
+        // no domain axis to zoom
+<span class="nc" id="L1538">    }</span>
+
+    /**
+     * Multiplies the range on the range axis/axes by the specified factor.
+     *
+     * @param factor  the zoom factor.
+     * @param state  the plot state.
+     * @param source  the source point.
+     */
+    @Override
+    public void zoomRangeAxes(double factor, PlotRenderingInfo state,
+                              Point2D source) {
+<span class="nc" id="L1550">        this.rangeAxis.resizeRange(factor);</span>
+<span class="nc" id="L1551">    }</span>
+
+    /**
+     * Multiplies the range on the range axis/axes by the specified factor.
+     *
+     * @param factor  the zoom factor.
+     * @param state  the plot state.
+     * @param source  the source point.
+     * @param useAnchor  a flag that controls whether or not the source point
+     *         is used for the zoom anchor.
+     */
+    @Override
+    public void zoomRangeAxes(double factor, PlotRenderingInfo state,
+                              Point2D source, boolean useAnchor) {
+<span class="nc" id="L1565">        double anchorY = this.getRangeAxis().java2DToValue(source.getY(),</span>
+<span class="nc" id="L1566">                state.getDataArea(), RectangleEdge.LEFT);</span>
+<span class="nc" id="L1567">        this.rangeAxis.resizeRange(factor, anchorY);</span>
+<span class="nc" id="L1568">    }</span>
+
+    /**
+     * This method does nothing.
+     *
+     * @param lowerPercent  the lower percent.
+     * @param upperPercent  the upper percent.
+     * @param state  the plot state.
+     * @param source  the source point.
+     */
+    @Override
+    public void zoomDomainAxes(double lowerPercent, double upperPercent,
+                               PlotRenderingInfo state, Point2D source) {
+        // no domain axis to zoom
+<span class="nc" id="L1582">    }</span>
+
+    /**
+     * Zooms the range axes.
+     *
+     * @param lowerPercent  the lower percent.
+     * @param upperPercent  the upper percent.
+     * @param state  the plot state.
+     * @param source  the source point.
+     */
+    @Override
+    public void zoomRangeAxes(double lowerPercent, double upperPercent,
+                              PlotRenderingInfo state, Point2D source) {
+<span class="nc" id="L1595">        this.rangeAxis.zoomRange(lowerPercent, upperPercent);</span>
+<span class="nc" id="L1596">    }</span>
+
+    /**
+     * Returns {@code false}.
+     *
+     * @return A boolean.
+     */
+    @Override
+    public boolean isDomainZoomable() {
+<span class="nc" id="L1605">        return false;</span>
+    }
+
+    /**
+     * Returns {@code true}.
+     *
+     * @return A boolean.
+     */
+    @Override
+    public boolean isRangeZoomable() {
+<span class="nc" id="L1615">        return true;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (1) (14 May 2022 17:53:42)</div></body></html>

@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>XYBoxAnnotationTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (1) (14 May 2022 17:53:42)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart.annotations</a> &gt; <span class="el_source">XYBoxAnnotationTest.java</span></div><h1>XYBoxAnnotationTest.java</h1><pre class="source lang-java linenums">/* ===========================================================
+ * JFreeChart : a free chart library for the Java(tm) platform
+ * ===========================================================
+ *
+ * (C) Copyright 2000-2022, by David Gilbert and Contributors.
+ *
+ * Project Info:  http://www.jfree.org/jfreechart/index.html
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ *
+ * [Oracle and Java are registered trademarks of Oracle and/or its affiliates. 
+ * Other names may be trademarks of their respective owners.]
+ *
+ * ------------------------
+ * XYBoxAnnotationTest.java
+ * ------------------------
+ * (C) Copyright 2005-2022, by David Gilbert and Contributors.
+ *
+ * Original Author:  David Gilbert;
+ * Contributor(s):   -;
+ *
+ */
+
+package org.jfree.chart.annotations;
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.GradientPaint;
+import java.awt.Stroke;
+
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.TestUtils;
+import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.internal.CloneUtils;
+import org.jfree.chart.api.PublicCloneable;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.data.xy.DefaultTableXYDataset;
+import org.jfree.data.xy.XYSeries;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Some tests for the {@link XYBoxAnnotation} class.
+ */
+<span class="fc" id="L60">public class XYBoxAnnotationTest {</span>
+
+    @Test
+    public void testConstructorExceptions() {
+<span class="fc" id="L64">        Stroke stroke = new BasicStroke(2.0f);</span>
+<span class="fc" id="L65">        assertThrows(IllegalArgumentException.class, () -&gt; {</span>
+<span class="pc" id="L66">            XYBoxAnnotation a1 = new XYBoxAnnotation(Double.NaN, 20.0, 100.0, 200.0,</span>
+<span class="fc" id="L67">                stroke, Color.BLUE, Color.RED);</span>
+<span class="nc" id="L68">        });</span>
+<span class="fc" id="L69">        assertThrows(IllegalArgumentException.class, () -&gt; {</span>
+<span class="pc" id="L70">            XYBoxAnnotation a1 = new XYBoxAnnotation(10.0, Double.NaN, 100.0, 200.0,</span>
+<span class="fc" id="L71">                stroke, Color.BLUE, Color.RED);</span>
+<span class="nc" id="L72">        });</span>
+<span class="fc" id="L73">        assertThrows(IllegalArgumentException.class, () -&gt; {</span>
+<span class="pc" id="L74">            XYBoxAnnotation a1 = new XYBoxAnnotation(10.0, 20.0, Double.NaN, 200.0,</span>
+<span class="fc" id="L75">                stroke, Color.BLUE, Color.RED);</span>
+<span class="nc" id="L76">        });</span>
+<span class="fc" id="L77">        assertThrows(IllegalArgumentException.class, () -&gt; {</span>
+<span class="pc" id="L78">            XYBoxAnnotation a1 = new XYBoxAnnotation(10.0, 20.0, 100.0, Double.NaN,</span>
+<span class="fc" id="L79">                stroke, Color.BLUE, Color.RED);</span>
+<span class="nc" id="L80">        });</span>
+<span class="fc" id="L81">    }</span>
+
+    /**
+     * Confirm that the equals method can distinguish all the required fields.
+     */
+    @Test
+    public void testEquals() {
+<span class="fc" id="L88">        XYBoxAnnotation a1 = new XYBoxAnnotation(1.0, 2.0, 3.0, 4.0,</span>
+<span class="fc" id="L89">                new BasicStroke(1.2f), Color.RED, Color.BLUE);</span>
+<span class="fc" id="L90">        XYBoxAnnotation a2 = new XYBoxAnnotation(1.0, 2.0, 3.0, 4.0,</span>
+<span class="fc" id="L91">                new BasicStroke(1.2f), Color.RED, Color.BLUE);</span>
+<span class="fc" id="L92">        assertEquals(a1, a2);</span>
+<span class="fc" id="L93">        assertEquals(a2, a1);</span>
+
+        // x0
+<span class="fc" id="L96">        a1 = new XYBoxAnnotation(2.0, 2.0, 3.0, 4.0, new BasicStroke(1.2f),</span>
+<span class="fc" id="L97">                Color.RED, Color.BLUE);</span>
+<span class="fc" id="L98">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L99">        a2 = new XYBoxAnnotation(2.0, 2.0, 3.0, 4.0, new BasicStroke(1.2f),</span>
+<span class="fc" id="L100">                Color.RED, Color.BLUE);</span>
+<span class="fc" id="L101">        assertEquals(a1, a2);</span>
+
+        // stroke
+<span class="fc" id="L104">        a1 = new XYBoxAnnotation(1.0, 2.0, 3.0, 4.0, new BasicStroke(2.3f),</span>
+<span class="fc" id="L105">                Color.RED, Color.BLUE);</span>
+<span class="fc" id="L106">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L107">        a2 = new XYBoxAnnotation(1.0, 2.0, 3.0, 4.0, new BasicStroke(2.3f),</span>
+<span class="fc" id="L108">                Color.RED, Color.BLUE);</span>
+<span class="fc" id="L109">        assertEquals(a1, a2);</span>
+
+<span class="fc" id="L111">        GradientPaint gp1a = new GradientPaint(1.0f, 2.0f, Color.BLUE,</span>
+<span class="fc" id="L112">                3.0f, 4.0f, Color.RED);</span>
+<span class="fc" id="L113">        GradientPaint gp1b = new GradientPaint(1.0f, 2.0f, Color.BLUE,</span>
+<span class="fc" id="L114">                3.0f, 4.0f, Color.RED);</span>
+<span class="fc" id="L115">        GradientPaint gp2a = new GradientPaint(5.0f, 6.0f, Color.pink,</span>
+<span class="fc" id="L116">                7.0f, 8.0f, Color.WHITE);</span>
+<span class="fc" id="L117">        GradientPaint gp2b = new GradientPaint(5.0f, 6.0f, Color.pink,</span>
+<span class="fc" id="L118">                7.0f, 8.0f, Color.WHITE);</span>
+
+        // outlinePaint
+<span class="fc" id="L121">        a1 = new XYBoxAnnotation(1.0, 2.0, 3.0, 4.0, new BasicStroke(2.3f),</span>
+<span class="fc" id="L122">                gp1a, Color.BLUE);</span>
+<span class="fc" id="L123">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L124">        a2 = new XYBoxAnnotation(1.0, 2.0, 3.0, 4.0, new BasicStroke(2.3f),</span>
+<span class="fc" id="L125">                gp1b, Color.BLUE);</span>
+<span class="fc" id="L126">        assertEquals(a1, a2);</span>
+
+        // fillPaint
+<span class="fc" id="L129">        a1 = new XYBoxAnnotation(1.0, 2.0, 3.0, 4.0, new BasicStroke(2.3f),</span>
+<span class="fc" id="L130">                gp1a, gp2a);</span>
+<span class="fc" id="L131">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L132">        a2 = new XYBoxAnnotation(1.0, 2.0, 3.0, 4.0, new BasicStroke(2.3f),</span>
+<span class="fc" id="L133">                gp1b, gp2b);</span>
+<span class="fc" id="L134">        assertEquals(a1, a2);</span>
+<span class="fc" id="L135">    }</span>
+
+    /**
+     * Two objects that are equal are required to return the same hashCode.
+     */
+    @Test
+    public void testHashCode() {
+<span class="fc" id="L142">        XYBoxAnnotation a1 = new XYBoxAnnotation(1.0, 2.0, 3.0, 4.0,</span>
+<span class="fc" id="L143">                new BasicStroke(1.2f), Color.RED, Color.BLUE);</span>
+<span class="fc" id="L144">        XYBoxAnnotation a2 = new XYBoxAnnotation(1.0, 2.0, 3.0, 4.0,</span>
+<span class="fc" id="L145">                new BasicStroke(1.2f), Color.RED, Color.BLUE);</span>
+<span class="fc" id="L146">        assertEquals(a1, a2);</span>
+<span class="fc" id="L147">        int h1 = a1.hashCode();</span>
+<span class="fc" id="L148">        int h2 = a2.hashCode();</span>
+<span class="fc" id="L149">        assertEquals(h1, h2);</span>
+<span class="fc" id="L150">    }</span>
+
+    /**
+     * Confirm that cloning works.
+     */
+    @Test
+    public void testCloning() throws CloneNotSupportedException {
+<span class="fc" id="L157">        XYBoxAnnotation a1 = new XYBoxAnnotation(1.0, 2.0, 3.0, 4.0,</span>
+<span class="fc" id="L158">                new BasicStroke(1.2f), Color.RED, Color.BLUE);</span>
+<span class="fc" id="L159">        XYBoxAnnotation a2 = CloneUtils.clone(a1);</span>
+<span class="fc" id="L160">        assertNotSame(a1, a2);</span>
+<span class="fc" id="L161">        assertSame(a1.getClass(), a2.getClass());</span>
+<span class="fc" id="L162">        assertEquals(a1, a2);</span>
+<span class="fc" id="L163">    }</span>
+
+    /**
+     * Checks that this class implements PublicCloneable.
+     */
+    @Test
+    public void testPublicCloneable() {
+<span class="fc" id="L170">        XYBoxAnnotation a1 = new XYBoxAnnotation(1.0, 2.0, 3.0, 4.0,</span>
+<span class="fc" id="L171">                new BasicStroke(1.2f), Color.RED, Color.BLUE);</span>
+<span class="fc" id="L172">        assertTrue(a1 instanceof PublicCloneable);</span>
+<span class="fc" id="L173">    }</span>
+
+    /**
+     * Serialize an instance, restore it, and check for equality.
+     */
+    @Test
+    public void testSerialization() {
+<span class="fc" id="L180">        XYBoxAnnotation a1 = new XYBoxAnnotation(1.0, 2.0, 3.0, 4.0,</span>
+<span class="fc" id="L181">                new BasicStroke(1.2f), Color.RED, Color.BLUE);</span>
+<span class="fc" id="L182">        XYBoxAnnotation a2 = TestUtils.serialised(a1);</span>
+<span class="fc" id="L183">        assertEquals(a1, a2);</span>
+<span class="fc" id="L184">    }</span>
+
+    /**
+     * Draws the chart with a {@code null} info object to make sure that
+     * no exceptions are thrown.
+     */
+    @Test
+    public void testDrawWithNullInfo() {
+        try {
+<span class="fc" id="L193">            DefaultTableXYDataset&lt;String&gt; dataset = new DefaultTableXYDataset&lt;&gt;();</span>
+
+<span class="fc" id="L195">            XYSeries&lt;String&gt; s1 = new XYSeries&lt;&gt;(&quot;Series 1&quot;, true, false);</span>
+<span class="fc" id="L196">            s1.add(5.0, 5.0);</span>
+<span class="fc" id="L197">            s1.add(10.0, 15.5);</span>
+<span class="fc" id="L198">            s1.add(15.0, 9.5);</span>
+<span class="fc" id="L199">            s1.add(20.0, 7.5);</span>
+<span class="fc" id="L200">            dataset.addSeries(s1);</span>
+
+<span class="fc" id="L202">            XYSeries&lt;String&gt; s2 = new XYSeries&lt;&gt;(&quot;Series 2&quot;, true, false);</span>
+<span class="fc" id="L203">            s2.add(5.0, 5.0);</span>
+<span class="fc" id="L204">            s2.add(10.0, 15.5);</span>
+<span class="fc" id="L205">            s2.add(15.0, 9.5);</span>
+<span class="fc" id="L206">            s2.add(20.0, 3.5);</span>
+<span class="fc" id="L207">            dataset.addSeries(s2);</span>
+<span class="fc" id="L208">            XYPlot&lt;String&gt; plot = new XYPlot&lt;&gt;(dataset,</span>
+<span class="fc" id="L209">                    new NumberAxis(&quot;X&quot;), new NumberAxis(&quot;Y&quot;),</span>
+<span class="fc" id="L210">                    new XYLineAndShapeRenderer());</span>
+<span class="fc" id="L211">            plot.addAnnotation(new XYBoxAnnotation(10.0, 12.0, 3.0, 4.0,</span>
+<span class="fc" id="L212">                    new BasicStroke(1.2f), Color.RED, Color.BLUE));</span>
+<span class="fc" id="L213">            JFreeChart chart = new JFreeChart(plot);</span>
+<span class="fc" id="L214">            /* BufferedImage image = */ chart.createBufferedImage(300, 200,</span>
+<span class="fc" id="L215">                    null);</span>
+<span class="fc" id="L216">        }</span>
+<span class="nc" id="L217">        catch (NullPointerException e) {</span>
+<span class="nc" id="L218">            fail(&quot;No exception should be triggered.&quot;);</span>
+        }
+<span class="fc" id="L220">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (1) (14 May 2022 17:53:42)</div></body></html>

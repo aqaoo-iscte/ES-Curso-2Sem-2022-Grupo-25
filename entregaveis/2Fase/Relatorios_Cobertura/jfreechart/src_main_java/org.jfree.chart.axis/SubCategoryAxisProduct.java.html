@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>SubCategoryAxisProduct.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (1) (14 May 2022 17:53:42)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart.axis</a> &gt; <span class="el_source">SubCategoryAxisProduct.java</span></div><h1>SubCategoryAxisProduct.java</h1><pre class="source lang-java linenums">package org.jfree.chart.axis;
+
+
+import java.util.List;
+import java.awt.Font;
+import org.jfree.chart.internal.Args;
+import org.jfree.chart.event.AxisChangeEvent;
+import java.io.Serializable;
+
+<span class="fc" id="L10">public class SubCategoryAxisProduct implements Serializable, Cloneable {</span>
+	private List subCategories;
+<span class="fc" id="L12">	private Font subLabelFont = new Font(&quot;SansSerif&quot;, Font.PLAIN, 10);</span>
+
+	public List getSubCategories() {
+<span class="fc" id="L15">		return subCategories;</span>
+	}
+
+	public void setSubCategories(List subCategories) {
+<span class="fc" id="L19">		this.subCategories = subCategories;</span>
+<span class="fc" id="L20">	}</span>
+
+	public Font getSubLabelFont() {
+<span class="fc" id="L23">		return subLabelFont;</span>
+	}
+
+	/**
+	* Adds a sub-category to the axis and sends an  {@link AxisChangeEvent}  to all registered listeners.
+	* @param subCategory   the sub-category ( {@code  null}  not permitted).
+	*/
+	public void addSubCategory(Comparable subCategory, SubCategoryAxis subCategoryAxis) {
+<span class="fc" id="L31">		Args.nullNotPermitted(subCategory, &quot;subCategory&quot;);</span>
+<span class="fc" id="L32">		this.subCategories.add(subCategory);</span>
+<span class="fc" id="L33">		subCategoryAxis.notifyListeners(new AxisChangeEvent(subCategoryAxis));</span>
+<span class="fc" id="L34">	}</span>
+
+	/**
+	* Sets the font used to display the sub-category labels and sends an {@link AxisChangeEvent}  to all registered listeners.
+	* @param font   the font ( {@code  null}  not permitted).
+	* @see #getSubLabelFont()
+	*/
+	public void setSubLabelFont(Font font, SubCategoryAxis subCategoryAxis) {
+<span class="fc" id="L42">		Args.nullNotPermitted(font, &quot;font&quot;);</span>
+<span class="fc" id="L43">		this.subLabelFont = font;</span>
+<span class="fc" id="L44">		subCategoryAxis.notifyListeners(new AxisChangeEvent(subCategoryAxis));</span>
+<span class="fc" id="L45">	}</span>
+
+	public Object clone() throws CloneNotSupportedException {
+<span class="fc" id="L48">		return (SubCategoryAxisProduct) super.clone();</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (1) (14 May 2022 17:53:42)</div></body></html>

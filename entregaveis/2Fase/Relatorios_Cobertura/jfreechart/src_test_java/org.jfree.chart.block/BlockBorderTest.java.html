@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>BlockBorderTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (1) (14 May 2022 17:53:42)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart.block</a> &gt; <span class="el_source">BlockBorderTest.java</span></div><h1>BlockBorderTest.java</h1><pre class="source lang-java linenums">/* ===========================================================
+ * JFreeChart : a free chart library for the Java(tm) platform
+ * ===========================================================
+ *
+ * (C) Copyright 2000-2022, by David Gilbert and Contributors.
+ *
+ * Project Info:  http://www.jfree.org/jfreechart/index.html
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ *
+ * [Oracle and Java are registered trademarks of Oracle and/or its affiliates. 
+ * Other names may be trademarks of their respective owners.]
+ *
+ * --------------------
+ * BlockBorderTest.java
+ * --------------------
+ * (C) Copyright 2005-2022, by David Gilbert and Contributors.
+ *
+ * Original Author:  David Gilbert;
+ * Contributor(s):   -;
+ *
+ */
+
+package org.jfree.chart.block;
+
+import java.awt.Color;
+import java.awt.GradientPaint;
+
+import org.jfree.chart.TestUtils;
+import org.jfree.chart.api.RectangleInsets;
+import org.jfree.chart.api.UnitType;
+
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Tests for the {@link BlockBorder} class.
+ */
+<span class="fc" id="L53">public class BlockBorderTest {</span>
+
+    /**
+     * Confirm that the equals() method can distinguish all the required fields.
+     */
+    @Test
+    public void testEquals() {
+<span class="fc" id="L60">        BlockBorder b1 = new BlockBorder(new RectangleInsets(1.0, 2.0, 3.0,</span>
+<span class="fc" id="L61">                4.0), Color.RED);</span>
+<span class="fc" id="L62">        BlockBorder b2 = new BlockBorder(new RectangleInsets(1.0, 2.0, 3.0,</span>
+<span class="fc" id="L63">                4.0), Color.RED);</span>
+<span class="fc" id="L64">        assertEquals(b1, b2);</span>
+<span class="fc" id="L65">        assertEquals(b2, b2);</span>
+
+        // insets
+<span class="fc" id="L68">        b1 = new BlockBorder(new RectangleInsets(UnitType.RELATIVE, 1.0, 2.0,</span>
+<span class="fc" id="L69">                3.0, 4.0), Color.RED);</span>
+<span class="fc" id="L70">        assertNotEquals(b1, b2);</span>
+<span class="fc" id="L71">        b2 = new BlockBorder(new RectangleInsets(UnitType.RELATIVE, 1.0, 2.0,</span>
+<span class="fc" id="L72">                3.0, 4.0), Color.RED);</span>
+<span class="fc" id="L73">        assertEquals(b1, b2);</span>
+
+        // paint
+<span class="fc" id="L76">        b1 = new BlockBorder(new RectangleInsets(1.0, 2.0, 3.0, 4.0),</span>
+<span class="fc" id="L77">                Color.BLUE);</span>
+<span class="fc" id="L78">        assertNotEquals(b1, b2);</span>
+<span class="fc" id="L79">        b2 = new BlockBorder(new RectangleInsets(1.0, 2.0, 3.0, 4.0),</span>
+<span class="fc" id="L80">                Color.BLUE);</span>
+<span class="fc" id="L81">        assertEquals(b1, b2);</span>
+<span class="fc" id="L82">    }</span>
+
+    /**
+     * Immutable - cloning not necessary.
+     */
+    @Test
+    public void testCloning() {
+<span class="fc" id="L89">        BlockBorder b1 = new BlockBorder();</span>
+<span class="fc" id="L90">        assertFalse(b1 instanceof Cloneable);</span>
+<span class="fc" id="L91">    }</span>
+
+    /**
+     * Serialize an instance, restore it, and check for equality.
+     */
+    @Test
+    public void testSerialization() {
+<span class="fc" id="L98">        BlockBorder b1 = new BlockBorder(new RectangleInsets(1.0, 2.0, 3.0,</span>
+<span class="fc" id="L99">                4.0), new GradientPaint(1.0f, 2.0f, Color.RED, 3.0f, 4.0f,</span>
+<span class="fc" id="L100">                Color.YELLOW));</span>
+<span class="fc" id="L101">        BlockBorder b2 = TestUtils.serialised(b1);</span>
+<span class="fc" id="L102">        assertEquals(b1, b2);</span>
+<span class="fc" id="L103">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (1) (14 May 2022 17:53:42)</div></body></html>

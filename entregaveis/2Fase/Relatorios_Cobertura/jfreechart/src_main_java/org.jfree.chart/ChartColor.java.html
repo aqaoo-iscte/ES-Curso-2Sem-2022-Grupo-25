@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>ChartColor.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (1) (14 May 2022 17:53:42)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart</a> &gt; <span class="el_source">ChartColor.java</span></div><h1>ChartColor.java</h1><pre class="source lang-java linenums">/* ===========================================================
+ * JFreeChart : a free chart library for the Java(tm) platform
+ * ===========================================================
+ *
+ * (C) Copyright 2000-2022, by David Gilbert and Contributors.
+ *
+ * Project Info:  http://www.jfree.org/jfreechart/index.html
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ *
+ * [Oracle and Java are registered trademarks of Oracle and/or its affiliates. 
+ * Other names may be trademarks of their respective owners.]
+ *
+ * ---------------
+ * ChartColor.java
+ * ---------------
+ * (C) Copyright 2003-2020, by Cameron Riley and Contributors.
+ *
+ * Original Author:  Cameron Riley;
+ * Contributor(s):   David Gilbert;
+ *
+ */
+
+package org.jfree.chart;
+
+
+import java.awt.Color;
+import java.awt.Paint;
+
+/**
+ * Class to extend the number of Colors available to the charts. This
+ * extends the java.awt.Color object and extends the number of final
+ * Colors publicly accessible.
+ */
+public class ChartColor extends Color {
+
+    /** A very dark red color. */
+<span class="fc" id="L51">    public static final Color VERY_DARK_RED = new Color(0x80, 0x00, 0x00);</span>
+
+    /** A dark red color. */
+<span class="fc" id="L54">    public static final Color DARK_RED = new Color(0xc0, 0x00, 0x00);</span>
+
+    /** A light red color. */
+<span class="fc" id="L57">    public static final Color LIGHT_RED = new Color(0xFF, 0x40, 0x40);</span>
+
+    /** A very light red color. */
+<span class="fc" id="L60">    public static final Color VERY_LIGHT_RED = new Color(0xFF, 0x80, 0x80);</span>
+
+    /** A very dark yellow color. */
+<span class="fc" id="L63">    public static final Color VERY_DARK_YELLOW = new Color(0x80, 0x80, 0x00);</span>
+
+    /** A dark yellow color. */
+<span class="fc" id="L66">    public static final Color DARK_YELLOW = new Color(0xC0, 0xC0, 0x00);</span>
+
+    /** A light yellow color. */
+<span class="fc" id="L69">    public static final Color LIGHT_YELLOW = new Color(0xFF, 0xFF, 0x40);</span>
+
+    /** A very light yellow color. */
+<span class="fc" id="L72">    public static final Color VERY_LIGHT_YELLOW = new Color(0xFF, 0xFF, 0x80);</span>
+
+    /** A very dark green color. */
+<span class="fc" id="L75">    public static final Color VERY_DARK_GREEN = new Color(0x00, 0x80, 0x00);</span>
+
+    /** A dark green color. */
+<span class="fc" id="L78">    public static final Color DARK_GREEN = new Color(0x00, 0xC0, 0x00);</span>
+
+    /** A light green color. */
+<span class="fc" id="L81">    public static final Color LIGHT_GREEN = new Color(0x40, 0xFF, 0x40);</span>
+
+    /** A very light green color. */
+<span class="fc" id="L84">    public static final Color VERY_LIGHT_GREEN = new Color(0x80, 0xFF, 0x80);</span>
+
+    /** A very dark cyan color. */
+<span class="fc" id="L87">    public static final Color VERY_DARK_CYAN = new Color(0x00, 0x80, 0x80);</span>
+
+    /** A dark cyan color. */
+<span class="fc" id="L90">    public static final Color DARK_CYAN = new Color(0x00, 0xC0, 0xC0);</span>
+
+    /** A light cyan color. */
+<span class="fc" id="L93">    public static final Color LIGHT_CYAN = new Color(0x40, 0xFF, 0xFF);</span>
+
+    /** Aa very light cyan color. */
+<span class="fc" id="L96">    public static final Color VERY_LIGHT_CYAN = new Color(0x80, 0xFF, 0xFF);</span>
+
+    /** A very dark blue color. */
+<span class="fc" id="L99">    public static final Color VERY_DARK_BLUE = new Color(0x00, 0x00, 0x80);</span>
+
+    /** A dark blue color. */
+<span class="fc" id="L102">    public static final Color DARK_BLUE = new Color(0x00, 0x00, 0xC0);</span>
+
+    /** A light blue color. */
+<span class="fc" id="L105">    public static final Color LIGHT_BLUE = new Color(0x40, 0x40, 0xFF);</span>
+
+    /** A very light blue color. */
+<span class="fc" id="L108">    public static final Color VERY_LIGHT_BLUE = new Color(0x80, 0x80, 0xFF);</span>
+
+    /** A very dark magenta/purple color. */
+<span class="fc" id="L111">    public static final Color VERY_DARK_MAGENTA = new Color(0x80, 0x00, 0x80);</span>
+
+    /** A dark magenta color. */
+<span class="fc" id="L114">    public static final Color DARK_MAGENTA = new Color(0xC0, 0x00, 0xC0);</span>
+
+    /** A light magenta color. */
+<span class="fc" id="L117">    public static final Color LIGHT_MAGENTA = new Color(0xFF, 0x40, 0xFF);</span>
+
+    /** A very light magenta color. */
+<span class="fc" id="L120">    public static final Color VERY_LIGHT_MAGENTA = new Color(0xFF, 0x80, 0xFF);</span>
+
+    /**
+     * Creates a Color with an opaque sRGB with red, green and blue values in
+     * range 0-255.
+     *
+     * @param r  the red component in range 0x00-0xFF.
+     * @param g  the green component in range 0x00-0xFF.
+     * @param b  the blue component in range 0x00-0xFF.
+     */
+    public ChartColor(int r, int g, int b) {
+<span class="nc" id="L131">        super(r, g, b);</span>
+<span class="nc" id="L132">    }</span>
+
+    /**
+     * Convenience method to return an array of {@code Paint} objects that
+     * represent the pre-defined colors in the {@code Color} and
+     * {@code ChartColor} objects.
+     *
+     * @return An array of objects with the {@code Paint} interface.
+     */
+    public static Paint[] createDefaultPaintArray() {
+
+<span class="fc" id="L143">        return new Paint[] {</span>
+<span class="fc" id="L144">            new Color(0xFF, 0x55, 0x55),</span>
+<span class="fc" id="L145">            new Color(0x55, 0x55, 0xFF),</span>
+<span class="fc" id="L146">            new Color(0x55, 0xFF, 0x55),</span>
+<span class="fc" id="L147">            new Color(0xFF, 0xFF, 0x55),</span>
+<span class="fc" id="L148">            new Color(0xFF, 0x55, 0xFF),</span>
+<span class="fc" id="L149">            new Color(0x55, 0xFF, 0xFF),</span>
+<span class="fc" id="L150">            Color.PINK,</span>
+<span class="fc" id="L151">            Color.GRAY,</span>
+<span class="fc" id="L152">            ChartColor.DARK_RED,</span>
+<span class="fc" id="L153">            ChartColor.DARK_BLUE,</span>
+<span class="fc" id="L154">            ChartColor.DARK_GREEN,</span>
+<span class="fc" id="L155">            ChartColor.DARK_YELLOW,</span>
+<span class="fc" id="L156">            ChartColor.DARK_MAGENTA,</span>
+<span class="fc" id="L157">            ChartColor.DARK_CYAN,</span>
+<span class="fc" id="L158">            Color.DARK_GRAY,</span>
+<span class="fc" id="L159">            ChartColor.LIGHT_RED,</span>
+<span class="fc" id="L160">            ChartColor.LIGHT_BLUE,</span>
+<span class="fc" id="L161">            ChartColor.LIGHT_GREEN,</span>
+<span class="fc" id="L162">            ChartColor.LIGHT_YELLOW,</span>
+<span class="fc" id="L163">            ChartColor.LIGHT_MAGENTA,</span>
+<span class="fc" id="L164">            ChartColor.LIGHT_CYAN,</span>
+<span class="fc" id="L165">            Color.LIGHT_GRAY,</span>
+<span class="fc" id="L166">            ChartColor.VERY_DARK_RED,</span>
+<span class="fc" id="L167">            ChartColor.VERY_DARK_BLUE,</span>
+<span class="fc" id="L168">            ChartColor.VERY_DARK_GREEN,</span>
+<span class="fc" id="L169">            ChartColor.VERY_DARK_YELLOW,</span>
+<span class="fc" id="L170">            ChartColor.VERY_DARK_MAGENTA,</span>
+<span class="fc" id="L171">            ChartColor.VERY_DARK_CYAN,</span>
+<span class="fc" id="L172">            ChartColor.VERY_LIGHT_RED,</span>
+<span class="fc" id="L173">            ChartColor.VERY_LIGHT_BLUE,</span>
+<span class="fc" id="L174">            ChartColor.VERY_LIGHT_GREEN,</span>
+<span class="fc" id="L175">            ChartColor.VERY_LIGHT_YELLOW,</span>
+<span class="fc" id="L176">            ChartColor.VERY_LIGHT_MAGENTA,</span>
+<span class="fc" id="L177">            ChartColor.VERY_LIGHT_CYAN</span>
+        };
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (1) (14 May 2022 17:53:42)</div></body></html>

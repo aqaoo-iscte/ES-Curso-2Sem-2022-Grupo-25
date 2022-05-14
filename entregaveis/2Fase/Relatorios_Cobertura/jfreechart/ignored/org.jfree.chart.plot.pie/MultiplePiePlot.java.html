@@ -1,0 +1,636 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>MultiplePiePlot.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (1) (14 May 2022 17:53:42)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">ignored</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart.plot.pie</a> &gt; <span class="el_source">MultiplePiePlot.java</span></div><h1>MultiplePiePlot.java</h1><pre class="source lang-java linenums">/* ===========================================================
+ * JFreeChart : a free chart library for the Java(tm) platform
+ * ===========================================================
+ *
+ * (C) Copyright 2000-2022, by David Gilbert and Contributors.
+ *
+ * Project Info:  http://www.jfree.org/jfreechart/index.html
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ *
+ * [Oracle and Java are registered trademarks of Oracle and/or its affiliates. 
+ * Other names may be trademarks of their respective owners.]
+ *
+ * --------------------
+ * MultiplePiePlot.java
+ * --------------------
+ * (C) Copyright 2004-2022, by David Gilbert.
+ *
+ * Original Author:  David Gilbert;
+ * Contributor(s):   Brian Cabana (patch 1943021);
+ *
+ */
+
+package org.jfree.chart.plot.pie;
+
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics2D;
+import java.awt.Paint;
+import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+import org.jfree.chart.ChartRenderingInfo;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.legend.LegendItem;
+import org.jfree.chart.legend.LegendItemCollection;
+import org.jfree.chart.event.PlotChangeEvent;
+import org.jfree.chart.title.TextTitle;
+import org.jfree.chart.api.RectangleEdge;
+import org.jfree.chart.api.RectangleInsets;
+import org.jfree.chart.internal.PaintUtils;
+import org.jfree.chart.internal.Args;
+import org.jfree.chart.internal.SerialUtils;
+import org.jfree.chart.internal.ShapeUtils;
+import org.jfree.chart.api.TableOrder;
+import org.jfree.chart.internal.CloneUtils;
+import org.jfree.chart.plot.Plot;
+import org.jfree.chart.plot.PlotRenderingInfo;
+import org.jfree.chart.plot.PlotState;
+import org.jfree.data.category.CategoryDataset;
+import org.jfree.data.category.CategoryToPieDataset;
+import org.jfree.data.general.DatasetChangeEvent;
+import org.jfree.data.general.DatasetUtils;
+import org.jfree.data.general.PieDataset;
+
+/**
+ * A plot that displays multiple pie plots using data from a
+ * {@link CategoryDataset}.
+ */
+<span class="nc bnc" id="L84" title="All 2 branches missed.">public class MultiplePiePlot extends Plot implements Cloneable, Serializable {</span>
+
+    /** For serialization. */
+<span class="nc" id="L87">    private static final long serialVersionUID = -355377800470807389L;</span>
+
+    /** The chart object that draws the individual pie charts. */
+    private JFreeChart pieChart;
+
+    /** The dataset. */
+    private CategoryDataset dataset;
+
+    /** The data extract order (by row or by column). */
+    private TableOrder dataExtractOrder;
+
+    /** The pie section limit percentage. */
+<span class="nc" id="L99">    private double limit = 0.0;</span>
+
+    /** The key for the aggregated items. */
+    private Comparable aggregatedItemsKey;
+
+    /** The paint for the aggregated items. */
+    private transient Paint aggregatedItemsPaint;
+
+    /** The colors to use for each section. */
+    private transient Map sectionPaints;
+
+    /** The legend item shape (never null). */
+    private transient Shape legendItemShape;
+
+    /**
+     * Creates a new plot with no data.
+     */
+    public MultiplePiePlot() {
+<span class="nc" id="L117">        this(null);</span>
+<span class="nc" id="L118">    }</span>
+
+    /**
+     * Creates a new plot.
+     *
+     * @param dataset  the dataset ({@code null} permitted).
+     */
+    public MultiplePiePlot(CategoryDataset dataset) {
+<span class="nc" id="L126">        super();</span>
+<span class="nc" id="L127">        setDataset(dataset);</span>
+<span class="nc" id="L128">        PiePlot piePlot = new PiePlot(null);</span>
+<span class="nc" id="L129">        piePlot.setIgnoreNullValues(true);</span>
+<span class="nc" id="L130">        this.pieChart = new JFreeChart(piePlot);</span>
+<span class="nc" id="L131">        this.pieChart.removeLegend();</span>
+<span class="nc" id="L132">        this.dataExtractOrder = TableOrder.BY_COLUMN;</span>
+<span class="nc" id="L133">        this.pieChart.setBackgroundPaint(null);</span>
+<span class="nc" id="L134">        TextTitle seriesTitle = new TextTitle(&quot;Series Title&quot;,</span>
+<span class="nc" id="L135">                new Font(&quot;SansSerif&quot;, Font.BOLD, 12));</span>
+<span class="nc" id="L136">        seriesTitle.setPosition(RectangleEdge.BOTTOM);</span>
+<span class="nc" id="L137">        this.pieChart.setTitle(seriesTitle);</span>
+<span class="nc" id="L138">        this.aggregatedItemsKey = &quot;Other&quot;;</span>
+<span class="nc" id="L139">        this.aggregatedItemsPaint = Color.lightGray;</span>
+<span class="nc" id="L140">        this.sectionPaints = new HashMap();</span>
+<span class="nc" id="L141">        this.legendItemShape = new Ellipse2D.Double(-4.0, -4.0, 8.0, 8.0);</span>
+<span class="nc" id="L142">    }</span>
+
+    /**
+     * Returns the dataset used by the plot.
+     *
+     * @return The dataset (possibly {@code null}).
+     */
+    public CategoryDataset getDataset() {
+<span class="nc" id="L150">        return this.dataset;</span>
+    }
+
+    /**
+     * Sets the dataset used by the plot and sends a {@link PlotChangeEvent}
+     * to all registered listeners.
+     *
+     * @param dataset  the dataset ({@code null} permitted).
+     */
+    public void setDataset(CategoryDataset dataset) {
+        // if there is an existing dataset, remove the plot from the list of
+        // change listeners...
+<span class="nc bnc" id="L162" title="All 2 branches missed.">        if (this.dataset != null) {</span>
+<span class="nc" id="L163">            this.dataset.removeChangeListener(this);</span>
+        }
+
+        // set the new dataset, and register the chart as a change listener...
+<span class="nc" id="L167">        this.dataset = dataset;</span>
+<span class="nc bnc" id="L168" title="All 2 branches missed.">        if (dataset != null) {</span>
+<span class="nc" id="L169">            dataset.addChangeListener(this);</span>
+        }
+
+        // send a dataset change event to self to trigger plot change event
+<span class="nc" id="L173">        datasetChanged(new DatasetChangeEvent(this, dataset));</span>
+<span class="nc" id="L174">    }</span>
+
+    /**
+     * Returns the pie chart that is used to draw the individual pie plots.
+     * Note that there are some attributes on this chart instance that will
+     * be ignored at rendering time (for example, legend item settings).
+     *
+     * @return The pie chart (never {@code null}).
+     *
+     * @see #setPieChart(JFreeChart)
+     */
+    public JFreeChart getPieChart() {
+<span class="nc" id="L186">        return this.pieChart;</span>
+    }
+
+    /**
+     * Sets the chart that is used to draw the individual pie plots.  The
+     * chart's plot must be an instance of {@link PiePlot}.
+     *
+     * @param pieChart  the pie chart ({@code null} not permitted).
+     *
+     * @see #getPieChart()
+     */
+    public void setPieChart(JFreeChart pieChart) {
+<span class="nc" id="L198">        Args.nullNotPermitted(pieChart, &quot;pieChart&quot;);</span>
+<span class="nc bnc" id="L199" title="All 2 branches missed.">        if (!(pieChart.getPlot() instanceof PiePlot)) {</span>
+<span class="nc" id="L200">            throw new IllegalArgumentException(&quot;The 'pieChart' argument must &quot;</span>
+                    + &quot;be a chart based on a PiePlot.&quot;);
+        }
+<span class="nc" id="L203">        this.pieChart = pieChart;</span>
+<span class="nc" id="L204">        fireChangeEvent();</span>
+<span class="nc" id="L205">    }</span>
+
+    /**
+     * Returns the data extract order (by row or by column).
+     *
+     * @return The data extract order (never {@code null}).
+     */
+    public TableOrder getDataExtractOrder() {
+<span class="nc" id="L213">        return this.dataExtractOrder;</span>
+    }
+
+    /**
+     * Sets the data extract order (by row or by column) and sends a
+     * {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param order  the order ({@code null} not permitted).
+     */
+    public void setDataExtractOrder(TableOrder order) {
+<span class="nc" id="L223">        Args.nullNotPermitted(order, &quot;order&quot;);</span>
+<span class="nc" id="L224">        this.dataExtractOrder = order;</span>
+<span class="nc" id="L225">        fireChangeEvent();</span>
+<span class="nc" id="L226">    }</span>
+
+    /**
+     * Returns the limit (as a percentage) below which small pie sections are
+     * aggregated.
+     *
+     * @return The limit percentage.
+     */
+    public double getLimit() {
+<span class="nc" id="L235">        return this.limit;</span>
+    }
+
+    /**
+     * Sets the limit below which pie sections are aggregated.
+     * Set this to 0.0 if you don't want any aggregation to occur.
+     *
+     * @param limit  the limit percent.
+     */
+    public void setLimit(double limit) {
+<span class="nc" id="L245">        this.limit = limit;</span>
+<span class="nc" id="L246">        fireChangeEvent();</span>
+<span class="nc" id="L247">    }</span>
+
+    /**
+     * Returns the key for aggregated items in the pie plots, if there are any.
+     * The default value is &quot;Other&quot;.
+     *
+     * @return The aggregated items key.
+     */
+    public Comparable getAggregatedItemsKey() {
+<span class="nc" id="L256">        return this.aggregatedItemsKey;</span>
+    }
+
+    /**
+     * Sets the key for aggregated items in the pie plots.  You must ensure
+     * that this doesn't clash with any keys in the dataset.
+     *
+     * @param key  the key ({@code null} not permitted).
+     */
+    public void setAggregatedItemsKey(Comparable key) {
+<span class="nc" id="L266">        Args.nullNotPermitted(key, &quot;key&quot;);</span>
+<span class="nc" id="L267">        this.aggregatedItemsKey = key;</span>
+<span class="nc" id="L268">        fireChangeEvent();</span>
+<span class="nc" id="L269">    }</span>
+
+    /**
+     * Returns the paint used to draw the pie section representing the
+     * aggregated items.  The default value is {code Color.lightGray}.
+     *
+     * @return The paint.
+     */
+    public Paint getAggregatedItemsPaint() {
+<span class="nc" id="L278">        return this.aggregatedItemsPaint;</span>
+    }
+
+    /**
+     * Sets the paint used to draw the pie section representing the aggregated
+     * items and sends a {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param paint  the paint ({@code null} not permitted).
+     */
+    public void setAggregatedItemsPaint(Paint paint) {
+<span class="nc" id="L288">        Args.nullNotPermitted(paint, &quot;paint&quot;);</span>
+<span class="nc" id="L289">        this.aggregatedItemsPaint = paint;</span>
+<span class="nc" id="L290">        fireChangeEvent();</span>
+<span class="nc" id="L291">    }</span>
+
+    /**
+     * Returns a short string describing the type of plot.
+     *
+     * @return The plot type.
+     */
+    @Override
+    public String getPlotType() {
+<span class="nc" id="L300">        return &quot;Multiple Pie Plot&quot;;</span>
+         // TODO: need to fetch this from localised resources
+    }
+
+    /**
+     * Returns the shape used for legend items.
+     *
+     * @return The shape (never {@code null}).
+     *
+     * @see #setLegendItemShape(Shape)
+     */
+    public Shape getLegendItemShape() {
+<span class="nc" id="L312">        return this.legendItemShape;</span>
+    }
+
+    /**
+     * Sets the shape used for legend items and sends a {@link PlotChangeEvent}
+     * to all registered listeners.
+     *
+     * @param shape  the shape ({@code null} not permitted).
+     *
+     * @see #getLegendItemShape()
+     */
+    public void setLegendItemShape(Shape shape) {
+<span class="nc" id="L324">        Args.nullNotPermitted(shape, &quot;shape&quot;);</span>
+<span class="nc" id="L325">        this.legendItemShape = shape;</span>
+<span class="nc" id="L326">        fireChangeEvent();</span>
+<span class="nc" id="L327">    }</span>
+
+    /**
+     * Draws the plot on a Java 2D graphics device (such as the screen or a
+     * printer).
+     *
+     * @param g2  the graphics device.
+     * @param area  the area within which the plot should be drawn.
+     * @param anchor  the anchor point ({@code null} permitted).
+     * @param parentState  the state from the parent plot, if there is one.
+     * @param info  collects info about the drawing.
+     */
+    @Override
+    public void draw(Graphics2D g2, Rectangle2D area, Point2D anchor,
+            PlotState parentState, PlotRenderingInfo info) {
+
+        // adjust the drawing area for the plot insets (if any)...
+<span class="nc" id="L344">        RectangleInsets insets = getInsets();</span>
+<span class="nc" id="L345">        insets.trim(area);</span>
+<span class="nc" id="L346">        drawBackground(g2, area);</span>
+<span class="nc" id="L347">        drawOutline(g2, area);</span>
+
+        // check that there is some data to display...
+<span class="nc bnc" id="L350" title="All 2 branches missed.">        if (DatasetUtils.isEmptyOrNull(this.dataset)) {</span>
+<span class="nc" id="L351">            drawNoDataMessage(g2, area);</span>
+<span class="nc" id="L352">            return;</span>
+        }
+
+        int pieCount;
+<span class="nc bnc" id="L356" title="All 2 branches missed.">        if (this.dataExtractOrder == TableOrder.BY_ROW) {</span>
+<span class="nc" id="L357">            pieCount = this.dataset.getRowCount();</span>
+<span class="nc" id="L358">        }</span>
+        else {
+<span class="nc" id="L360">            pieCount = this.dataset.getColumnCount();</span>
+        }
+
+        // the columns variable is always &gt;= rows
+<span class="nc" id="L364">        int displayCols = (int) Math.ceil(Math.sqrt(pieCount));</span>
+<span class="nc" id="L365">        int displayRows</span>
+<span class="nc" id="L366">            = (int) Math.ceil((double) pieCount / (double) displayCols);</span>
+
+        // swap rows and columns to match plotArea shape
+<span class="nc bnc" id="L369" title="All 4 branches missed.">        if (displayCols &gt; displayRows &amp;&amp; area.getWidth() &lt; area.getHeight()) {</span>
+<span class="nc" id="L370">            int temp = displayCols;</span>
+<span class="nc" id="L371">            displayCols = displayRows;</span>
+<span class="nc" id="L372">            displayRows = temp;</span>
+        }
+
+<span class="nc" id="L375">        prefetchSectionPaints();</span>
+
+<span class="nc" id="L377">        int x = (int) area.getX();</span>
+<span class="nc" id="L378">        int y = (int) area.getY();</span>
+<span class="nc" id="L379">        int width = ((int) area.getWidth()) / displayCols;</span>
+<span class="nc" id="L380">        int height = ((int) area.getHeight()) / displayRows;</span>
+<span class="nc" id="L381">        int row = 0;</span>
+<span class="nc" id="L382">        int column = 0;</span>
+<span class="nc" id="L383">        int diff = (displayRows * displayCols) - pieCount;</span>
+<span class="nc" id="L384">        int xoffset = 0;</span>
+<span class="nc" id="L385">        Rectangle rect = new Rectangle();</span>
+
+<span class="nc bnc" id="L387" title="All 2 branches missed.">        for (int pieIndex = 0; pieIndex &lt; pieCount; pieIndex++) {</span>
+<span class="nc" id="L388">            rect.setBounds(x + xoffset + (width * column), y + (height * row),</span>
+<span class="nc" id="L389">                    width, height);</span>
+
+            String title;
+<span class="nc bnc" id="L392" title="All 2 branches missed.">            if (this.dataExtractOrder == TableOrder.BY_ROW) {</span>
+<span class="nc" id="L393">                title = this.dataset.getRowKey(pieIndex).toString();</span>
+<span class="nc" id="L394">            }</span>
+            else {
+<span class="nc" id="L396">                title = this.dataset.getColumnKey(pieIndex).toString();</span>
+            }
+<span class="nc" id="L398">            this.pieChart.setTitle(title);</span>
+
+            PieDataset piedataset;
+<span class="nc" id="L401">            PieDataset dd = new CategoryToPieDataset(this.dataset,</span>
+<span class="nc" id="L402">                    this.dataExtractOrder, pieIndex);</span>
+<span class="nc bnc" id="L403" title="All 2 branches missed.">            if (this.limit &gt; 0.0) {</span>
+<span class="nc" id="L404">                piedataset = DatasetUtils.createConsolidatedPieDataset(</span>
+<span class="nc" id="L405">                        dd, this.aggregatedItemsKey, this.limit);</span>
+<span class="nc" id="L406">            }</span>
+            else {
+<span class="nc" id="L408">                piedataset = dd;</span>
+            }
+<span class="nc" id="L410">            PiePlot piePlot = (PiePlot) this.pieChart.getPlot();</span>
+<span class="nc" id="L411">            piePlot.setDataset(piedataset);</span>
+<span class="nc" id="L412">            piePlot.setPieIndex(pieIndex);</span>
+
+            // update the section colors to match the global colors...
+<span class="nc bnc" id="L415" title="All 2 branches missed.">            for (int i = 0; i &lt; piedataset.getItemCount(); i++) {</span>
+<span class="nc" id="L416">                Comparable key = piedataset.getKey(i);</span>
+                Paint p;
+<span class="nc bnc" id="L418" title="All 2 branches missed.">                if (key.equals(this.aggregatedItemsKey)) {</span>
+<span class="nc" id="L419">                    p = this.aggregatedItemsPaint;</span>
+<span class="nc" id="L420">                }</span>
+                else {
+<span class="nc" id="L422">                    p = (Paint) this.sectionPaints.get(key);</span>
+                }
+<span class="nc" id="L424">                piePlot.setSectionPaint(key, p);</span>
+            }
+
+<span class="nc" id="L427">            ChartRenderingInfo subinfo = null;</span>
+<span class="nc bnc" id="L428" title="All 2 branches missed.">            if (info != null) {</span>
+<span class="nc" id="L429">                subinfo = new ChartRenderingInfo();</span>
+            }
+<span class="nc" id="L431">            this.pieChart.draw(g2, rect, subinfo);</span>
+<span class="nc bnc" id="L432" title="All 2 branches missed.">            if (info != null) {</span>
+<span class="nc bnc" id="L433" title="All 4 branches missed.">                assert subinfo != null;</span>
+<span class="nc" id="L434">                info.getOwner().getEntityCollection().addAll(</span>
+<span class="nc" id="L435">                        subinfo.getEntityCollection());</span>
+<span class="nc" id="L436">                info.addSubplotInfo(subinfo.getPlotInfo());</span>
+            }
+
+<span class="nc" id="L439">            ++column;</span>
+<span class="nc bnc" id="L440" title="All 2 branches missed.">            if (column == displayCols) {</span>
+<span class="nc" id="L441">                column = 0;</span>
+<span class="nc" id="L442">                ++row;</span>
+
+<span class="nc bnc" id="L444" title="All 4 branches missed.">                if (row == displayRows - 1 &amp;&amp; diff != 0) {</span>
+<span class="nc" id="L445">                    xoffset = (diff * width) / 2;</span>
+                }
+            }
+        }
+
+<span class="nc" id="L450">    }</span>
+
+    /**
+     * For each key in the dataset, check the {@code sectionPaints}
+     * cache to see if a paint is associated with that key and, if not,
+     * fetch one from the drawing supplier.  These colors are cached so that
+     * the legend and all the subplots use consistent colors.
+     */
+    private void prefetchSectionPaints() {
+
+        // pre-fetch the colors for each key...this is because the subplots
+        // may not display every key, but we need the coloring to be
+        // consistent...
+
+<span class="nc" id="L464">        PiePlot piePlot = (PiePlot) getPieChart().getPlot();</span>
+
+<span class="nc bnc" id="L466" title="All 2 branches missed.">        if (this.dataExtractOrder == TableOrder.BY_ROW) {</span>
+            // column keys provide potential keys for individual pies
+<span class="nc bnc" id="L468" title="All 2 branches missed.">            for (int c = 0; c &lt; this.dataset.getColumnCount(); c++) {</span>
+<span class="nc" id="L469">                Comparable key = this.dataset.getColumnKey(c);</span>
+<span class="nc" id="L470">                Paint p = piePlot.getSectionPaint(key);</span>
+<span class="nc bnc" id="L471" title="All 2 branches missed.">                if (p == null) {</span>
+<span class="nc" id="L472">                    p = (Paint) this.sectionPaints.get(key);</span>
+<span class="nc bnc" id="L473" title="All 2 branches missed.">                    if (p == null) {</span>
+<span class="nc" id="L474">                        p = getDrawingSupplier().getNextPaint();</span>
+                    }
+                }
+<span class="nc" id="L477">                this.sectionPaints.put(key, p);</span>
+            }
+<span class="nc" id="L479">        }</span>
+        else {
+            // row keys provide potential keys for individual pies
+<span class="nc bnc" id="L482" title="All 2 branches missed.">            for (int r = 0; r &lt; this.dataset.getRowCount(); r++) {</span>
+<span class="nc" id="L483">                Comparable key = this.dataset.getRowKey(r);</span>
+<span class="nc" id="L484">                Paint p = piePlot.getSectionPaint(key);</span>
+<span class="nc bnc" id="L485" title="All 2 branches missed.">                if (p == null) {</span>
+<span class="nc" id="L486">                    p = (Paint) this.sectionPaints.get(key);</span>
+<span class="nc bnc" id="L487" title="All 2 branches missed.">                    if (p == null) {</span>
+<span class="nc" id="L488">                        p = getDrawingSupplier().getNextPaint();</span>
+                    }
+                }
+<span class="nc" id="L491">                this.sectionPaints.put(key, p);</span>
+            }
+        }
+
+<span class="nc" id="L495">    }</span>
+
+    /**
+     * Returns a collection of legend items for the pie chart.
+     *
+     * @return The legend items.
+     */
+    @Override
+    public LegendItemCollection getLegendItems() {
+
+<span class="nc" id="L505">        LegendItemCollection result = new LegendItemCollection();</span>
+<span class="nc bnc" id="L506" title="All 2 branches missed.">        if (this.dataset == null) {</span>
+<span class="nc" id="L507">            return result;</span>
+        }
+
+<span class="nc" id="L510">        List keys = null;</span>
+<span class="nc" id="L511">        prefetchSectionPaints();</span>
+<span class="nc bnc" id="L512" title="All 2 branches missed.">        if (this.dataExtractOrder == TableOrder.BY_ROW) {</span>
+<span class="nc" id="L513">            keys = this.dataset.getColumnKeys();</span>
+<span class="nc" id="L514">        }</span>
+<span class="nc bnc" id="L515" title="All 2 branches missed.">        else if (this.dataExtractOrder == TableOrder.BY_COLUMN) {</span>
+<span class="nc" id="L516">            keys = this.dataset.getRowKeys();</span>
+        }
+<span class="nc bnc" id="L518" title="All 2 branches missed.">        if (keys == null) {</span>
+<span class="nc" id="L519">            return result;</span>
+        }
+<span class="nc" id="L521">        int section = 0;</span>
+<span class="nc bnc" id="L522" title="All 2 branches missed.">        for (Object o : keys) {</span>
+<span class="nc" id="L523">            Comparable key = (Comparable) o;</span>
+<span class="nc" id="L524">            String label = key.toString();  // TODO: use a generator here</span>
+<span class="nc" id="L525">            String description = label;</span>
+<span class="nc" id="L526">            Paint paint = (Paint) this.sectionPaints.get(key);</span>
+<span class="nc" id="L527">            LegendItem item = new LegendItem(label, description, null,</span>
+<span class="nc" id="L528">                    null, getLegendItemShape(), paint,</span>
+<span class="nc" id="L529">                    Plot.DEFAULT_OUTLINE_STROKE, paint);</span>
+<span class="nc" id="L530">            item.setSeriesKey(key);</span>
+<span class="nc" id="L531">            item.setSeriesIndex(section);</span>
+<span class="nc" id="L532">            item.setDataset(getDataset());</span>
+<span class="nc" id="L533">            result.add(item);</span>
+<span class="nc" id="L534">            section++;</span>
+        }
+<span class="nc bnc" id="L536" title="All 2 branches missed.">        if (this.limit &gt; 0.0) {</span>
+<span class="nc" id="L537">            LegendItem a = new LegendItem(this.aggregatedItemsKey.toString(),</span>
+<span class="nc" id="L538">                    this.aggregatedItemsKey.toString(), null, null,</span>
+<span class="nc" id="L539">                    getLegendItemShape(), this.aggregatedItemsPaint,</span>
+<span class="nc" id="L540">                    Plot.DEFAULT_OUTLINE_STROKE, this.aggregatedItemsPaint);</span>
+<span class="nc" id="L541">            result.add(a);</span>
+        }
+<span class="nc" id="L543">        return result;</span>
+    }
+
+    /**
+     * Tests this plot for equality with an arbitrary object.  Note that the
+     * plot's dataset is not considered in the equality test.
+     *
+     * @param obj  the object ({@code null} permitted).
+     *
+     * @return {@code true} if this plot is equal to {@code obj}, and
+     *     {@code false} otherwise.
+     */
+    @Override
+    public boolean equals(Object obj) {
+<span class="nc bnc" id="L557" title="All 2 branches missed.">        if (obj == this) {</span>
+<span class="nc" id="L558">            return true;</span>
+        }
+<span class="nc bnc" id="L560" title="All 2 branches missed.">        if (!(obj instanceof MultiplePiePlot)) {</span>
+<span class="nc" id="L561">            return false;</span>
+        }
+<span class="nc" id="L563">        MultiplePiePlot that = (MultiplePiePlot) obj;</span>
+<span class="nc bnc" id="L564" title="All 2 branches missed.">        if (this.dataExtractOrder != that.dataExtractOrder) {</span>
+<span class="nc" id="L565">            return false;</span>
+        }
+<span class="nc bnc" id="L567" title="All 2 branches missed.">        if (this.limit != that.limit) {</span>
+<span class="nc" id="L568">            return false;</span>
+        }
+<span class="nc bnc" id="L570" title="All 2 branches missed.">        if (!this.aggregatedItemsKey.equals(that.aggregatedItemsKey)) {</span>
+<span class="nc" id="L571">            return false;</span>
+        }
+<span class="nc" id="L573">        if (!PaintUtils.equal(this.aggregatedItemsPaint,</span>
+<span class="nc bnc" id="L574" title="All 2 branches missed.">                that.aggregatedItemsPaint)) {</span>
+<span class="nc" id="L575">            return false;</span>
+        }
+<span class="nc bnc" id="L577" title="All 2 branches missed.">        if (!Objects.equals(this.pieChart, that.pieChart)) {</span>
+<span class="nc" id="L578">            return false;</span>
+        }
+<span class="nc bnc" id="L580" title="All 2 branches missed.">        if (!ShapeUtils.equal(this.legendItemShape, that.legendItemShape)) {</span>
+<span class="nc" id="L581">            return false;</span>
+        }
+<span class="nc bnc" id="L583" title="All 2 branches missed.">        if (!super.equals(obj)) {</span>
+<span class="nc" id="L584">            return false;</span>
+        }
+<span class="nc" id="L586">        return true;</span>
+    }
+
+    /**
+     * Returns a clone of the plot.
+     *
+     * @return A clone.
+     *
+     * @throws CloneNotSupportedException if some component of the plot does
+     *         not support cloning.
+     */
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+<span class="nc" id="L599">        MultiplePiePlot clone = (MultiplePiePlot) super.clone();</span>
+<span class="nc" id="L600">        clone.pieChart = (JFreeChart) this.pieChart.clone();</span>
+<span class="nc" id="L601">        clone.sectionPaints = new HashMap(this.sectionPaints);</span>
+<span class="nc" id="L602">        clone.legendItemShape = CloneUtils.clone(this.legendItemShape);</span>
+<span class="nc" id="L603">        return clone;</span>
+    }
+
+    /**
+     * Provides serialization support.
+     *
+     * @param stream  the output stream.
+     *
+     * @throws IOException  if there is an I/O error.
+     */
+    private void writeObject(ObjectOutputStream stream) throws IOException {
+<span class="nc" id="L614">        stream.defaultWriteObject();</span>
+<span class="nc" id="L615">        SerialUtils.writePaint(this.aggregatedItemsPaint, stream);</span>
+<span class="nc" id="L616">        SerialUtils.writeShape(this.legendItemShape, stream);</span>
+<span class="nc" id="L617">    }</span>
+
+    /**
+     * Provides serialization support.
+     *
+     * @param stream  the input stream.
+     *
+     * @throws IOException  if there is an I/O error.
+     * @throws ClassNotFoundException  if there is a classpath problem.
+     */
+    private void readObject(ObjectInputStream stream)
+        throws IOException, ClassNotFoundException {
+<span class="nc" id="L629">        stream.defaultReadObject();</span>
+<span class="nc" id="L630">        this.aggregatedItemsPaint = SerialUtils.readPaint(stream);</span>
+<span class="nc" id="L631">        this.legendItemShape = SerialUtils.readShape(stream);</span>
+<span class="nc" id="L632">        this.sectionPaints = new HashMap();</span>
+<span class="nc" id="L633">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (1) (14 May 2022 17:53:42)</div></body></html>

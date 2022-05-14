@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>JFreeChartProduct2.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (1) (14 May 2022 17:53:42)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart</a> &gt; <span class="el_source">JFreeChartProduct2.java</span></div><h1>JFreeChartProduct2.java</h1><pre class="source lang-java linenums">package org.jfree.chart;
+
+
+import javax.swing.event.EventListenerList;
+import org.jfree.chart.event.ChartProgressListener;
+import org.jfree.chart.event.ChartProgressEvent;
+import java.io.Serializable;
+
+<span class="fc" id="L9">public class JFreeChartProduct2 implements Serializable, Cloneable {</span>
+	private transient EventListenerList progressListeners;
+
+	public void setProgressListeners(EventListenerList progressListeners) {
+<span class="fc" id="L13">		this.progressListeners = progressListeners;</span>
+<span class="fc" id="L14">	}</span>
+
+	/**
+	* Registers an object for notification of progress events relating to the chart.
+	* @param listener   the object being registered.
+	* @see #removeProgressListener(ChartProgressListener)
+	*/
+	public void addProgressListener(ChartProgressListener listener) {
+<span class="nc" id="L22">		this.progressListeners.add(ChartProgressListener.class, listener);</span>
+<span class="nc" id="L23">	}</span>
+
+	/**
+	* Deregisters an object for notification of changes to the chart.
+	* @param listener   the object being deregistered.
+	* @see #addProgressListener(ChartProgressListener)
+	*/
+	public void removeProgressListener(ChartProgressListener listener) {
+<span class="nc" id="L31">		this.progressListeners.remove(ChartProgressListener.class, listener);</span>
+<span class="nc" id="L32">	}</span>
+
+	/**
+	* Sends a  {@link ChartProgressEvent}  to all registered listeners.
+	* @param event   information about the event that triggered the notification.
+	*/
+	public void notifyListeners(ChartProgressEvent event) {
+<span class="fc" id="L39">		Object[] listeners = this.progressListeners.getListenerList();</span>
+<span class="pc bpc" id="L40" title="1 of 2 branches missed.">		for (int i = listeners.length - 2; i &gt;= 0; i -= 2) {</span>
+<span class="nc bnc" id="L41" title="All 2 branches missed.">			if (listeners[i] == ChartProgressListener.class) {</span>
+<span class="nc" id="L42">				((ChartProgressListener) listeners[i + 1]).chartProgress(event);</span>
+			}
+		}
+<span class="fc" id="L45">	}</span>
+
+	public Object clone() throws CloneNotSupportedException {
+<span class="nc" id="L48">		return (JFreeChartProduct2) super.clone();</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (1) (14 May 2022 17:53:42)</div></body></html>

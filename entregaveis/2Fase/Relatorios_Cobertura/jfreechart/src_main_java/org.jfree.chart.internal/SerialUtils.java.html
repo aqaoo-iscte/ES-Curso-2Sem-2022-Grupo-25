@@ -1,0 +1,681 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>SerialUtils.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (1) (14 May 2022 17:53:42)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart.internal</a> &gt; <span class="el_source">SerialUtils.java</span></div><h1>SerialUtils.java</h1><pre class="source lang-java linenums">/* ===========================================================
+ * JFreeChart : a free chart library for the Java(tm) platform
+ * ===========================================================
+ *
+ * (C) Copyright 2000-2022, by David Gilbert and Contributors.
+ *
+ * Project Info:  http://www.jfree.org/jfreechart/index.html
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ *
+ * [Oracle and Java are registered trademarks of Oracle and/or its affiliates. 
+ * Other names may be trademarks of their respective owners.]
+ *
+ * ----------------
+ * SerialUtils.java
+ * ----------------
+ * (C) Copyright 2000-2022, by David Gilbert and Contributors.
+ *
+ * Original Author:  David Gilbert;
+ * Contributors:     -;
+ */
+
+package org.jfree.chart.internal;
+
+import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Composite;
+import java.awt.GradientPaint;
+import java.awt.Paint;
+import java.awt.Shape;
+import java.awt.Stroke;
+import java.awt.geom.Arc2D;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.Line2D;
+import java.awt.geom.PathIterator;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.text.AttributedCharacterIterator;
+import java.text.AttributedString;
+import java.text.CharacterIterator;
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * A class containing useful utility methods relating to serialization.
+ */
+public class SerialUtils {
+
+    /**
+     * Private constructor prevents object creation.
+     */
+    private SerialUtils() {
+    }
+
+    /**
+     * Returns {@code true} if a class implements {@code Serializable}
+     * and {@code false} otherwise.
+     *
+     * @param c  the class.
+     *
+     * @return A boolean.
+     */
+    public static boolean isSerializable(Class c) {
+<span class="fc" id="L83">        return (Serializable.class.isAssignableFrom(c));</span>
+    }
+
+    /**
+     * Reads a {@code Paint} object that has been serialised by the
+     * {@link #writePaint(Paint, ObjectOutputStream)} method.
+     *
+     * @param stream  the input stream ({@code null} not permitted).
+     *
+     * @return The paint object (possibly {@code null}).
+     *
+     * @throws IOException  if there is an I/O problem.
+     * @throws ClassNotFoundException  if there is a problem loading a class.
+     */
+    public static Paint readPaint(ObjectInputStream stream)
+             throws IOException, ClassNotFoundException {
+<span class="fc" id="L99">        Args.nullNotPermitted(stream, &quot;stream&quot;);</span>
+<span class="fc" id="L100">        Paint result = null;</span>
+<span class="fc" id="L101">        boolean isNull = stream.readBoolean();</span>
+<span class="fc bfc" id="L102" title="All 2 branches covered.">        if (!isNull) {</span>
+<span class="fc" id="L103">            final Class c = (Class) stream.readObject();</span>
+<span class="fc bfc" id="L104" title="All 2 branches covered.">            if (isSerializable(c)) {</span>
+<span class="fc" id="L105">                result = (Paint) stream.readObject();</span>
+<span class="pc bpc" id="L106" title="1 of 2 branches missed.">            } else if (c.equals(GradientPaint.class)) {</span>
+<span class="fc" id="L107">                float x1 = stream.readFloat();</span>
+<span class="fc" id="L108">                float y1 = stream.readFloat();</span>
+<span class="fc" id="L109">                Color c1 = (Color) stream.readObject();</span>
+<span class="fc" id="L110">                float x2 = stream.readFloat();</span>
+<span class="fc" id="L111">                float y2 = stream.readFloat();</span>
+<span class="fc" id="L112">                Color c2 = (Color) stream.readObject();</span>
+<span class="fc" id="L113">                boolean isCyclic = stream.readBoolean();</span>
+<span class="fc" id="L114">                result = new GradientPaint(x1, y1, c1, x2, y2, c2, isCyclic);</span>
+            }
+        }
+<span class="fc" id="L117">        return result;</span>
+    }
+
+    /**
+     * Serialises a {@code Paint} object.
+     *
+     * @param paint  the paint object ({@code null} permitted).
+     * @param stream  the output stream ({@code null} not permitted).
+     *
+     * @throws IOException if there is an I/O error.
+     */
+    public static void writePaint(Paint paint, ObjectOutputStream stream) throws IOException {
+<span class="fc" id="L129">        Args.nullNotPermitted(stream, &quot;stream&quot;);</span>
+<span class="fc bfc" id="L130" title="All 2 branches covered.">        if (paint != null) {</span>
+<span class="fc" id="L131">            stream.writeBoolean(false);</span>
+<span class="fc" id="L132">            stream.writeObject(paint.getClass());</span>
+<span class="fc bfc" id="L133" title="All 2 branches covered.">            if (paint instanceof Serializable) {</span>
+<span class="fc" id="L134">                stream.writeObject(paint);</span>
+<span class="pc bpc" id="L135" title="1 of 2 branches missed.">            } else if (paint instanceof GradientPaint) {</span>
+<span class="fc" id="L136">                final GradientPaint gp = (GradientPaint) paint;</span>
+<span class="fc" id="L137">                stream.writeFloat((float) gp.getPoint1().getX());</span>
+<span class="fc" id="L138">                stream.writeFloat((float) gp.getPoint1().getY());</span>
+<span class="fc" id="L139">                stream.writeObject(gp.getColor1());</span>
+<span class="fc" id="L140">                stream.writeFloat((float) gp.getPoint2().getX());</span>
+<span class="fc" id="L141">                stream.writeFloat((float) gp.getPoint2().getY());</span>
+<span class="fc" id="L142">                stream.writeObject(gp.getColor2());</span>
+<span class="fc" id="L143">                stream.writeBoolean(gp.isCyclic());</span>
+            }
+<span class="fc" id="L145">        } else {</span>
+<span class="fc" id="L146">            stream.writeBoolean(true);</span>
+        }
+<span class="fc" id="L148">    }</span>
+
+    /**
+     * Reads a {@code Stroke} object that has been serialised by the
+     * {@link #writeStroke(Stroke, ObjectOutputStream)} method.
+     *
+     * @param stream  the input stream ({@code null} not permitted).
+     *
+     * @return The stroke object (possibly {@code null}).
+     *
+     * @throws IOException  if there is an I/O problem.
+     * @throws ClassNotFoundException  if there is a problem loading a class.
+     */
+    public static Stroke readStroke(ObjectInputStream stream)
+            throws IOException, ClassNotFoundException {
+
+<span class="fc" id="L164">        Args.nullNotPermitted(stream, &quot;stream&quot;);</span>
+<span class="fc" id="L165">        Stroke result = null;</span>
+<span class="fc" id="L166">        boolean isNull = stream.readBoolean();</span>
+<span class="fc bfc" id="L167" title="All 2 branches covered.">        if (!isNull) {</span>
+<span class="fc" id="L168">            Class c = (Class) stream.readObject();</span>
+<span class="pc bpc" id="L169" title="1 of 2 branches missed.">            if (c.equals(BasicStroke.class)) {</span>
+<span class="fc" id="L170">                float width = stream.readFloat();</span>
+<span class="fc" id="L171">                int cap = stream.readInt();</span>
+<span class="fc" id="L172">                int join = stream.readInt();</span>
+<span class="fc" id="L173">                float miterLimit = stream.readFloat();</span>
+<span class="fc" id="L174">                float[] dash = (float[]) stream.readObject();</span>
+<span class="fc" id="L175">                float dashPhase = stream.readFloat();</span>
+<span class="fc" id="L176">                result = new BasicStroke(width, cap, join, miterLimit, dash, </span>
+<span class="fc" id="L177">                        dashPhase);</span>
+<span class="fc" id="L178">            } else {</span>
+<span class="nc" id="L179">                result = (Stroke) stream.readObject();</span>
+            }
+        }
+<span class="fc" id="L182">        return result;</span>
+
+    }
+
+    /**
+     * Serialises a {@code Stroke} object.  This code handles the
+     * {@code BasicStroke} class which is the only {@code Stroke}
+     * implementation provided by the JDK (and isn't directly
+     * {@code Serializable}).
+     *
+     * @param stroke  the stroke object ({@code null} permitted).
+     * @param stream  the output stream ({@code null} not permitted).
+     *
+     * @throws IOException if there is an I/O error.
+     */
+    public static void writeStroke(Stroke stroke, ObjectOutputStream stream)
+            throws IOException {
+
+<span class="fc" id="L200">        Args.nullNotPermitted(stream, &quot;stream&quot;);</span>
+<span class="fc" id="L201">        stream2(stroke, stream);</span>
+<span class="fc" id="L202">    }</span>
+
+	private static void stream2(Stroke stroke, ObjectOutputStream stream) throws IOException {
+<span class="fc bfc" id="L205" title="All 2 branches covered.">		if (stroke != null) {</span>
+<span class="fc" id="L206">			stream.writeBoolean(false);</span>
+<span class="pc bpc" id="L207" title="1 of 2 branches missed.">			if (stroke instanceof BasicStroke) {</span>
+<span class="fc" id="L208">				BasicStroke s = (BasicStroke) stroke;</span>
+<span class="fc" id="L209">				stream.writeObject(BasicStroke.class);</span>
+<span class="fc" id="L210">				stream.writeFloat(s.getLineWidth());</span>
+<span class="fc" id="L211">				stream.writeInt(s.getEndCap());</span>
+<span class="fc" id="L212">				stream.writeInt(s.getLineJoin());</span>
+<span class="fc" id="L213">				stream.writeFloat(s.getMiterLimit());</span>
+<span class="fc" id="L214">				stream.writeObject(s.getDashArray());</span>
+<span class="fc" id="L215">				stream.writeFloat(s.getDashPhase());</span>
+<span class="fc" id="L216">			} else {</span>
+<span class="nc" id="L217">				stream.writeObject(stroke.getClass());</span>
+<span class="nc" id="L218">				stream.writeObject(stroke);</span>
+			}
+<span class="nc" id="L220">		} else {</span>
+<span class="fc" id="L221">			stream.writeBoolean(true);</span>
+		}
+<span class="fc" id="L223">	}</span>
+
+    /**
+     * Reads a {@code Composite} object that has been serialised by the
+     * {@link #writeComposite(Composite, ObjectOutputStream)}
+     * method.
+     *
+     * @param stream  the input stream ({@code null} not permitted).
+     *
+     * @return The composite object (possibly {@code null}).
+     *
+     * @throws IOException  if there is an I/O problem.
+     * @throws ClassNotFoundException  if there is a problem loading a class.
+     */
+    public static Composite readComposite(ObjectInputStream stream)
+            throws IOException, ClassNotFoundException {
+
+<span class="nc" id="L240">        Args.nullNotPermitted(stream, &quot;stream&quot;);</span>
+<span class="nc" id="L241">        Composite result = null;</span>
+<span class="nc" id="L242">        boolean isNull = stream.readBoolean();</span>
+<span class="nc bnc" id="L243" title="All 2 branches missed.">        if (!isNull) {</span>
+<span class="nc" id="L244">            Class c = (Class) stream.readObject();</span>
+<span class="nc bnc" id="L245" title="All 2 branches missed.">            if (isSerializable(c)) {</span>
+<span class="nc" id="L246">                result = (Composite) stream.readObject();</span>
+<span class="nc bnc" id="L247" title="All 2 branches missed.">            } else if (c.equals(AlphaComposite.class)) {</span>
+<span class="nc" id="L248">                int rule = stream.readInt();</span>
+<span class="nc" id="L249">                float alpha = stream.readFloat();</span>
+<span class="nc" id="L250">                result = AlphaComposite.getInstance(rule, alpha);</span>
+            }
+        }
+<span class="nc" id="L253">        return result;</span>
+
+    }
+
+    /**
+     * Serialises a {@code Composite} object.
+     *
+     * @param composite  the composite object ({@code null} permitted).
+     * @param stream  the output stream ({@code null} not permitted).
+     *
+     * @throws IOException if there is an I/O error.
+     */
+    public static void writeComposite(Composite composite, 
+            ObjectOutputStream stream) throws IOException {
+
+<span class="nc" id="L268">        Args.nullNotPermitted(stream, &quot;stream&quot;);</span>
+<span class="nc bnc" id="L269" title="All 2 branches missed.">        if (composite != null) {</span>
+<span class="nc" id="L270">            stream.writeBoolean(false);</span>
+<span class="nc" id="L271">            stream.writeObject(composite.getClass());</span>
+<span class="nc bnc" id="L272" title="All 2 branches missed.">            if (composite instanceof Serializable) {</span>
+<span class="nc" id="L273">                stream.writeObject(composite);</span>
+<span class="nc" id="L274">            }</span>
+<span class="nc bnc" id="L275" title="All 2 branches missed.">            else if (composite instanceof AlphaComposite) {</span>
+<span class="nc" id="L276">                AlphaComposite ac = (AlphaComposite) composite;</span>
+<span class="nc" id="L277">                stream.writeInt(ac.getRule());</span>
+<span class="nc" id="L278">                stream.writeFloat(ac.getAlpha());</span>
+            }
+<span class="nc" id="L280">        } else {</span>
+<span class="nc" id="L281">            stream.writeBoolean(true);</span>
+        }
+<span class="nc" id="L283">    }</span>
+
+    /**
+     * Reads a {@code Shape} object that has been serialised by the
+     * {@link #writeShape(Shape, ObjectOutputStream)} method.
+     *
+     * @param stream  the input stream ({@code null} not permitted).
+     *
+     * @return The shape object (possibly {@code null}).
+     *
+     * @throws IOException  if there is an I/O problem.
+     * @throws ClassNotFoundException  if there is a problem loading a class.
+     */
+    public static Shape readShape(ObjectInputStream stream)
+            throws IOException, ClassNotFoundException {
+
+<span class="fc" id="L299">        Args.nullNotPermitted(stream, &quot;stream&quot;);</span>
+<span class="fc" id="L300">        Shape result = null;</span>
+<span class="fc" id="L301">        boolean isNull = stream.readBoolean();</span>
+<span class="fc bfc" id="L302" title="All 2 branches covered.">        if (!isNull) {</span>
+<span class="fc" id="L303">            Class c = (Class) stream.readObject();</span>
+<span class="fc bfc" id="L304" title="All 2 branches covered.">            if (c.equals(Line2D.class)) {</span>
+<span class="fc" id="L305">                double x1 = stream.readDouble();</span>
+<span class="fc" id="L306">                double y1 = stream.readDouble();</span>
+<span class="fc" id="L307">                double x2 = stream.readDouble();</span>
+<span class="fc" id="L308">                double y2 = stream.readDouble();</span>
+<span class="fc" id="L309">                result = new Line2D.Double(x1, y1, x2, y2);</span>
+<span class="fc bfc" id="L310" title="All 2 branches covered.">            } else if (c.equals(Rectangle2D.class)) {</span>
+<span class="fc" id="L311">                double x = stream.readDouble();</span>
+<span class="fc" id="L312">                double y = stream.readDouble();</span>
+<span class="fc" id="L313">                double w = stream.readDouble();</span>
+<span class="fc" id="L314">                double h = stream.readDouble();</span>
+<span class="fc" id="L315">                result = new Rectangle2D.Double(x, y, w, h);</span>
+<span class="fc bfc" id="L316" title="All 2 branches covered.">            } else if (c.equals(Ellipse2D.class)) {</span>
+<span class="fc" id="L317">                double x = stream.readDouble();</span>
+<span class="fc" id="L318">                double y = stream.readDouble();</span>
+<span class="fc" id="L319">                double w = stream.readDouble();</span>
+<span class="fc" id="L320">                double h = stream.readDouble();</span>
+<span class="fc" id="L321">                result = new Ellipse2D.Double(x, y, w, h);</span>
+<span class="pc bpc" id="L322" title="1 of 2 branches missed.">            } else if (c.equals(Arc2D.class)) {</span>
+<span class="nc" id="L323">                double x = stream.readDouble();</span>
+<span class="nc" id="L324">                double y = stream.readDouble();</span>
+<span class="nc" id="L325">                double w = stream.readDouble();</span>
+<span class="nc" id="L326">                double h = stream.readDouble();</span>
+<span class="nc" id="L327">                double as = stream.readDouble(); // Angle Start</span>
+<span class="nc" id="L328">                double ae = stream.readDouble(); // Angle Extent</span>
+<span class="nc" id="L329">                int at = stream.readInt();       // Arc type</span>
+<span class="nc" id="L330">                result = new Arc2D.Double(x, y, w, h, as, ae, at);</span>
+<span class="pc bpc" id="L331" title="1 of 2 branches missed.">            } else if (c.equals(GeneralPath.class)) {</span>
+<span class="nc" id="L332">                GeneralPath gp = new GeneralPath();</span>
+<span class="nc" id="L333">                float[] args = new float[6];</span>
+<span class="nc" id="L334">                boolean hasNext = stream.readBoolean();</span>
+<span class="nc bnc" id="L335" title="All 2 branches missed.">                while (!hasNext) {</span>
+<span class="nc" id="L336">                    int type = stream.readInt();</span>
+<span class="nc bnc" id="L337" title="All 2 branches missed.">                    for (int i = 0; i &lt; 6; i++) {</span>
+<span class="nc" id="L338">                        args[i] = stream.readFloat();</span>
+                    }
+<span class="nc bnc" id="L340" title="All 6 branches missed.">                    switch (type) {</span>
+                        case PathIterator.SEG_MOVETO :
+<span class="nc" id="L342">                            gp.moveTo(args[0], args[1]);</span>
+<span class="nc" id="L343">                            break;</span>
+                        case PathIterator.SEG_LINETO :
+<span class="nc" id="L345">                            gp.lineTo(args[0], args[1]);</span>
+<span class="nc" id="L346">                            break;</span>
+                        case PathIterator.SEG_CUBICTO :
+<span class="nc" id="L348">                            gp.curveTo(args[0], args[1], args[2],</span>
+<span class="nc" id="L349">                                    args[3], args[4], args[5]);</span>
+<span class="nc" id="L350">                            break;</span>
+                        case PathIterator.SEG_QUADTO :
+<span class="nc" id="L352">                            gp.quadTo(args[0], args[1], args[2], args[3]);</span>
+<span class="nc" id="L353">                            break;</span>
+                        case PathIterator.SEG_CLOSE :
+<span class="nc" id="L355">                            gp.closePath();</span>
+<span class="nc" id="L356">                            break;</span>
+                        default :
+<span class="nc" id="L358">                            throw new RuntimeException(</span>
+<span class="nc" id="L359">                                    &quot;JFreeChart - No path exists&quot;);</span>
+                    }
+<span class="nc" id="L361">                    gp.setWindingRule(stream.readInt());</span>
+<span class="nc" id="L362">                    hasNext = stream.readBoolean();</span>
+                }
+<span class="nc" id="L364">                result = gp;</span>
+<span class="nc" id="L365">            } else {</span>
+<span class="fc" id="L366">                result = (Shape) stream.readObject();</span>
+            }
+        }
+<span class="fc" id="L369">        return result;</span>
+
+    }
+
+    /**
+     * Serialises a {@code Shape} object.
+     *
+     * @param shape  the shape object ({@code null} permitted).
+     * @param stream  the output stream ({@code null} not permitted).
+     *
+     * @throws IOException if there is an I/O error.
+     */
+    public static void writeShape(Shape shape, ObjectOutputStream stream)
+            throws IOException {
+
+<span class="fc" id="L384">        Args.nullNotPermitted(stream, &quot;stream&quot;);</span>
+<span class="fc" id="L385">        stream3(shape, stream);</span>
+<span class="fc bfc" id="L386" title="All 2 branches covered.">		if (shape != null) {</span>
+<span class="fc bfc" id="L387" title="All 2 branches covered.">            if (shape instanceof Line2D) {</span>
+<span class="fc bfc" id="L388" title="All 2 branches covered.">            } else if (shape instanceof Rectangle2D) {</span>
+<span class="fc bfc" id="L389" title="All 2 branches covered.">            } else if (shape instanceof Ellipse2D) {</span>
+<span class="pc bpc" id="L390" title="1 of 2 branches missed.">            } else if (shape instanceof Arc2D) {</span>
+<span class="pc bpc" id="L391" title="1 of 2 branches missed.">            } else if (shape instanceof GeneralPath) {</span>
+<span class="nc" id="L392">                final PathIterator pi = shape.getPathIterator(null);</span>
+<span class="nc bnc" id="L393" title="All 2 branches missed.">                while (!pi.isDone()) {</span>
+<span class="nc" id="L394">                    pi.next();</span>
+                }
+            } else {
+            }
+        } else {
+        }
+<span class="fc" id="L400">    }</span>
+
+	private static void stream3(Shape shape, ObjectOutputStream stream) throws IOException {
+<span class="fc bfc" id="L403" title="All 2 branches covered.">		if (shape != null) {</span>
+<span class="fc" id="L404">			stream.writeBoolean(false);</span>
+<span class="fc bfc" id="L405" title="All 2 branches covered.">			if (shape instanceof Line2D) {</span>
+<span class="fc" id="L406">				final Line2D line = (Line2D) shape;</span>
+<span class="fc" id="L407">				stream.writeObject(Line2D.class);</span>
+<span class="fc" id="L408">				stream.writeDouble(line.getX1());</span>
+<span class="fc" id="L409">				stream.writeDouble(line.getY1());</span>
+<span class="fc" id="L410">				stream.writeDouble(line.getX2());</span>
+<span class="fc" id="L411">				stream.writeDouble(line.getY2());</span>
+<span class="fc bfc" id="L412" title="All 2 branches covered.">			} else if (shape instanceof Rectangle2D) {</span>
+<span class="fc" id="L413">				final Rectangle2D rectangle = (Rectangle2D) shape;</span>
+<span class="fc" id="L414">				stream.writeObject(Rectangle2D.class);</span>
+<span class="fc" id="L415">				stream.writeDouble(rectangle.getX());</span>
+<span class="fc" id="L416">				stream.writeDouble(rectangle.getY());</span>
+<span class="fc" id="L417">				stream.writeDouble(rectangle.getWidth());</span>
+<span class="fc" id="L418">				stream.writeDouble(rectangle.getHeight());</span>
+<span class="fc bfc" id="L419" title="All 2 branches covered.">			} else if (shape instanceof Ellipse2D) {</span>
+<span class="fc" id="L420">				final Ellipse2D ellipse = (Ellipse2D) shape;</span>
+<span class="fc" id="L421">				stream.writeObject(Ellipse2D.class);</span>
+<span class="fc" id="L422">				stream.writeDouble(ellipse.getX());</span>
+<span class="fc" id="L423">				stream.writeDouble(ellipse.getY());</span>
+<span class="fc" id="L424">				stream.writeDouble(ellipse.getWidth());</span>
+<span class="fc" id="L425">				stream.writeDouble(ellipse.getHeight());</span>
+<span class="pc bpc" id="L426" title="1 of 2 branches missed.">			} else if (shape instanceof Arc2D) {</span>
+<span class="nc" id="L427">				final Arc2D arc = (Arc2D) shape;</span>
+<span class="nc" id="L428">				stream.writeObject(Arc2D.class);</span>
+<span class="nc" id="L429">				stream.writeDouble(arc.getX());</span>
+<span class="nc" id="L430">				stream.writeDouble(arc.getY());</span>
+<span class="nc" id="L431">				stream.writeDouble(arc.getWidth());</span>
+<span class="nc" id="L432">				stream.writeDouble(arc.getHeight());</span>
+<span class="nc" id="L433">				stream.writeDouble(arc.getAngleStart());</span>
+<span class="nc" id="L434">				stream.writeDouble(arc.getAngleExtent());</span>
+<span class="nc" id="L435">				stream.writeInt(arc.getArcType());</span>
+<span class="pc bpc" id="L436" title="1 of 2 branches missed.">			} else if (shape instanceof GeneralPath) {</span>
+<span class="nc" id="L437">				stream.writeObject(GeneralPath.class);</span>
+<span class="nc" id="L438">				final PathIterator pi = shape.getPathIterator(null);</span>
+<span class="nc" id="L439">				final float[] args = new float[6];</span>
+<span class="nc" id="L440">				stream.writeBoolean(pi.isDone());</span>
+<span class="nc bnc" id="L441" title="All 2 branches missed.">				while (!pi.isDone()) {</span>
+<span class="nc" id="L442">					final int type = pi.currentSegment(args);</span>
+<span class="nc" id="L443">					stream.writeInt(type);</span>
+<span class="nc bnc" id="L444" title="All 2 branches missed.">					for (int i = 0; i &lt; 6; i++) {</span>
+<span class="nc" id="L445">						stream.writeFloat(args[i]);</span>
+					}
+<span class="nc" id="L447">					stream.writeInt(pi.getWindingRule());</span>
+<span class="nc" id="L448">					stream.writeBoolean(pi.isDone());</span>
+				}
+<span class="nc" id="L450">			} else {</span>
+<span class="fc" id="L451">				stream.writeObject(shape.getClass());</span>
+<span class="fc" id="L452">				stream.writeObject(shape);</span>
+			}
+<span class="fc" id="L454">		} else {</span>
+<span class="fc" id="L455">			stream.writeBoolean(true);</span>
+		}
+<span class="fc" id="L457">	}</span>
+
+    /**
+     * Reads a {@code Point2D} object that has been serialised by the
+     * {@link #writePoint2D(Point2D, ObjectOutputStream)} method.
+     *
+     * @param stream  the input stream ({@code null} not permitted).
+     *
+     * @return The point object (possibly {@code null}).
+     *
+     * @throws IOException  if there is an I/O problem.
+     */
+    public static Point2D readPoint2D(ObjectInputStream stream)
+            throws IOException {
+<span class="fc" id="L471">        Args.nullNotPermitted(stream, &quot;stream&quot;);</span>
+<span class="fc" id="L472">        Point2D result = null;</span>
+<span class="fc" id="L473">        boolean isNull = stream.readBoolean();</span>
+<span class="pc bpc" id="L474" title="1 of 2 branches missed.">        if (!isNull) {</span>
+<span class="fc" id="L475">            double x = stream.readDouble();</span>
+<span class="fc" id="L476">            double y = stream.readDouble();</span>
+<span class="fc" id="L477">            result = new Point2D.Double(x, y);</span>
+        }
+<span class="fc" id="L479">        return result;</span>
+    }
+
+    /**
+     * Serialises a {@code Point2D} object.
+     *
+     * @param p  the point object ({@code null} permitted).
+     * @param stream  the output stream ({@code null} not permitted).
+     *
+     * @throws IOException if there is an I/O error.
+     */
+    public static void writePoint2D(Point2D p, ObjectOutputStream stream)
+            throws IOException {
+
+<span class="fc" id="L493">        Args.nullNotPermitted(stream, &quot;stream&quot;);</span>
+<span class="pc bpc" id="L494" title="1 of 2 branches missed.">        if (p != null) {</span>
+<span class="fc" id="L495">            stream.writeBoolean(false);</span>
+<span class="fc" id="L496">            stream.writeDouble(p.getX());</span>
+<span class="fc" id="L497">            stream.writeDouble(p.getY());</span>
+<span class="fc" id="L498">        } else {</span>
+<span class="nc" id="L499">            stream.writeBoolean(true);</span>
+        }
+<span class="fc" id="L501">    }</span>
+
+    /**
+     * Reads a {@code AttributedString} object that has been serialised by
+     * the {@link #writeAttributedString(AttributedString,
+     * ObjectOutputStream)} method.
+     *
+     * @param stream  the input stream ({@code null} not permitted).
+     *
+     * @return The attributed string object (possibly {@code null}).
+     *
+     * @throws IOException  if there is an I/O problem.
+     * @throws ClassNotFoundException  if there is a problem loading a class.
+     */
+    public static AttributedString readAttributedString(ObjectInputStream stream)
+            throws IOException, ClassNotFoundException {
+
+<span class="fc" id="L518">        Args.nullNotPermitted(stream, &quot;stream&quot;);</span>
+<span class="fc" id="L519">        AttributedString result = null;</span>
+<span class="fc" id="L520">        final boolean isNull = stream.readBoolean();</span>
+<span class="fc bfc" id="L521" title="All 2 branches covered.">        if (!isNull) {</span>
+            // read string and attributes then create result
+<span class="fc" id="L523">            String plainStr = (String) stream.readObject();</span>
+<span class="fc" id="L524">            result = new AttributedString(plainStr);</span>
+<span class="fc" id="L525">            char c = stream.readChar();</span>
+<span class="fc" id="L526">            int start = 0;</span>
+<span class="fc bfc" id="L527" title="All 2 branches covered.">            while (c != CharacterIterator.DONE) {</span>
+<span class="fc" id="L528">                int limit = stream.readInt();</span>
+<span class="fc" id="L529">                Map atts = (Map) stream.readObject();</span>
+<span class="fc" id="L530">                result.addAttributes(atts, start, limit);</span>
+<span class="fc" id="L531">                start = limit;</span>
+<span class="fc" id="L532">                c = stream.readChar();</span>
+            }
+        }
+<span class="fc" id="L535">        return result;</span>
+    }
+
+    /**
+     * Serialises an {@code AttributedString} object.
+     *
+     * @param as  the attributed string object ({@code null} permitted).
+     * @param stream  the output stream ({@code null} not permitted).
+     *
+     * @throws IOException if there is an I/O error.
+     */
+    public static void writeAttributedString(AttributedString as,
+            ObjectOutputStream stream) throws IOException {
+
+<span class="fc" id="L549">        Args.nullNotPermitted(stream, &quot;stream&quot;);</span>
+<span class="fc" id="L550">        stream1(as, stream);</span>
+
+<span class="fc" id="L552">    }</span>
+
+	private static void stream1(AttributedString as, ObjectOutputStream stream) throws IOException {
+<span class="fc bfc" id="L555" title="All 2 branches covered.">		if (as != null) {</span>
+<span class="fc" id="L556">			stream.writeBoolean(false);</span>
+<span class="fc" id="L557">			AttributedCharacterIterator aci = as.getIterator();</span>
+<span class="fc" id="L558">			StringBuffer plainStr = new StringBuffer();</span>
+<span class="fc" id="L559">			char current = aci.first();</span>
+<span class="fc bfc" id="L560" title="All 2 branches covered.">			while (current != CharacterIterator.DONE) {</span>
+<span class="fc" id="L561">				plainStr = plainStr.append(current);</span>
+<span class="fc" id="L562">				current = aci.next();</span>
+			}
+<span class="fc" id="L564">			stream.writeObject(plainStr.toString());</span>
+<span class="fc" id="L565">			current = aci.first();</span>
+<span class="fc" id="L566">			int begin = aci.getBeginIndex();</span>
+<span class="fc bfc" id="L567" title="All 2 branches covered.">			while (current != CharacterIterator.DONE) {</span>
+<span class="fc" id="L568">				stream.writeChar(current);</span>
+<span class="fc" id="L569">				int limit = aci.getRunLimit();</span>
+<span class="fc" id="L570">				stream.writeInt(limit - begin);</span>
+<span class="fc" id="L571">				Map atts = new HashMap(aci.getAttributes());</span>
+<span class="fc" id="L572">				stream.writeObject(atts);</span>
+<span class="fc" id="L573">				current = aci.setIndex(limit);</span>
+			}
+<span class="fc" id="L575">			stream.writeChar(CharacterIterator.DONE);</span>
+<span class="fc" id="L576">		} else {</span>
+<span class="fc" id="L577">			stream.writeBoolean(true);</span>
+		}
+<span class="fc" id="L579">	}</span>
+
+    /**
+     * Serialises a {@code Map&lt;Integer, Paint&gt;} instance to the specified stream.
+     * 
+     * @param map  the map ({@code null} permitted).
+     * @param stream  the stream ({@code null} not permitted).
+     * 
+     * @throws IOException if there is an I/O problem.
+     */
+    public static void writeMapOfPaint(Map&lt;Integer, Paint&gt; map, ObjectOutputStream stream) throws IOException {
+<span class="fc" id="L590">        Args.nullNotPermitted(stream, &quot;stream&quot;);</span>
+<span class="pc bpc" id="L591" title="1 of 2 branches missed.">        if (map != null) {</span>
+<span class="fc" id="L592">            stream.writeBoolean(false);</span>
+<span class="fc" id="L593">            int keyCount = map.keySet().size();</span>
+<span class="fc" id="L594">            stream.writeInt(keyCount);</span>
+<span class="fc bfc" id="L595" title="All 2 branches covered.">            for (Integer key : map.keySet()) {</span>
+<span class="fc" id="L596">                Paint p = map.get(key);</span>
+<span class="fc" id="L597">                stream.writeInt(key);</span>
+<span class="fc" id="L598">                writePaint(p, stream);</span>
+            }
+<span class="fc" id="L600">        } else {</span>
+<span class="nc" id="L601">            stream.writeBoolean(true); // indicates null</span>
+        }
+<span class="fc" id="L603">    }</span>
+    
+    /**
+     * Deserialises a {@code Map&lt;Integer, Paint&gt;} instance from the specified stream.
+     * 
+     * @param stream  the stream ({@code null} not permitted).
+     * 
+     * @return A map instance (possibly {@code null}).
+     * 
+     * @throws IOException
+     * @throws ClassNotFoundException 
+     */
+    public static Map&lt;Integer, Paint&gt; readMapOfPaint(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+<span class="fc" id="L616">        Args.nullNotPermitted(stream, &quot;stream&quot;);</span>
+<span class="fc" id="L617">        boolean isNull = stream.readBoolean();</span>
+<span class="pc bpc" id="L618" title="1 of 2 branches missed.">        if (isNull) {</span>
+<span class="nc" id="L619">            return null;</span>
+        }
+<span class="fc" id="L621">        Map&lt;Integer, Paint&gt; result = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L622">        int keyCount = stream.readInt();</span>
+<span class="fc bfc" id="L623" title="All 2 branches covered.">        for (int i = 0; i &lt; keyCount; i++) {</span>
+<span class="fc" id="L624">            Integer key = stream.readInt();</span>
+<span class="fc" id="L625">            Paint paint = readPaint(stream);</span>
+<span class="fc" id="L626">            result.put(key, paint);</span>
+        }
+<span class="fc" id="L628">        return result;</span>
+    }
+    /**
+     * Serialises a {@code Map&lt;Integer, Stroke&gt;} instance to the specified stream.
+     * 
+     * @param map  the map ({@code null} permitted).
+     * @param stream  the stream ({@code null} not permitted).
+     * 
+     * @throws IOException if there is an I/O problem.
+     */
+    public static void writeMapOfStroke(Map&lt;Integer, Stroke&gt; map, ObjectOutputStream stream) throws IOException {
+<span class="fc" id="L639">        Args.nullNotPermitted(stream, &quot;stream&quot;);</span>
+<span class="pc bpc" id="L640" title="1 of 2 branches missed.">        if (map != null) {</span>
+<span class="fc" id="L641">            stream.writeBoolean(false);</span>
+<span class="fc" id="L642">            int keyCount = map.keySet().size();</span>
+<span class="fc" id="L643">            stream.writeInt(keyCount);</span>
+<span class="fc bfc" id="L644" title="All 2 branches covered.">            for (Integer key : map.keySet()) {</span>
+<span class="fc" id="L645">                Stroke s = map.get(key);</span>
+<span class="fc" id="L646">                stream.writeInt(key);</span>
+<span class="fc" id="L647">                writeStroke(s, stream);</span>
+            }
+<span class="fc" id="L649">        } else {</span>
+<span class="nc" id="L650">            stream.writeBoolean(true); // indicates null</span>
+        }
+<span class="fc" id="L652">    }</span>
+    
+    /**
+     * Deserialises a {@code Map&lt;Integer, Stroke&gt;} instance from the specified stream.
+     * 
+     * @param stream  the stream ({@code null} not permitted).
+     * 
+     * @return A map instance (possibly {@code null}).
+     * 
+     * @throws IOException
+     * @throws ClassNotFoundException 
+     */
+    public static Map&lt;Integer, Stroke&gt; readMapOfStroke(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+<span class="fc" id="L665">        Args.nullNotPermitted(stream, &quot;stream&quot;);</span>
+<span class="fc" id="L666">        boolean isNull = stream.readBoolean();</span>
+<span class="pc bpc" id="L667" title="1 of 2 branches missed.">        if (isNull) {</span>
+<span class="nc" id="L668">            return null;</span>
+        }
+<span class="fc" id="L670">        Map&lt;Integer, Stroke&gt; result = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L671">        int keyCount = stream.readInt();</span>
+<span class="fc bfc" id="L672" title="All 2 branches covered.">        for (int i = 0; i &lt; keyCount; i++) {</span>
+<span class="fc" id="L673">            Integer key = stream.readInt();</span>
+<span class="fc" id="L674">            Stroke stroke = readStroke(stream);</span>
+<span class="fc" id="L675">            result.put(key, stroke);</span>
+        }
+<span class="fc" id="L677">        return result;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (1) (14 May 2022 17:53:42)</div></body></html>

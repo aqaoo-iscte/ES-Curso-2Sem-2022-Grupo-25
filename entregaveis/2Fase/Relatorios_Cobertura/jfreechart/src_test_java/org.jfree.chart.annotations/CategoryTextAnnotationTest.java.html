@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>CategoryTextAnnotationTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (1) (14 May 2022 17:53:42)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart.annotations</a> &gt; <span class="el_source">CategoryTextAnnotationTest.java</span></div><h1>CategoryTextAnnotationTest.java</h1><pre class="source lang-java linenums">/* ===========================================================
+ * JFreeChart : a free chart library for the Java(tm) platform
+ * ===========================================================
+ *
+ * (C) Copyright 2000-2022, by David Gilbert and Contributors.
+ *
+ * Project Info:  http://www.jfree.org/jfreechart/index.html
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ *
+ * [Oracle and Java are registered trademarks of Oracle and/or its affiliates. 
+ * Other names may be trademarks of their respective owners.]
+ *
+ * -------------------------------
+ * CategoryTextAnnotationTest.java
+ * -------------------------------
+ * (C) Copyright 2003-2022, by David Gilbert and Contributors.
+ *
+ * Original Author:  David Gilbert;
+ * Contributor(s):   -;
+ *
+ */
+
+package org.jfree.chart.annotations;
+
+import org.jfree.chart.TestUtils;
+
+import org.jfree.chart.axis.CategoryAnchor;
+import org.jfree.chart.api.PublicCloneable;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Tests for the {@link CategoryTextAnnotation} class.
+ */
+<span class="fc" id="L50">public class CategoryTextAnnotationTest {</span>
+
+    /**
+     * Confirm that the equals method can distinguish all the required fields.
+     */
+    @Test
+    public void testEquals() {
+<span class="fc" id="L57">        CategoryTextAnnotation a1 = new CategoryTextAnnotation(&quot;Test&quot;, </span>
+<span class="fc" id="L58">                &quot;Category&quot;, 1.0);</span>
+<span class="fc" id="L59">        CategoryTextAnnotation a2 = new CategoryTextAnnotation(&quot;Test&quot;, </span>
+<span class="fc" id="L60">                &quot;Category&quot;, 1.0);</span>
+<span class="fc" id="L61">        assertEquals(a1, a2);</span>
+
+        // category
+<span class="fc" id="L64">        a1.setCategory(&quot;Category 2&quot;);</span>
+<span class="fc" id="L65">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L66">        a2.setCategory(&quot;Category 2&quot;);</span>
+<span class="fc" id="L67">        assertEquals(a1, a2);</span>
+
+        // categoryAnchor
+<span class="fc" id="L70">        a1.setCategoryAnchor(CategoryAnchor.START);</span>
+<span class="fc" id="L71">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L72">        a2.setCategoryAnchor(CategoryAnchor.START);</span>
+<span class="fc" id="L73">        assertEquals(a1, a2);</span>
+
+        // value
+<span class="fc" id="L76">        a1.setValue(0.15);</span>
+<span class="fc" id="L77">        assertNotEquals(a1, a2);</span>
+<span class="fc" id="L78">        a2.setValue(0.15);</span>
+<span class="fc" id="L79">        assertEquals(a1, a2);</span>
+<span class="fc" id="L80">    }</span>
+
+    /**
+     * Two objects that are equal are required to return the same hashCode.
+     */
+    @Test
+    public void testHashcode() {
+<span class="fc" id="L87">        CategoryTextAnnotation a1 = new CategoryTextAnnotation(&quot;Test&quot;, </span>
+<span class="fc" id="L88">                &quot;Category&quot;, 1.0);</span>
+<span class="fc" id="L89">        CategoryTextAnnotation a2 = new CategoryTextAnnotation(&quot;Test&quot;, </span>
+<span class="fc" id="L90">                &quot;Category&quot;, 1.0);</span>
+<span class="fc" id="L91">        assertEquals(a1, a2);</span>
+<span class="fc" id="L92">        int h1 = a1.hashCode();</span>
+<span class="fc" id="L93">        int h2 = a2.hashCode();</span>
+<span class="fc" id="L94">        assertEquals(h1, h2);</span>
+<span class="fc" id="L95">    }</span>
+
+    /**
+     * Confirm that cloning works.
+     */
+    @Test
+    public void testCloning() throws CloneNotSupportedException {
+<span class="fc" id="L102">        CategoryTextAnnotation a1 = new CategoryTextAnnotation(</span>
+<span class="fc" id="L103">                &quot;Test&quot;, &quot;Category&quot;, 1.0);</span>
+<span class="fc" id="L104">        CategoryTextAnnotation a2 = (CategoryTextAnnotation) a1.clone();</span>
+<span class="fc" id="L105">        assertNotSame(a1, a2);</span>
+<span class="fc" id="L106">        assertSame(a1.getClass(), a2.getClass());</span>
+<span class="fc" id="L107">        assertEquals(a1, a2);</span>
+<span class="fc" id="L108">    }</span>
+
+    /**
+     * Checks that this class implements PublicCloneable.
+     */
+    @Test
+    public void testPublicCloneable() {
+<span class="fc" id="L115">        CategoryTextAnnotation a1 = new CategoryTextAnnotation(</span>
+<span class="fc" id="L116">                &quot;Test&quot;, &quot;Category&quot;, 1.0);</span>
+<span class="fc" id="L117">        assertTrue(a1 instanceof PublicCloneable);</span>
+<span class="fc" id="L118">    }</span>
+
+    /**
+     * Serialize an instance, restore it, and check for equality.
+     */
+    @Test
+    public void testSerialization() {
+<span class="fc" id="L125">        CategoryTextAnnotation a1 = new CategoryTextAnnotation(&quot;Test&quot;, </span>
+<span class="fc" id="L126">                &quot;Category&quot;, 1.0);</span>
+<span class="fc" id="L127">        CategoryTextAnnotation a2 = TestUtils.serialised(a1);</span>
+<span class="fc" id="L128">        assertEquals(a1, a2);</span>
+<span class="fc" id="L129">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (1) (14 May 2022 17:53:42)</div></body></html>

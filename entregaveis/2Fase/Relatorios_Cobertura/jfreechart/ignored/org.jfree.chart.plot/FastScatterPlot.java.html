@@ -1,0 +1,1085 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FastScatterPlot.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (1) (14 May 2022 17:53:42)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">ignored</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart.plot</a> &gt; <span class="el_source">FastScatterPlot.java</span></div><h1>FastScatterPlot.java</h1><pre class="source lang-java linenums">/* ===========================================================
+ * JFreeChart : a free chart library for the Java(tm) platform
+ * ===========================================================
+ *
+ * (C) Copyright 2000-2022, by David Gilbert and Contributors.
+ *
+ * Project Info:  http://www.jfree.org/jfreechart/index.html
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ *
+ * [Oracle and Java are registered trademarks of Oracle and/or its affiliates. 
+ * Other names may be trademarks of their respective owners.]
+ *
+ * --------------------
+ * FastScatterPlot.java
+ * --------------------
+ * (C) Copyright 2002-2022, by David Gilbert.
+ *
+ * Original Author:  David Gilbert;
+ * Contributor(s):   Arnaud Lelievre;
+ *                   Ulrich Voigt (patch #307);
+ *
+ */
+
+package org.jfree.chart.plot;
+
+import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Composite;
+import java.awt.Graphics2D;
+import java.awt.Paint;
+import java.awt.RenderingHints;
+import java.awt.Shape;
+import java.awt.Stroke;
+import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.List;
+import java.util.Objects;
+import java.util.ResourceBundle;
+import org.jfree.chart.ChartElementVisitor;
+
+import org.jfree.chart.axis.AxisSpace;
+import org.jfree.chart.axis.AxisState;
+import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.axis.ValueTick;
+import org.jfree.chart.event.PlotChangeEvent;
+import org.jfree.chart.api.RectangleEdge;
+import org.jfree.chart.api.RectangleInsets;
+import org.jfree.chart.internal.ArrayUtils;
+import org.jfree.chart.internal.PaintUtils;
+import org.jfree.chart.internal.Args;
+import org.jfree.chart.internal.SerialUtils;
+import org.jfree.data.Range;
+
+/**
+ * A fast scatter plot.
+ */
+public class FastScatterPlot extends Plot implements ValueAxisPlot, Pannable,
+        Zoomable, Cloneable, Serializable {
+
+    /** For serialization. */
+    private static final long serialVersionUID = 7871545897358563521L;
+
+    /** The default grid line stroke. */
+<span class="nc" id="L85">    public static final Stroke DEFAULT_GRIDLINE_STROKE = new BasicStroke(0.5f,</span>
+<span class="nc" id="L86">            BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0.0f, new float[]</span>
+<span class="nc" id="L87">            {2.0f, 2.0f}, 0.0f);</span>
+
+    /** The default grid line paint. */
+<span class="nc" id="L90">    public static final Paint DEFAULT_GRIDLINE_PAINT = Color.lightGray;</span>
+
+    /** The data. */
+    private float[][] data;
+
+    /** The x data range. */
+    private final Range xDataRange;
+
+    /** The y data range. */
+    private final Range yDataRange;
+
+    /** The domain axis (used for the x-values). */
+    private ValueAxis domainAxis;
+
+    /** The range axis (used for the y-values). */
+    private ValueAxis rangeAxis;
+
+    /** The paint used to plot data points. */
+    private transient Paint paint;
+
+    /** A flag that controls whether the domain grid-lines are visible. */
+    private boolean domainGridlinesVisible;
+
+    /** The stroke used to draw the domain grid-lines. */
+    private transient Stroke domainGridlineStroke;
+
+    /** The paint used to draw the domain grid-lines. */
+    private transient Paint domainGridlinePaint;
+
+    /** A flag that controls whether the range grid-lines are visible. */
+    private boolean rangeGridlinesVisible;
+
+    /** The stroke used to draw the range grid-lines. */
+    private transient Stroke rangeGridlineStroke;
+
+    /** The paint used to draw the range grid-lines. */
+    private transient Paint rangeGridlinePaint;
+
+    /**
+     * A flag that controls whether or not panning is enabled for the domain
+     * axis.
+     */
+    private boolean domainPannable;
+
+    /**
+     * A flag that controls whether or not panning is enabled for the range
+     * axis.
+     */
+    private boolean rangePannable;
+
+    /** The resourceBundle for the localization. */
+<span class="nc" id="L141">    protected static ResourceBundle localizationResources</span>
+<span class="nc" id="L142">            = ResourceBundle.getBundle(&quot;org.jfree.chart.plot.LocalizationBundle&quot;);</span>
+
+    /**
+     * Creates a new instance of {@code FastScatterPlot} with default
+     * axes.
+     */
+    public FastScatterPlot() {
+<span class="nc" id="L149">        this(null, new NumberAxis(&quot;X&quot;), new NumberAxis(&quot;Y&quot;));</span>
+<span class="nc" id="L150">    }</span>
+
+    /**
+     * Creates a new fast scatter plot.
+     * &lt;p&gt;
+     * The data is an array of x, y values:  data[0][i] = x, data[1][i] = y.
+     *
+     * @param data  the data ({@code null} permitted).
+     * @param domainAxis  the domain (x) axis ({@code null} not permitted).
+     * @param rangeAxis  the range (y) axis ({@code null} not permitted).
+     */
+    public FastScatterPlot(float[][] data,
+                           ValueAxis domainAxis, ValueAxis rangeAxis) {
+
+<span class="nc" id="L164">        super();</span>
+<span class="nc" id="L165">        Args.nullNotPermitted(domainAxis, &quot;domainAxis&quot;);</span>
+<span class="nc" id="L166">        Args.nullNotPermitted(rangeAxis, &quot;rangeAxis&quot;);</span>
+
+<span class="nc" id="L168">        this.data = data;</span>
+<span class="nc" id="L169">        this.xDataRange = calculateXDataRange(data);</span>
+<span class="nc" id="L170">        this.yDataRange = calculateYDataRange(data);</span>
+<span class="nc" id="L171">        this.domainAxis = domainAxis;</span>
+<span class="nc" id="L172">        this.domainAxis.setPlot(this);</span>
+<span class="nc" id="L173">        this.domainAxis.addChangeListener(this);</span>
+<span class="nc" id="L174">        this.rangeAxis = rangeAxis;</span>
+<span class="nc" id="L175">        this.rangeAxis.setPlot(this);</span>
+<span class="nc" id="L176">        this.rangeAxis.addChangeListener(this);</span>
+
+<span class="nc" id="L178">        this.paint = Color.RED;</span>
+
+<span class="nc" id="L180">        this.domainGridlinesVisible = true;</span>
+<span class="nc" id="L181">        this.domainGridlinePaint = FastScatterPlot.DEFAULT_GRIDLINE_PAINT;</span>
+<span class="nc" id="L182">        this.domainGridlineStroke = FastScatterPlot.DEFAULT_GRIDLINE_STROKE;</span>
+
+<span class="nc" id="L184">        this.rangeGridlinesVisible = true;</span>
+<span class="nc" id="L185">        this.rangeGridlinePaint = FastScatterPlot.DEFAULT_GRIDLINE_PAINT;</span>
+<span class="nc" id="L186">        this.rangeGridlineStroke = FastScatterPlot.DEFAULT_GRIDLINE_STROKE;</span>
+<span class="nc" id="L187">    }</span>
+
+    /**
+     * Returns a short string describing the plot type.
+     *
+     * @return A short string describing the plot type.
+     */
+    @Override
+    public String getPlotType() {
+<span class="nc" id="L196">        return localizationResources.getString(&quot;Fast_Scatter_Plot&quot;);</span>
+    }
+
+    /**
+     * Returns the data array used by the plot.
+     *
+     * @return The data array (possibly {@code null}).
+     *
+     * @see #setData(float[][])
+     */
+    public float[][] getData() {
+<span class="nc" id="L207">        return this.data;</span>
+    }
+
+    /**
+     * Sets the data array used by the plot and sends a {@link PlotChangeEvent}
+     * to all registered listeners.
+     *
+     * @param data  the data array ({@code null} permitted).
+     *
+     * @see #getData()
+     */
+    public void setData(float[][] data) {
+<span class="nc" id="L219">        this.data = data;</span>
+<span class="nc" id="L220">        fireChangeEvent();</span>
+<span class="nc" id="L221">    }</span>
+
+    /**
+     * Returns the orientation of the plot.
+     *
+     * @return The orientation (always {@link PlotOrientation#VERTICAL}).
+     */
+    @Override
+    public PlotOrientation getOrientation() {
+<span class="nc" id="L230">        return PlotOrientation.VERTICAL;</span>
+    }
+
+    /**
+     * Returns the domain axis for the plot.
+     *
+     * @return The domain axis (never {@code null}).
+     *
+     * @see #setDomainAxis(ValueAxis)
+     */
+    public ValueAxis getDomainAxis() {
+<span class="nc" id="L241">        return this.domainAxis;</span>
+    }
+
+    /**
+     * Sets the domain axis and sends a {@link PlotChangeEvent} to all
+     * registered listeners.
+     *
+     * @param axis  the axis ({@code null} not permitted).
+     *
+     * @see #getDomainAxis()
+     */
+    public void setDomainAxis(ValueAxis axis) {
+<span class="nc" id="L253">        Args.nullNotPermitted(axis, &quot;axis&quot;);</span>
+<span class="nc" id="L254">        this.domainAxis = axis;</span>
+<span class="nc" id="L255">        fireChangeEvent();</span>
+<span class="nc" id="L256">    }</span>
+
+    /**
+     * Returns the range axis for the plot.
+     *
+     * @return The range axis (never {@code null}).
+     *
+     * @see #setRangeAxis(ValueAxis)
+     */
+    public ValueAxis getRangeAxis() {
+<span class="nc" id="L266">        return this.rangeAxis;</span>
+    }
+
+    /**
+     * Sets the range axis and sends a {@link PlotChangeEvent} to all
+     * registered listeners.
+     *
+     * @param axis  the axis ({@code null} not permitted).
+     *
+     * @see #getRangeAxis()
+     */
+    public void setRangeAxis(ValueAxis axis) {
+<span class="nc" id="L278">        Args.nullNotPermitted(axis, &quot;axis&quot;);</span>
+<span class="nc" id="L279">        this.rangeAxis = axis;</span>
+<span class="nc" id="L280">        fireChangeEvent();</span>
+<span class="nc" id="L281">    }</span>
+
+    /**
+     * Returns the paint used to plot data points.  The default is
+     * {@code Color.RED}.
+     *
+     * @return The paint.
+     *
+     * @see #setPaint(Paint)
+     */
+    public Paint getPaint() {
+<span class="nc" id="L292">        return this.paint;</span>
+    }
+
+    /**
+     * Sets the color for the data points and sends a {@link PlotChangeEvent}
+     * to all registered listeners.
+     *
+     * @param paint  the paint ({@code null} not permitted).
+     *
+     * @see #getPaint()
+     */
+    public void setPaint(Paint paint) {
+<span class="nc" id="L304">        Args.nullNotPermitted(paint, &quot;paint&quot;);</span>
+<span class="nc" id="L305">        this.paint = paint;</span>
+<span class="nc" id="L306">        fireChangeEvent();</span>
+<span class="nc" id="L307">    }</span>
+
+    /**
+     * Returns {@code true} if the domain gridlines are visible, and
+     * {@code false} otherwise.
+     *
+     * @return {@code true} or {@code false}.
+     *
+     * @see #setDomainGridlinesVisible(boolean)
+     * @see #setDomainGridlinePaint(Paint)
+     */
+    public boolean isDomainGridlinesVisible() {
+<span class="nc" id="L319">        return this.domainGridlinesVisible;</span>
+    }
+
+    /**
+     * Sets the flag that controls whether or not the domain grid-lines are
+     * visible.  If the flag value is changed, a {@link PlotChangeEvent} is
+     * sent to all registered listeners.
+     *
+     * @param visible  the new value of the flag.
+     *
+     * @see #getDomainGridlinePaint()
+     */
+    public void setDomainGridlinesVisible(boolean visible) {
+<span class="nc bnc" id="L332" title="All 2 branches missed.">        if (this.domainGridlinesVisible != visible) {</span>
+<span class="nc" id="L333">            this.domainGridlinesVisible = visible;</span>
+<span class="nc" id="L334">            fireChangeEvent();</span>
+        }
+<span class="nc" id="L336">    }</span>
+
+    /**
+     * Returns the stroke for the grid-lines (if any) plotted against the
+     * domain axis.
+     *
+     * @return The stroke (never {@code null}).
+     *
+     * @see #setDomainGridlineStroke(Stroke)
+     */
+    public Stroke getDomainGridlineStroke() {
+<span class="nc" id="L347">        return this.domainGridlineStroke;</span>
+    }
+
+    /**
+     * Sets the stroke for the grid lines plotted against the domain axis and
+     * sends a {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param stroke  the stroke ({@code null} not permitted).
+     *
+     * @see #getDomainGridlineStroke()
+     */
+    public void setDomainGridlineStroke(Stroke stroke) {
+<span class="nc" id="L359">        Args.nullNotPermitted(stroke, &quot;stroke&quot;);</span>
+<span class="nc" id="L360">        this.domainGridlineStroke = stroke;</span>
+<span class="nc" id="L361">        fireChangeEvent();</span>
+<span class="nc" id="L362">    }</span>
+
+    /**
+     * Returns the paint for the grid lines (if any) plotted against the domain
+     * axis.
+     *
+     * @return The paint (never {@code null}).
+     *
+     * @see #setDomainGridlinePaint(Paint)
+     */
+    public Paint getDomainGridlinePaint() {
+<span class="nc" id="L373">        return this.domainGridlinePaint;</span>
+    }
+
+    /**
+     * Sets the paint for the grid lines plotted against the domain axis and
+     * sends a {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param paint  the paint ({@code null} not permitted).
+     *
+     * @see #getDomainGridlinePaint()
+     */
+    public void setDomainGridlinePaint(Paint paint) {
+<span class="nc" id="L385">        Args.nullNotPermitted(paint, &quot;paint&quot;);</span>
+<span class="nc" id="L386">        this.domainGridlinePaint = paint;</span>
+<span class="nc" id="L387">        fireChangeEvent();</span>
+<span class="nc" id="L388">    }</span>
+
+    /**
+     * Returns {@code true} if the range axis grid is visible, and
+     * {@code false} otherwise.
+     *
+     * @return {@code true} or {@code false}.
+     *
+     * @see #setRangeGridlinesVisible(boolean)
+     */
+    public boolean isRangeGridlinesVisible() {
+<span class="nc" id="L399">        return this.rangeGridlinesVisible;</span>
+    }
+
+    /**
+     * Sets the flag that controls whether or not the range axis grid lines are
+     * visible.  If the flag value is changed, a {@link PlotChangeEvent} is
+     * sent to all registered listeners.
+     *
+     * @param visible  the new value of the flag.
+     *
+     * @see #isRangeGridlinesVisible()
+     */
+    public void setRangeGridlinesVisible(boolean visible) {
+<span class="nc bnc" id="L412" title="All 2 branches missed.">        if (this.rangeGridlinesVisible != visible) {</span>
+<span class="nc" id="L413">            this.rangeGridlinesVisible = visible;</span>
+<span class="nc" id="L414">            fireChangeEvent();</span>
+        }
+<span class="nc" id="L416">    }</span>
+
+    /**
+     * Returns the stroke for the grid lines (if any) plotted against the range
+     * axis.
+     *
+     * @return The stroke (never {@code null}).
+     *
+     * @see #setRangeGridlineStroke(Stroke)
+     */
+    public Stroke getRangeGridlineStroke() {
+<span class="nc" id="L427">        return this.rangeGridlineStroke;</span>
+    }
+
+    /**
+     * Sets the stroke for the grid lines plotted against the range axis and
+     * sends a {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param stroke  the stroke ({@code null} permitted).
+     *
+     * @see #getRangeGridlineStroke()
+     */
+    public void setRangeGridlineStroke(Stroke stroke) {
+<span class="nc" id="L439">        Args.nullNotPermitted(stroke, &quot;stroke&quot;);</span>
+<span class="nc" id="L440">        this.rangeGridlineStroke = stroke;</span>
+<span class="nc" id="L441">        fireChangeEvent();</span>
+<span class="nc" id="L442">    }</span>
+
+    /**
+     * Returns the paint for the grid lines (if any) plotted against the range
+     * axis.
+     *
+     * @return The paint (never {@code null}).
+     *
+     * @see #setRangeGridlinePaint(Paint)
+     */
+    public Paint getRangeGridlinePaint() {
+<span class="nc" id="L453">        return this.rangeGridlinePaint;</span>
+    }
+
+    /**
+     * Sets the paint for the grid lines plotted against the range axis and
+     * sends a {@link PlotChangeEvent} to all registered listeners.
+     *
+     * @param paint  the paint ({@code null} not permitted).
+     *
+     * @see #getRangeGridlinePaint()
+     */
+    public void setRangeGridlinePaint(Paint paint) {
+<span class="nc" id="L465">        Args.nullNotPermitted(paint, &quot;paint&quot;);</span>
+<span class="nc" id="L466">        this.rangeGridlinePaint = paint;</span>
+<span class="nc" id="L467">        fireChangeEvent();</span>
+<span class="nc" id="L468">    }</span>
+
+    /**
+     * Receives a chart element visitor.
+     * 
+     * @param visitor  the visitor ({@code null} not permitted).
+     */
+    @Override
+    public void receive(ChartElementVisitor visitor) {
+<span class="nc" id="L477">        this.domainAxis.receive(visitor);</span>
+<span class="nc" id="L478">        this.rangeAxis.receive(visitor);</span>
+<span class="nc" id="L479">        super.receive(visitor);</span>
+<span class="nc" id="L480">    }</span>
+
+    /**
+     * Draws the fast scatter plot on a Java 2D graphics device (such as the
+     * screen or a printer).
+     *
+     * @param g2  the graphics device.
+     * @param area   the area within which the plot (including axis labels)
+     *                   should be drawn.
+     * @param anchor  the anchor point ({@code null} permitted).
+     * @param parentState  the state from the parent plot (ignored).
+     * @param info  collects chart drawing information ({@code null}
+     *              permitted).
+     */
+    @Override
+    public void draw(Graphics2D g2, Rectangle2D area, Point2D anchor,
+                     PlotState parentState, PlotRenderingInfo info) {
+
+        // set up info collection...
+<span class="nc bnc" id="L499" title="All 2 branches missed.">        if (info != null) {</span>
+<span class="nc" id="L500">            info.setPlotArea(area);</span>
+        }
+
+        // adjust the drawing area for plot insets (if any)...
+<span class="nc" id="L504">        RectangleInsets insets = getInsets();</span>
+<span class="nc" id="L505">        insets.trim(area);</span>
+
+<span class="nc" id="L507">        AxisSpace space = new AxisSpace();</span>
+<span class="nc" id="L508">        space = this.domainAxis.reserveSpace(g2, this, area,</span>
+<span class="nc" id="L509">                RectangleEdge.BOTTOM, space);</span>
+<span class="nc" id="L510">        space = this.rangeAxis.reserveSpace(g2, this, area, RectangleEdge.LEFT,</span>
+<span class="nc" id="L511">                space);</span>
+<span class="nc" id="L512">        Rectangle2D dataArea = space.shrink(area, null);</span>
+
+<span class="nc bnc" id="L514" title="All 2 branches missed.">        if (info != null) {</span>
+<span class="nc" id="L515">            info.setDataArea(dataArea);</span>
+        }
+
+        // draw the plot background and axes...
+<span class="nc" id="L519">        drawBackground(g2, dataArea);</span>
+
+<span class="nc" id="L521">        AxisState domainAxisState = this.domainAxis.draw(g2,</span>
+<span class="nc" id="L522">                dataArea.getMaxY(), area, dataArea, RectangleEdge.BOTTOM, info);</span>
+<span class="nc" id="L523">        AxisState rangeAxisState = this.rangeAxis.draw(g2, dataArea.getMinX(),</span>
+<span class="nc" id="L524">                area, dataArea, RectangleEdge.LEFT, info);</span>
+<span class="nc" id="L525">        drawDomainGridlines(g2, dataArea, domainAxisState.getTicks());</span>
+<span class="nc" id="L526">        drawRangeGridlines(g2, dataArea, rangeAxisState.getTicks());</span>
+
+<span class="nc" id="L528">        Shape originalClip = g2.getClip();</span>
+<span class="nc" id="L529">        Composite originalComposite = g2.getComposite();</span>
+
+<span class="nc" id="L531">        g2.clip(dataArea);</span>
+<span class="nc" id="L532">        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER,</span>
+<span class="nc" id="L533">                getForegroundAlpha()));</span>
+
+<span class="nc" id="L535">        render(g2, dataArea, info, null);</span>
+
+<span class="nc" id="L537">        g2.setClip(originalClip);</span>
+<span class="nc" id="L538">        g2.setComposite(originalComposite);</span>
+<span class="nc" id="L539">        drawOutline(g2, dataArea);</span>
+
+<span class="nc" id="L541">    }</span>
+
+    /**
+     * Draws a representation of the data within the dataArea region.  The
+     * {@code info} and {@code crosshairState} arguments may be
+     * {@code null}.
+     *
+     * @param g2  the graphics device.
+     * @param dataArea  the region in which the data is to be drawn.
+     * @param info  an optional object for collection dimension information.
+     * @param crosshairState  collects crosshair information ({@code null}
+     *                        permitted).
+     */
+    public void render(Graphics2D g2, Rectangle2D dataArea,
+                       PlotRenderingInfo info, CrosshairState crosshairState) {
+<span class="nc" id="L556">        g2.setPaint(this.paint);</span>
+
+        // if the axes use a linear scale, you can uncomment the code below and
+        // switch to the alternative transX/transY calculation inside the loop
+        // that follows - it is a little bit faster then.
+        //
+        // int xx = (int) dataArea.getMinX();
+        // int ww = (int) dataArea.getWidth();
+        // int yy = (int) dataArea.getMaxY();
+        // int hh = (int) dataArea.getHeight();
+        // double domainMin = this.domainAxis.getLowerBound();
+        // double domainLength = this.domainAxis.getUpperBound() - domainMin;
+        // double rangeMin = this.rangeAxis.getLowerBound();
+        // double rangeLength = this.rangeAxis.getUpperBound() - rangeMin;
+
+<span class="nc bnc" id="L571" title="All 2 branches missed.">        if (this.data != null) {</span>
+<span class="nc bnc" id="L572" title="All 2 branches missed.">            for (int i = 0; i &lt; this.data[0].length; i++) {</span>
+<span class="nc" id="L573">                float x = this.data[0][i];</span>
+<span class="nc" id="L574">                float y = this.data[1][i];</span>
+
+                //int transX = (int) (xx + ww * (x - domainMin) / domainLength);
+                //int transY = (int) (yy - hh * (y - rangeMin) / rangeLength);
+<span class="nc" id="L578">                int transX = (int) this.domainAxis.valueToJava2D(x, dataArea,</span>
+<span class="nc" id="L579">                        RectangleEdge.BOTTOM);</span>
+<span class="nc" id="L580">                int transY = (int) this.rangeAxis.valueToJava2D(y, dataArea,</span>
+<span class="nc" id="L581">                        RectangleEdge.LEFT);</span>
+<span class="nc" id="L582">                g2.fillRect(transX, transY, 1, 1);</span>
+            }
+        }
+<span class="nc" id="L585">    }</span>
+
+    /**
+     * Draws the gridlines for the plot, if they are visible.
+     *
+     * @param g2  the graphics device.
+     * @param dataArea  the data area.
+     * @param ticks  the ticks.
+     */
+    protected void drawDomainGridlines(Graphics2D g2, Rectangle2D dataArea,
+            List ticks) {
+<span class="nc bnc" id="L596" title="All 2 branches missed.">        if (!isDomainGridlinesVisible()) {</span>
+<span class="nc" id="L597">            return;</span>
+        }
+<span class="nc" id="L599">        Object saved = g2.getRenderingHint(RenderingHints.KEY_STROKE_CONTROL);</span>
+<span class="nc" id="L600">        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, </span>
+<span class="nc" id="L601">                RenderingHints.VALUE_STROKE_NORMALIZE);</span>
+<span class="nc bnc" id="L602" title="All 2 branches missed.">        for (Object o : ticks) {</span>
+<span class="nc" id="L603">            ValueTick tick = (ValueTick) o;</span>
+<span class="nc" id="L604">            double v = this.domainAxis.valueToJava2D(tick.getValue(),</span>
+<span class="nc" id="L605">                    dataArea, RectangleEdge.BOTTOM);</span>
+<span class="nc" id="L606">            Line2D line = new Line2D.Double(v, dataArea.getMinY(), v,</span>
+<span class="nc" id="L607">                    dataArea.getMaxY());</span>
+<span class="nc" id="L608">            g2.setPaint(getDomainGridlinePaint());</span>
+<span class="nc" id="L609">            g2.setStroke(getDomainGridlineStroke());</span>
+<span class="nc" id="L610">            g2.draw(line);</span>
+        }
+<span class="nc" id="L612">        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, saved);</span>
+<span class="nc" id="L613">    }</span>
+
+    /**
+     * Draws the gridlines for the plot, if they are visible.
+     *
+     * @param g2  the graphics device.
+     * @param dataArea  the data area.
+     * @param ticks  the ticks.
+     */
+    protected void drawRangeGridlines(Graphics2D g2, Rectangle2D dataArea,
+            List ticks) {
+
+<span class="nc bnc" id="L625" title="All 2 branches missed.">        if (!isRangeGridlinesVisible()) {</span>
+<span class="nc" id="L626">            return;</span>
+        }
+<span class="nc" id="L628">        Object saved = g2.getRenderingHint(RenderingHints.KEY_STROKE_CONTROL);</span>
+<span class="nc" id="L629">        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, </span>
+<span class="nc" id="L630">                RenderingHints.VALUE_STROKE_NORMALIZE);</span>
+
+<span class="nc bnc" id="L632" title="All 2 branches missed.">        for (Object o : ticks) {</span>
+<span class="nc" id="L633">            ValueTick tick = (ValueTick) o;</span>
+<span class="nc" id="L634">            double v = this.rangeAxis.valueToJava2D(tick.getValue(),</span>
+<span class="nc" id="L635">                    dataArea, RectangleEdge.LEFT);</span>
+<span class="nc" id="L636">            Line2D line = new Line2D.Double(dataArea.getMinX(), v,</span>
+<span class="nc" id="L637">                    dataArea.getMaxX(), v);</span>
+<span class="nc" id="L638">            g2.setPaint(getRangeGridlinePaint());</span>
+<span class="nc" id="L639">            g2.setStroke(getRangeGridlineStroke());</span>
+<span class="nc" id="L640">            g2.draw(line);</span>
+        }
+<span class="nc" id="L642">        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, saved);</span>
+<span class="nc" id="L643">    }</span>
+
+    /**
+     * Returns the range of data values to be plotted along the axis, or
+     * {@code null} if the specified axis isn't the domain axis or the
+     * range axis for the plot.
+     *
+     * @param axis  the axis ({@code null} permitted).
+     *
+     * @return The range (possibly {@code null}).
+     */
+    @Override
+    public Range getDataRange(ValueAxis axis) {
+<span class="nc" id="L656">        Range result = null;</span>
+<span class="nc bnc" id="L657" title="All 2 branches missed.">        if (axis == this.domainAxis) {</span>
+<span class="nc" id="L658">            result = this.xDataRange;</span>
+<span class="nc" id="L659">        }</span>
+<span class="nc bnc" id="L660" title="All 2 branches missed.">        else if (axis == this.rangeAxis) {</span>
+<span class="nc" id="L661">            result = this.yDataRange;</span>
+        }
+<span class="nc" id="L663">        return result;</span>
+    }
+
+    /**
+     * Calculates the X data range.
+     *
+     * @param data  the data ({@code null} permitted).
+     *
+     * @return The range.
+     */
+    private Range calculateXDataRange(float[][] data) {
+
+<span class="nc" id="L675">        Range result = null;</span>
+
+<span class="nc bnc" id="L677" title="All 2 branches missed.">        if (data != null) {</span>
+<span class="nc" id="L678">            float lowest = Float.POSITIVE_INFINITY;</span>
+<span class="nc" id="L679">            float highest = Float.NEGATIVE_INFINITY;</span>
+<span class="nc bnc" id="L680" title="All 2 branches missed.">            for (int i = 0; i &lt; data[0].length; i++) {</span>
+<span class="nc" id="L681">                float v = data[0][i];</span>
+<span class="nc bnc" id="L682" title="All 2 branches missed.">                if (v &lt; lowest) {</span>
+<span class="nc" id="L683">                    lowest = v;</span>
+                }
+<span class="nc bnc" id="L685" title="All 2 branches missed.">                if (v &gt; highest) {</span>
+<span class="nc" id="L686">                    highest = v;</span>
+                }
+            }
+<span class="nc bnc" id="L689" title="All 2 branches missed.">            if (lowest &lt;= highest) {</span>
+<span class="nc" id="L690">                result = new Range(lowest, highest);</span>
+            }
+        }
+
+<span class="nc" id="L694">        return result;</span>
+
+    }
+
+    /**
+     * Calculates the Y data range.
+     *
+     * @param data  the data ({@code null} permitted).
+     *
+     * @return The range.
+     */
+    private Range calculateYDataRange(float[][] data) {
+
+<span class="nc" id="L707">        Range result = null;</span>
+<span class="nc bnc" id="L708" title="All 2 branches missed.">        if (data != null) {</span>
+<span class="nc" id="L709">            float lowest = Float.POSITIVE_INFINITY;</span>
+<span class="nc" id="L710">            float highest = Float.NEGATIVE_INFINITY;</span>
+<span class="nc bnc" id="L711" title="All 2 branches missed.">            for (int i = 0; i &lt; data[0].length; i++) {</span>
+<span class="nc" id="L712">                float v = data[1][i];</span>
+<span class="nc bnc" id="L713" title="All 2 branches missed.">                if (v &lt; lowest) {</span>
+<span class="nc" id="L714">                    lowest = v;</span>
+                }
+<span class="nc bnc" id="L716" title="All 2 branches missed.">                if (v &gt; highest) {</span>
+<span class="nc" id="L717">                    highest = v;</span>
+                }
+            }
+<span class="nc bnc" id="L720" title="All 2 branches missed.">            if (lowest &lt;= highest) {</span>
+<span class="nc" id="L721">                result = new Range(lowest, highest);</span>
+            }
+        }
+<span class="nc" id="L724">        return result;</span>
+
+    }
+
+    /**
+     * Multiplies the range on the domain axis by the specified factor.
+     *
+     * @param factor  the zoom factor.
+     * @param info  the plot rendering info.
+     * @param source  the source point.
+     */
+    @Override
+    public void zoomDomainAxes(double factor, PlotRenderingInfo info,
+                               Point2D source) {
+<span class="nc" id="L738">        this.domainAxis.resizeRange(factor);</span>
+<span class="nc" id="L739">    }</span>
+
+    /**
+     * Multiplies the range on the domain axis by the specified factor.
+     *
+     * @param factor  the zoom factor.
+     * @param info  the plot rendering info.
+     * @param source  the source point (in Java2D space).
+     * @param useAnchor  use source point as zoom anchor?
+     *
+     * @see #zoomRangeAxes(double, PlotRenderingInfo, Point2D, boolean)
+     */
+    @Override
+    public void zoomDomainAxes(double factor, PlotRenderingInfo info,
+                               Point2D source, boolean useAnchor) {
+
+<span class="nc bnc" id="L755" title="All 2 branches missed.">        if (useAnchor) {</span>
+            // get the source coordinate - this plot has always a VERTICAL
+            // orientation
+<span class="nc" id="L758">            double sourceX = source.getX();</span>
+<span class="nc" id="L759">            double anchorX = this.domainAxis.java2DToValue(sourceX,</span>
+<span class="nc" id="L760">                    info.getDataArea(), RectangleEdge.BOTTOM);</span>
+<span class="nc" id="L761">            this.domainAxis.resizeRange2(factor, anchorX);</span>
+<span class="nc" id="L762">        }</span>
+        else {
+<span class="nc" id="L764">            this.domainAxis.resizeRange(factor);</span>
+        }
+
+<span class="nc" id="L767">    }</span>
+
+    /**
+     * Zooms in on the domain axes.
+     *
+     * @param lowerPercent  the new lower bound as a percentage of the current
+     *                      range.
+     * @param upperPercent  the new upper bound as a percentage of the current
+     *                      range.
+     * @param info  the plot rendering info.
+     * @param source  the source point.
+     */
+    @Override
+    public void zoomDomainAxes(double lowerPercent, double upperPercent,
+                               PlotRenderingInfo info, Point2D source) {
+<span class="nc" id="L782">        this.domainAxis.zoomRange(lowerPercent, upperPercent);</span>
+<span class="nc" id="L783">    }</span>
+
+    /**
+     * Multiplies the range on the range axis/axes by the specified factor.
+     *
+     * @param factor  the zoom factor.
+     * @param info  the plot rendering info.
+     * @param source  the source point.
+     */
+    @Override
+    public void zoomRangeAxes(double factor, PlotRenderingInfo info, 
+            Point2D source) {
+<span class="nc" id="L795">        this.rangeAxis.resizeRange(factor);</span>
+<span class="nc" id="L796">    }</span>
+
+    /**
+     * Multiplies the range on the range axis by the specified factor.
+     *
+     * @param factor  the zoom factor.
+     * @param info  the plot rendering info.
+     * @param source  the source point (in Java2D space).
+     * @param useAnchor  use source point as zoom anchor?
+     *
+     * @see #zoomDomainAxes(double, PlotRenderingInfo, Point2D, boolean)
+     */
+    @Override
+    public void zoomRangeAxes(double factor, PlotRenderingInfo info,
+                              Point2D source, boolean useAnchor) {
+
+<span class="nc bnc" id="L812" title="All 2 branches missed.">        if (useAnchor) {</span>
+            // get the source coordinate - this plot has always a VERTICAL
+            // orientation
+<span class="nc" id="L815">            double sourceY = source.getY();</span>
+<span class="nc" id="L816">            double anchorY = this.rangeAxis.java2DToValue(sourceY,</span>
+<span class="nc" id="L817">                    info.getDataArea(), RectangleEdge.LEFT);</span>
+<span class="nc" id="L818">            this.rangeAxis.resizeRange2(factor, anchorY);</span>
+<span class="nc" id="L819">        }</span>
+        else {
+<span class="nc" id="L821">            this.rangeAxis.resizeRange(factor);</span>
+        }
+
+<span class="nc" id="L824">    }</span>
+
+    /**
+     * Zooms in on the range axes.
+     *
+     * @param lowerPercent  the new lower bound as a percentage of the current
+     *                      range.
+     * @param upperPercent  the new upper bound as a percentage of the current
+     *                      range.
+     * @param info  the plot rendering info.
+     * @param source  the source point.
+     */
+    @Override
+    public void zoomRangeAxes(double lowerPercent, double upperPercent,
+                              PlotRenderingInfo info, Point2D source) {
+<span class="nc" id="L839">        this.rangeAxis.zoomRange(lowerPercent, upperPercent);</span>
+<span class="nc" id="L840">    }</span>
+
+    /**
+     * Returns {@code true}.
+     *
+     * @return A boolean.
+     */
+    @Override
+    public boolean isDomainZoomable() {
+<span class="nc" id="L849">        return true;</span>
+    }
+
+    /**
+     * Returns {@code true}.
+     *
+     * @return A boolean.
+     */
+    @Override
+    public boolean isRangeZoomable() {
+<span class="nc" id="L859">        return true;</span>
+    }
+
+    /**
+     * Returns {@code true} if panning is enabled for the domain axes,
+     * and {@code false} otherwise.
+     *
+     * @return A boolean.
+     */
+    @Override
+    public boolean isDomainPannable() {
+<span class="nc" id="L870">        return this.domainPannable;</span>
+    }
+
+    /**
+     * Sets the flag that enables or disables panning of the plot along the
+     * domain axes.
+     *
+     * @param pannable  the new flag value.
+     */
+    public void setDomainPannable(boolean pannable) {
+<span class="nc" id="L880">        this.domainPannable = pannable;</span>
+<span class="nc" id="L881">    }</span>
+
+    /**
+     * Returns {@code true} if panning is enabled for the range axes,
+     * and {@code false} otherwise.
+     *
+     * @return A boolean.
+     */
+    @Override
+    public boolean isRangePannable() {
+<span class="nc" id="L891">        return this.rangePannable;</span>
+    }
+
+    /**
+     * Sets the flag that enables or disables panning of the plot along
+     * the range axes.
+     *
+     * @param pannable  the new flag value.
+     */
+    public void setRangePannable(boolean pannable) {
+<span class="nc" id="L901">        this.rangePannable = pannable;</span>
+<span class="nc" id="L902">    }</span>
+
+    /**
+     * Pans the domain axes by the specified percentage.
+     *
+     * @param percent  the distance to pan (as a percentage of the axis length).
+     * @param info the plot info
+     * @param source the source point where the pan action started.
+     */
+    @Override
+    public void panDomainAxes(double percent, PlotRenderingInfo info,
+            Point2D source) {
+<span class="nc bnc" id="L914" title="All 4 branches missed.">        if (!isDomainPannable() || this.domainAxis == null) {</span>
+<span class="nc" id="L915">            return;</span>
+        }
+<span class="nc" id="L917">        double length = this.domainAxis.getRange().getLength();</span>
+<span class="nc" id="L918">        double adj = percent * length;</span>
+<span class="nc bnc" id="L919" title="All 2 branches missed.">        if (this.domainAxis.isInverted()) {</span>
+<span class="nc" id="L920">            adj = -adj;</span>
+        }
+<span class="nc" id="L922">        this.domainAxis.setRange(this.domainAxis.getLowerBound() + adj,</span>
+<span class="nc" id="L923">                this.domainAxis.getUpperBound() + adj);</span>
+<span class="nc" id="L924">    }</span>
+
+    /**
+     * Pans the range axes by the specified percentage.
+     *
+     * @param percent  the distance to pan (as a percentage of the axis length).
+     * @param info the plot info
+     * @param source the source point where the pan action started.
+     */
+    @Override
+    public void panRangeAxes(double percent, PlotRenderingInfo info,
+            Point2D source) {
+<span class="nc bnc" id="L936" title="All 4 branches missed.">        if (!isRangePannable() || this.rangeAxis == null) {</span>
+<span class="nc" id="L937">            return;</span>
+        }
+<span class="nc" id="L939">        double length = this.rangeAxis.getRange().getLength();</span>
+<span class="nc" id="L940">        double adj = percent * length;</span>
+<span class="nc bnc" id="L941" title="All 2 branches missed.">        if (this.rangeAxis.isInverted()) {</span>
+<span class="nc" id="L942">            adj = -adj;</span>
+        }
+<span class="nc" id="L944">        this.rangeAxis.setRange(this.rangeAxis.getLowerBound() + adj,</span>
+<span class="nc" id="L945">                this.rangeAxis.getUpperBound() + adj);</span>
+<span class="nc" id="L946">    }</span>
+
+    /**
+     * Tests an arbitrary object for equality with this plot.  Note that
+     * {@code FastScatterPlot} carries its data around with it (rather
+     * than referencing a dataset), and the data is included in the
+     * equality test.
+     *
+     * @param obj  the object ({@code null} permitted).
+     *
+     * @return A boolean.
+     */
+    @Override
+    public boolean equals(Object obj) {
+<span class="nc bnc" id="L960" title="All 2 branches missed.">        if (obj == this) {</span>
+<span class="nc" id="L961">            return true;</span>
+        }
+<span class="nc bnc" id="L963" title="All 2 branches missed.">        if (!super.equals(obj)) {</span>
+<span class="nc" id="L964">            return false;</span>
+        }
+<span class="nc bnc" id="L966" title="All 2 branches missed.">        if (!(obj instanceof FastScatterPlot)) {</span>
+<span class="nc" id="L967">            return false;</span>
+        }
+<span class="nc" id="L969">        FastScatterPlot that = (FastScatterPlot) obj;</span>
+<span class="nc bnc" id="L970" title="All 2 branches missed.">        if (this.domainPannable != that.domainPannable) {</span>
+<span class="nc" id="L971">            return false;</span>
+        }
+<span class="nc bnc" id="L973" title="All 2 branches missed.">        if (this.rangePannable != that.rangePannable) {</span>
+<span class="nc" id="L974">            return false;</span>
+        }
+<span class="nc bnc" id="L976" title="All 2 branches missed.">        if (!ArrayUtils.equal(this.data, that.data)) {</span>
+<span class="nc" id="L977">            return false;</span>
+        }
+<span class="nc bnc" id="L979" title="All 2 branches missed.">        if (!Objects.equals(this.domainAxis, that.domainAxis)) {</span>
+<span class="nc" id="L980">            return false;</span>
+        }
+<span class="nc bnc" id="L982" title="All 2 branches missed.">        if (!Objects.equals(this.rangeAxis, that.rangeAxis)) {</span>
+<span class="nc" id="L983">            return false;</span>
+        }
+<span class="nc bnc" id="L985" title="All 2 branches missed.">        if (!PaintUtils.equal(this.paint, that.paint)) {</span>
+<span class="nc" id="L986">            return false;</span>
+        }
+<span class="nc bnc" id="L988" title="All 2 branches missed.">        if (this.domainGridlinesVisible != that.domainGridlinesVisible) {</span>
+<span class="nc" id="L989">            return false;</span>
+        }
+<span class="nc" id="L991">        if (!PaintUtils.equal(this.domainGridlinePaint,</span>
+<span class="nc bnc" id="L992" title="All 2 branches missed.">                that.domainGridlinePaint)) {</span>
+<span class="nc" id="L993">            return false;</span>
+        }
+<span class="nc bnc" id="L995" title="All 2 branches missed.">        if (!Objects.equals(this.domainGridlineStroke, that.domainGridlineStroke)) {</span>
+<span class="nc" id="L996">            return false;</span>
+        }
+<span class="nc bnc" id="L998" title="All 4 branches missed.">        if (!this.rangeGridlinesVisible == that.rangeGridlinesVisible) {</span>
+<span class="nc" id="L999">            return false;</span>
+        }
+<span class="nc" id="L1001">        if (!PaintUtils.equal(this.rangeGridlinePaint,</span>
+<span class="nc bnc" id="L1002" title="All 2 branches missed.">                that.rangeGridlinePaint)) {</span>
+<span class="nc" id="L1003">            return false;</span>
+        }
+<span class="nc bnc" id="L1005" title="All 2 branches missed.">        if (!Objects.equals(this.rangeGridlineStroke, that.rangeGridlineStroke)) {</span>
+<span class="nc" id="L1006">            return false;</span>
+        }
+<span class="nc" id="L1008">        return true;</span>
+    }
+
+    /**
+     * Returns a clone of the plot.
+     *
+     * @return A clone.
+     *
+     * @throws CloneNotSupportedException if some component of the plot does
+     *                                    not support cloning.
+     */
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+
+<span class="nc" id="L1022">        FastScatterPlot clone = (FastScatterPlot) super.clone();</span>
+<span class="nc bnc" id="L1023" title="All 2 branches missed.">        if (this.data != null) {</span>
+<span class="nc" id="L1024">            clone.data = ArrayUtils.clone(this.data);</span>
+        }
+<span class="nc bnc" id="L1026" title="All 2 branches missed.">        if (this.domainAxis != null) {</span>
+<span class="nc" id="L1027">            clone.domainAxis = (ValueAxis) this.domainAxis.clone();</span>
+<span class="nc" id="L1028">            clone.domainAxis.setPlot(clone);</span>
+<span class="nc" id="L1029">            clone.domainAxis.addChangeListener(clone);</span>
+        }
+<span class="nc bnc" id="L1031" title="All 2 branches missed.">        if (this.rangeAxis != null) {</span>
+<span class="nc" id="L1032">            clone.rangeAxis = (ValueAxis) this.rangeAxis.clone();</span>
+<span class="nc" id="L1033">            clone.rangeAxis.setPlot(clone);</span>
+<span class="nc" id="L1034">            clone.rangeAxis.addChangeListener(clone);</span>
+        }
+<span class="nc" id="L1036">        return clone;</span>
+
+    }
+
+    /**
+     * Provides serialization support.
+     *
+     * @param stream  the output stream.
+     *
+     * @throws IOException  if there is an I/O error.
+     */
+    private void writeObject(ObjectOutputStream stream) throws IOException {
+<span class="nc" id="L1048">        stream.defaultWriteObject();</span>
+<span class="nc" id="L1049">        SerialUtils.writePaint(this.paint, stream);</span>
+<span class="nc" id="L1050">        SerialUtils.writeStroke(this.domainGridlineStroke, stream);</span>
+<span class="nc" id="L1051">        SerialUtils.writePaint(this.domainGridlinePaint, stream);</span>
+<span class="nc" id="L1052">        SerialUtils.writeStroke(this.rangeGridlineStroke, stream);</span>
+<span class="nc" id="L1053">        SerialUtils.writePaint(this.rangeGridlinePaint, stream);</span>
+<span class="nc" id="L1054">    }</span>
+
+    /**
+     * Provides serialization support.
+     *
+     * @param stream  the input stream.
+     *
+     * @throws IOException  if there is an I/O error.
+     * @throws ClassNotFoundException  if there is a classpath problem.
+     */
+    private void readObject(ObjectInputStream stream)
+            throws IOException, ClassNotFoundException {
+<span class="nc" id="L1066">        stream.defaultReadObject();</span>
+
+<span class="nc" id="L1068">        this.paint = SerialUtils.readPaint(stream);</span>
+<span class="nc" id="L1069">        this.domainGridlineStroke = SerialUtils.readStroke(stream);</span>
+<span class="nc" id="L1070">        this.domainGridlinePaint = SerialUtils.readPaint(stream);</span>
+
+<span class="nc" id="L1072">        this.rangeGridlineStroke = SerialUtils.readStroke(stream);</span>
+<span class="nc" id="L1073">        this.rangeGridlinePaint = SerialUtils.readPaint(stream);</span>
+
+<span class="nc bnc" id="L1075" title="All 2 branches missed.">        if (this.domainAxis != null) {</span>
+<span class="nc" id="L1076">            this.domainAxis.addChangeListener(this);</span>
+        }
+
+<span class="nc bnc" id="L1079" title="All 2 branches missed.">        if (this.rangeAxis != null) {</span>
+<span class="nc" id="L1080">            this.rangeAxis.addChangeListener(this);</span>
+        }
+<span class="nc" id="L1082">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (1) (14 May 2022 17:53:42)</div></body></html>

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>ValueAxisProduct.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (1) (14 May 2022 17:53:42)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart.axis</a> &gt; <span class="el_source">ValueAxisProduct.java</span></div><h1>ValueAxisProduct.java</h1><pre class="source lang-java linenums">package org.jfree.chart.axis;
+
+
+import java.awt.Shape;
+import org.jfree.chart.internal.Args;
+import java.io.Serializable;
+
+<span class="fc" id="L8">public class ValueAxisProduct implements Serializable, Cloneable {</span>
+	private transient Shape upArrow;
+	private transient Shape downArrow;
+	private transient Shape leftArrow;
+	private transient Shape rightArrow;
+
+	public Shape getUpArrow() {
+<span class="fc" id="L15">		return upArrow;</span>
+	}
+
+	public void setUpArrow2(Shape upArrow) {
+<span class="fc" id="L19">		this.upArrow = upArrow;</span>
+<span class="fc" id="L20">	}</span>
+
+	public Shape getDownArrow() {
+<span class="fc" id="L23">		return downArrow;</span>
+	}
+
+	public void setDownArrow2(Shape downArrow) {
+<span class="fc" id="L27">		this.downArrow = downArrow;</span>
+<span class="fc" id="L28">	}</span>
+
+	public Shape getLeftArrow() {
+<span class="fc" id="L31">		return leftArrow;</span>
+	}
+
+	public void setLeftArrow2(Shape leftArrow) {
+<span class="fc" id="L35">		this.leftArrow = leftArrow;</span>
+<span class="fc" id="L36">	}</span>
+
+	public Shape getRightArrow() {
+<span class="fc" id="L39">		return rightArrow;</span>
+	}
+
+	public void setRightArrow2(Shape rightArrow) {
+<span class="fc" id="L43">		this.rightArrow = rightArrow;</span>
+<span class="fc" id="L44">	}</span>
+
+	/**
+	* Sets the shape that can be displayed as an arrow pointing upwards at the end of an axis line and sends an  {@link AxisChangeEvent}  to all registered listeners.
+	* @param arrow   the arrow shape ( {@code  null}  not permitted).
+	* @see #getUpArrow()
+	*/
+	public void setUpArrow(Shape arrow, ValueAxis valueAxis) {
+<span class="nc" id="L52">		Args.nullNotPermitted(arrow, &quot;arrow&quot;);</span>
+<span class="nc" id="L53">		this.upArrow = arrow;</span>
+<span class="nc" id="L54">		valueAxis.fireChangeEvent();</span>
+<span class="nc" id="L55">	}</span>
+
+	/**
+	* Sets the shape that can be displayed as an arrow pointing downwards at the end of an axis line and sends an  {@link AxisChangeEvent}  to all registered listeners.
+	* @param arrow   the arrow shape ( {@code  null}  not permitted).
+	* @see #getDownArrow()
+	*/
+	public void setDownArrow(Shape arrow, ValueAxis valueAxis) {
+<span class="nc" id="L63">		Args.nullNotPermitted(arrow, &quot;arrow&quot;);</span>
+<span class="nc" id="L64">		this.downArrow = arrow;</span>
+<span class="nc" id="L65">		valueAxis.fireChangeEvent();</span>
+<span class="nc" id="L66">	}</span>
+
+	/**
+	* Sets the shape that can be displayed as an arrow pointing left at the end of an axis line and sends an  {@link AxisChangeEvent}  to all registered listeners.
+	* @param arrow   the arrow shape ( {@code  null}  not permitted).
+	* @see #getLeftArrow()
+	*/
+	public void setLeftArrow(Shape arrow, ValueAxis valueAxis) {
+<span class="nc" id="L74">		Args.nullNotPermitted(arrow, &quot;arrow&quot;);</span>
+<span class="nc" id="L75">		this.leftArrow = arrow;</span>
+<span class="nc" id="L76">		valueAxis.fireChangeEvent();</span>
+<span class="nc" id="L77">	}</span>
+
+	/**
+	* Sets the shape that can be displayed as an arrow pointing rightwards at the end of an axis line and sends an  {@link AxisChangeEvent}  to all registered listeners.
+	* @param arrow   the arrow shape ( {@code  null}  not permitted).
+	* @see #getRightArrow()
+	*/
+	public void setRightArrow(Shape arrow, ValueAxis valueAxis) {
+<span class="nc" id="L85">		Args.nullNotPermitted(arrow, &quot;arrow&quot;);</span>
+<span class="nc" id="L86">		this.rightArrow = arrow;</span>
+<span class="nc" id="L87">		valueAxis.fireChangeEvent();</span>
+<span class="nc" id="L88">	}</span>
+
+	public Object clone() throws CloneNotSupportedException {
+<span class="fc" id="L91">		return (ValueAxisProduct) super.clone();</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (1) (14 May 2022 17:53:42)</div></body></html>

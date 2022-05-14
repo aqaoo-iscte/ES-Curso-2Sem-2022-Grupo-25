@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>MonthDateFormatTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (1) (14 May 2022 17:53:42)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart.axis</a> &gt; <span class="el_source">MonthDateFormatTest.java</span></div><h1>MonthDateFormatTest.java</h1><pre class="source lang-java linenums">/* ===========================================================
+ * JFreeChart : a free chart library for the Java(tm) platform
+ * ===========================================================
+ *
+ * (C) Copyright 2000-2022, by David Gilbert and Contributors.
+ *
+ * Project Info:  http://www.jfree.org/jfreechart/index.html
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ *
+ * [Oracle and Java are registered trademarks of Oracle and/or its affiliates. 
+ * Other names may be trademarks of their respective owners.]
+ *
+ * ------------------------
+ * MonthDateFormatTest.java
+ * ------------------------
+ * (C) Copyright 2005-2022, by David Gilbert and Contributors.
+ *
+ * Original Author:  David Gilbert;
+ * Contributor(s):   -;
+ *
+ */
+
+package org.jfree.chart.axis;
+
+import java.text.SimpleDateFormat;
+import java.util.Locale;
+import java.util.TimeZone;
+
+import org.jfree.chart.TestUtils;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Some tests for the {@link MonthDateFormat} class.
+ */
+<span class="fc" id="L51">public class MonthDateFormatTest {</span>
+
+    /**
+     * Confirm that the equals method can distinguish all the required fields.
+     */
+    @Test
+    public void testEquals() {
+<span class="fc" id="L58">        MonthDateFormat mf1 = new MonthDateFormat();</span>
+<span class="fc" id="L59">        MonthDateFormat mf2 = new MonthDateFormat();</span>
+<span class="fc" id="L60">        assertEquals(mf1, mf2);</span>
+<span class="fc" id="L61">        assertEquals(mf2, mf1);</span>
+
+<span class="fc" id="L63">        boolean[] showYear1 = new boolean [12];</span>
+<span class="fc" id="L64">        showYear1[0] = true;</span>
+<span class="fc" id="L65">        boolean[] showYear2 = new boolean [12];</span>
+<span class="fc" id="L66">        showYear1[1] = true;</span>
+
+        // time zone
+<span class="fc" id="L69">        mf1 = new MonthDateFormat(TimeZone.getTimeZone(&quot;PST&quot;), Locale.US, 1,</span>
+<span class="fc" id="L70">            showYear1, new SimpleDateFormat(&quot;yy&quot;));</span>
+<span class="fc" id="L71">        assertNotEquals(mf1, mf2);</span>
+<span class="fc" id="L72">        mf2 = new MonthDateFormat(TimeZone.getTimeZone(&quot;PST&quot;), Locale.US, 1,</span>
+<span class="fc" id="L73">            showYear1, new SimpleDateFormat(&quot;yy&quot;));</span>
+<span class="fc" id="L74">        assertEquals(mf1, mf2);</span>
+
+        // locale
+<span class="fc" id="L77">        mf1 = new MonthDateFormat(TimeZone.getTimeZone(&quot;PST&quot;), Locale.FRANCE, 1,</span>
+<span class="fc" id="L78">            showYear1, new SimpleDateFormat(&quot;yy&quot;));</span>
+<span class="fc" id="L79">        assertNotEquals(mf1, mf2);</span>
+<span class="fc" id="L80">        mf2 = new MonthDateFormat(TimeZone.getTimeZone(&quot;PST&quot;), Locale.FRANCE, 1,</span>
+<span class="fc" id="L81">            showYear1, new SimpleDateFormat(&quot;yy&quot;));</span>
+<span class="fc" id="L82">        assertEquals(mf1, mf2);</span>
+
+        // chars
+<span class="fc" id="L85">        mf1 = new MonthDateFormat(TimeZone.getTimeZone(&quot;PST&quot;), Locale.FRANCE, 2,</span>
+<span class="fc" id="L86">            showYear1, new SimpleDateFormat(&quot;yy&quot;));</span>
+<span class="fc" id="L87">        assertNotEquals(mf1, mf2);</span>
+<span class="fc" id="L88">        mf2 = new MonthDateFormat(TimeZone.getTimeZone(&quot;PST&quot;), Locale.FRANCE, 2,</span>
+<span class="fc" id="L89">            showYear1, new SimpleDateFormat(&quot;yy&quot;));</span>
+<span class="fc" id="L90">        assertEquals(mf1, mf2);</span>
+
+        // showYear[]
+<span class="fc" id="L93">        mf1 = new MonthDateFormat(TimeZone.getTimeZone(&quot;PST&quot;), Locale.FRANCE, 2,</span>
+<span class="fc" id="L94">            showYear2, new SimpleDateFormat(&quot;yy&quot;));</span>
+<span class="fc" id="L95">        assertNotEquals(mf1, mf2);</span>
+<span class="fc" id="L96">        mf2 = new MonthDateFormat(TimeZone.getTimeZone(&quot;PST&quot;), Locale.FRANCE, 2,</span>
+<span class="fc" id="L97">            showYear2, new SimpleDateFormat(&quot;yy&quot;));</span>
+<span class="fc" id="L98">        assertEquals(mf1, mf2);</span>
+
+        // yearFormatter
+<span class="fc" id="L101">        mf1 = new MonthDateFormat(TimeZone.getTimeZone(&quot;PST&quot;), Locale.FRANCE, 2,</span>
+<span class="fc" id="L102">            showYear2, new SimpleDateFormat(&quot;yyyy&quot;));</span>
+<span class="fc" id="L103">        assertNotEquals(mf1, mf2);</span>
+<span class="fc" id="L104">        mf2 = new MonthDateFormat(TimeZone.getTimeZone(&quot;PST&quot;), Locale.FRANCE, 2,</span>
+<span class="fc" id="L105">            showYear2, new SimpleDateFormat(&quot;yyyy&quot;));</span>
+<span class="fc" id="L106">        assertEquals(mf1, mf2);</span>
+
+<span class="fc" id="L108">    }</span>
+
+    /**
+     * Two objects that are equal are required to return the same hashCode.
+     */
+    @Test
+    public void testHashCode() {
+<span class="fc" id="L115">        MonthDateFormat mf1 = new MonthDateFormat();</span>
+<span class="fc" id="L116">        MonthDateFormat mf2 = new MonthDateFormat();</span>
+<span class="fc" id="L117">        assertEquals(mf1, mf2);</span>
+<span class="fc" id="L118">        int h1 = mf1.hashCode();</span>
+<span class="fc" id="L119">        int h2 = mf2.hashCode();</span>
+<span class="fc" id="L120">        assertEquals(h1, h2);</span>
+<span class="fc" id="L121">    }</span>
+
+    /**
+     * Confirm that cloning works.
+     */
+    @Test
+    public void testCloning() {
+<span class="fc" id="L128">        MonthDateFormat mf1 = new MonthDateFormat();</span>
+<span class="fc" id="L129">        MonthDateFormat mf2 = null;</span>
+<span class="fc" id="L130">        mf2 = (MonthDateFormat) mf1.clone();</span>
+<span class="fc" id="L131">        assertNotSame(mf1, mf2);</span>
+<span class="fc" id="L132">        assertSame(mf1.getClass(), mf2.getClass());</span>
+<span class="fc" id="L133">        assertEquals(mf1, mf2);</span>
+<span class="fc" id="L134">    }</span>
+
+    /**
+     * Serialize an instance, restore it, and check for equality.
+     */
+    @Test
+    public void testSerialization() {
+<span class="fc" id="L141">        MonthDateFormat mf1 = new MonthDateFormat();</span>
+<span class="fc" id="L142">        MonthDateFormat mf2 = TestUtils.serialised(mf1);</span>
+<span class="fc" id="L143">        assertEquals(mf1, mf2);</span>
+<span class="fc" id="L144">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (1) (14 May 2022 17:53:42)</div></body></html>

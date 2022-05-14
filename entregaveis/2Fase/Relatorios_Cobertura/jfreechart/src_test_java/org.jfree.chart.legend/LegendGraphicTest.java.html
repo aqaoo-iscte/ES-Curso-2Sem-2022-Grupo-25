@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>LegendGraphicTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (1) (14 May 2022 17:53:42)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart.legend</a> &gt; <span class="el_source">LegendGraphicTest.java</span></div><h1>LegendGraphicTest.java</h1><pre class="source lang-java linenums">/* ===========================================================
+ * JFreeChart : a free chart library for the Java(tm) platform
+ * ===========================================================
+ *
+ * (C) Copyright 2000-2022, by David Gilbert and Contributors.
+ *
+ * Project Info:  http://www.jfree.org/jfreechart/index.html
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ *
+ * [Oracle and Java are registered trademarks of Oracle and/or its affiliates. 
+ * Other names may be trademarks of their respective owners.]
+ *
+ * ----------------------
+ * LegendGraphicTest.java
+ * ----------------------
+ * (C) Copyright 2005-2022, by David Gilbert and Contributors.
+ *
+ * Original Author:  David Gilbert;
+ * Contributor(s):   -;
+ *
+ */
+
+package org.jfree.chart.legend;
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Rectangle;
+import java.awt.Stroke;
+import java.awt.geom.Line2D;
+import java.awt.geom.Rectangle2D;
+
+import org.jfree.chart.TestUtils;
+import org.jfree.chart.util.GradientPaintTransformType;
+import org.jfree.chart.api.RectangleAnchor;
+import org.jfree.chart.util.StandardGradientPaintTransformer;
+import org.jfree.chart.internal.CloneUtils;
+
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Tests for the {@link LegendGraphic} class.
+ */
+<span class="fc" id="L59">public class LegendGraphicTest {</span>
+
+    /**
+     * Check that the equals() method distinguishes all fields.
+     */
+    @Test
+    public void testEquals() {
+<span class="fc" id="L66">        LegendGraphic g1 = new LegendGraphic(new Rectangle2D.Double(1.0, 2.0,</span>
+<span class="fc" id="L67">                3.0, 4.0), Color.BLACK);</span>
+<span class="fc" id="L68">        LegendGraphic g2 = new LegendGraphic(new Rectangle2D.Double(1.0, 2.0,</span>
+<span class="fc" id="L69">                3.0, 4.0), Color.BLACK);</span>
+<span class="fc" id="L70">        assertEquals(g1, g2);</span>
+<span class="fc" id="L71">        assertEquals(g2, g1);</span>
+
+        // shapeVisible
+<span class="pc bpc" id="L74" title="1 of 2 branches missed.">        g1.setShapeVisible(!g1.isShapeVisible());</span>
+<span class="fc" id="L75">        assertNotEquals(g1, g2);</span>
+<span class="pc bpc" id="L76" title="1 of 2 branches missed.">        g2.setShapeVisible(!g2.isShapeVisible());</span>
+<span class="fc" id="L77">        assertEquals(g1, g2);</span>
+
+        // shape
+<span class="fc" id="L80">        g1.setShape(new Rectangle2D.Double(4.0, 3.0, 2.0, 1.0));</span>
+<span class="fc" id="L81">        assertNotEquals(g1, g2);</span>
+<span class="fc" id="L82">        g2.setShape(new Rectangle2D.Double(4.0, 3.0, 2.0, 1.0));</span>
+<span class="fc" id="L83">        assertEquals(g1, g2);</span>
+
+        // shapeFilled
+<span class="pc bpc" id="L86" title="1 of 2 branches missed.">        g1.setShapeFilled(!g1.isShapeFilled());</span>
+<span class="fc" id="L87">        assertNotEquals(g1, g2);</span>
+<span class="pc bpc" id="L88" title="1 of 2 branches missed.">        g2.setShapeFilled(!g2.isShapeFilled());</span>
+<span class="fc" id="L89">        assertEquals(g1, g2);</span>
+
+        // fillPaint
+<span class="fc" id="L92">        g1.setFillPaint(Color.GREEN);</span>
+<span class="fc" id="L93">        assertNotEquals(g1, g2);</span>
+<span class="fc" id="L94">        g2.setFillPaint(Color.GREEN);</span>
+<span class="fc" id="L95">        assertEquals(g1, g2);</span>
+
+        // shapeOutlineVisible
+<span class="pc bpc" id="L98" title="1 of 2 branches missed.">        g1.setShapeOutlineVisible(!g1.isShapeOutlineVisible());</span>
+<span class="fc" id="L99">        assertNotEquals(g1, g2);</span>
+<span class="pc bpc" id="L100" title="1 of 2 branches missed.">        g2.setShapeOutlineVisible(!g2.isShapeOutlineVisible());</span>
+<span class="fc" id="L101">        assertEquals(g1, g2);</span>
+
+        // outlinePaint
+<span class="fc" id="L104">        g1.setOutlinePaint(Color.GREEN);</span>
+<span class="fc" id="L105">        assertNotEquals(g1, g2);</span>
+<span class="fc" id="L106">        g2.setOutlinePaint(Color.GREEN);</span>
+<span class="fc" id="L107">        assertEquals(g1, g2);</span>
+
+        // outlineStroke
+<span class="fc" id="L110">        g1.setOutlineStroke(new BasicStroke(1.23f));</span>
+<span class="fc" id="L111">        assertNotEquals(g1, g2);</span>
+<span class="fc" id="L112">        g2.setOutlineStroke(new BasicStroke(1.23f));</span>
+<span class="fc" id="L113">        assertEquals(g1, g2);</span>
+
+        // shapeAnchor
+<span class="fc" id="L116">        g1.setShapeAnchor(RectangleAnchor.BOTTOM_RIGHT);</span>
+<span class="fc" id="L117">        assertNotEquals(g1, g2);</span>
+<span class="fc" id="L118">        g2.setShapeAnchor(RectangleAnchor.BOTTOM_RIGHT);</span>
+<span class="fc" id="L119">        assertEquals(g1, g2);</span>
+
+        // shapeLocation
+<span class="fc" id="L122">        g1.setShapeLocation(RectangleAnchor.BOTTOM_RIGHT);</span>
+<span class="fc" id="L123">        assertNotEquals(g1, g2);</span>
+<span class="fc" id="L124">        g2.setShapeLocation(RectangleAnchor.BOTTOM_RIGHT);</span>
+<span class="fc" id="L125">        assertEquals(g1, g2);</span>
+
+        // lineVisible
+<span class="pc bpc" id="L128" title="1 of 2 branches missed.">        g1.setLineVisible(!g1.isLineVisible());</span>
+<span class="fc" id="L129">        assertNotEquals(g1, g2);</span>
+<span class="pc bpc" id="L130" title="1 of 2 branches missed.">        g2.setLineVisible(!g2.isLineVisible());</span>
+<span class="fc" id="L131">        assertEquals(g1, g2);</span>
+
+        // line
+<span class="fc" id="L134">        g1.setLine(new Line2D.Double(1.0, 2.0, 3.0, 4.0));</span>
+<span class="fc" id="L135">        assertNotEquals(g1, g2);</span>
+<span class="fc" id="L136">        g2.setLine(new Line2D.Double(1.0, 2.0, 3.0, 4.0));</span>
+<span class="fc" id="L137">        assertEquals(g1, g2);</span>
+
+        // linePaint
+<span class="fc" id="L140">        g1.setLinePaint(Color.GREEN);</span>
+<span class="fc" id="L141">        assertNotEquals(g1, g2);</span>
+<span class="fc" id="L142">        g2.setLinePaint(Color.GREEN);</span>
+<span class="fc" id="L143">        assertEquals(g1, g2);</span>
+
+        // lineStroke
+<span class="fc" id="L146">        g1.setLineStroke(new BasicStroke(1.23f));</span>
+<span class="fc" id="L147">        assertNotEquals(g1, g2);</span>
+<span class="fc" id="L148">        g2.setLineStroke(new BasicStroke(1.23f));</span>
+<span class="fc" id="L149">        assertEquals(g1, g2);</span>
+
+        // fillPaintTransformer
+<span class="fc" id="L152">        g1.setFillPaintTransformer(new StandardGradientPaintTransformer(</span>
+<span class="fc" id="L153">                GradientPaintTransformType.CENTER_HORIZONTAL));</span>
+<span class="fc" id="L154">        assertNotEquals(g1, g2);</span>
+<span class="fc" id="L155">        g2.setFillPaintTransformer(new StandardGradientPaintTransformer(</span>
+<span class="fc" id="L156">                GradientPaintTransformType.CENTER_HORIZONTAL));</span>
+<span class="fc" id="L157">        assertEquals(g1, g2);</span>
+
+<span class="fc" id="L159">    }</span>
+
+    /**
+     * Two objects that are equal are required to return the same hashCode.
+     */
+    @Test
+    public void testHashcode() {
+<span class="fc" id="L166">        LegendGraphic g1 = new LegendGraphic(new Rectangle2D.Double(1.0, 2.0,</span>
+<span class="fc" id="L167">                3.0, 4.0), Color.BLACK);</span>
+<span class="fc" id="L168">        LegendGraphic g2 = new LegendGraphic(new Rectangle2D.Double(1.0, 2.0,</span>
+<span class="fc" id="L169">                3.0, 4.0), Color.BLACK);</span>
+<span class="fc" id="L170">        assertEquals(g1, g2);</span>
+<span class="fc" id="L171">        int h1 = g1.hashCode();</span>
+<span class="fc" id="L172">        int h2 = g2.hashCode();</span>
+<span class="fc" id="L173">        assertEquals(h1, h2);</span>
+<span class="fc" id="L174">    }</span>
+
+    /**
+     * Confirm that cloning works.
+     */
+    @Test
+    public void testCloning() throws CloneNotSupportedException {
+<span class="fc" id="L181">        Rectangle r = new Rectangle(1, 2, 3, 4);</span>
+<span class="fc" id="L182">        LegendGraphic g1 = new LegendGraphic(r, Color.BLACK);</span>
+<span class="fc" id="L183">        LegendGraphic g2 = CloneUtils.clone(g1);</span>
+<span class="fc" id="L184">        assertNotSame(g1, g2);</span>
+<span class="fc" id="L185">        assertSame(g1.getClass(), g2.getClass());</span>
+<span class="fc" id="L186">        assertEquals(g1, g2);</span>
+
+        // check independence
+<span class="fc" id="L189">        r.setBounds(4, 3, 2, 1);</span>
+<span class="fc" id="L190">        assertNotEquals(g1, g2);</span>
+<span class="fc" id="L191">    }</span>
+
+    /**
+     * A test for cloning - checks that the line shape is cloned correctly.
+     */
+    @Test
+    public void testCloning2() throws CloneNotSupportedException {
+<span class="fc" id="L198">        Rectangle r = new Rectangle(1, 2, 3, 4);</span>
+<span class="fc" id="L199">        LegendGraphic g1 = new LegendGraphic(r, Color.BLACK);</span>
+<span class="fc" id="L200">        Line2D l = new Line2D.Double(1.0, 2.0, 3.0, 4.0);</span>
+<span class="fc" id="L201">        g1.setLine(l);</span>
+<span class="fc" id="L202">        LegendGraphic g2 = CloneUtils.clone(g1);</span>
+<span class="fc" id="L203">        assertNotSame(g1, g2);</span>
+<span class="fc" id="L204">        assertSame(g1.getClass(), g2.getClass());</span>
+<span class="fc" id="L205">        assertEquals(g1, g2);</span>
+
+        // check independence
+<span class="fc" id="L208">        l.setLine(4.0, 3.0, 2.0, 1.0);</span>
+<span class="fc" id="L209">        assertNotEquals(g1, g2);</span>
+
+<span class="fc" id="L211">    }</span>
+
+    /**
+     * Serialize an instance, restore it, and check for equality.
+     */
+    @Test
+    public void testSerialization() {
+<span class="fc" id="L218">        Stroke s = new BasicStroke(1.23f);</span>
+<span class="fc" id="L219">        LegendGraphic g1 = new LegendGraphic(new Rectangle2D.Double(1.0, 2.0, </span>
+<span class="fc" id="L220">                3.0, 4.0), Color.BLACK);</span>
+<span class="fc" id="L221">        g1.setOutlineStroke(s);</span>
+<span class="fc" id="L222">        LegendGraphic g2 = TestUtils.serialised(g1);</span>
+<span class="fc" id="L223">        assertEquals(g1, g2);</span>
+<span class="fc" id="L224">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (1) (14 May 2022 17:53:42)</div></body></html>

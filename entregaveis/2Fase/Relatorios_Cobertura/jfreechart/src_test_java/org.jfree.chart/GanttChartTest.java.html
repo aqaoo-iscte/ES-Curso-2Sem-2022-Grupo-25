@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>GanttChartTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (1) (14 May 2022 17:53:42)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart</a> &gt; <span class="el_source">GanttChartTest.java</span></div><h1>GanttChartTest.java</h1><pre class="source lang-java linenums">/* ===========================================================
+ * JFreeChart : a free chart library for the Java(tm) platform
+ * ===========================================================
+ *
+ * (C) Copyright 2000-2022, by David Gilbert and Contributors.
+ *
+ * Project Info:  http://www.jfree.org/jfreechart/index.html
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ *
+ * [Oracle and Java are registered trademarks of Oracle and/or its affiliates. 
+ * Other names may be trademarks of their respective owners.]
+ *
+ * -------------------
+ * GanttChartTest.java
+ * -------------------
+ * (C) Copyright 2005-2022, by David Gilbert.
+ *
+ * Original Author:  David Gilbert;
+ * Contributor(s):   -;
+ *
+ */
+
+package org.jfree.chart;
+
+import java.awt.Graphics2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+import java.util.Calendar;
+import java.util.Date;
+
+import org.jfree.chart.event.ChartChangeEvent;
+import org.jfree.chart.event.ChartChangeListener;
+import org.jfree.chart.labels.CategoryToolTipGenerator;
+import org.jfree.chart.labels.StandardCategoryToolTipGenerator;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.renderer.category.CategoryItemRenderer;
+import org.jfree.chart.urls.CategoryURLGenerator;
+import org.jfree.chart.urls.StandardCategoryURLGenerator;
+import org.jfree.data.category.IntervalCategoryDataset;
+import org.jfree.data.gantt.Task;
+import org.jfree.data.gantt.TaskSeries;
+import org.jfree.data.gantt.TaskSeriesCollection;
+import org.jfree.data.time.SimpleTimePeriod;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Some tests for a Gantt chart.
+ */
+<span class="fc" id="L66">public class GanttChartTest  {</span>
+
+    /** A chart. */
+    private JFreeChart chart;
+
+    /**
+     * Common test setup.
+     */
+    @BeforeEach
+    public void setUp() {
+<span class="fc" id="L76">        this.chart = createGanttChart();</span>
+<span class="fc" id="L77">    }</span>
+
+    /**
+     * Draws the chart with a {@code null} info object to make sure that
+     * no exceptions are thrown (a problem that was occurring at one point).
+     */
+    @Test
+    public void testDrawWithNullInfo() {
+        try {
+<span class="fc" id="L86">            BufferedImage image = new BufferedImage(200 , 100,</span>
+<span class="fc" id="L87">                    BufferedImage.TYPE_INT_RGB);</span>
+<span class="fc" id="L88">            Graphics2D g2 = image.createGraphics();</span>
+<span class="fc" id="L89">            this.chart.draw(g2, new Rectangle2D.Double(0, 0, 200, 100), null,</span>
+<span class="fc" id="L90">                    null);</span>
+<span class="fc" id="L91">            g2.dispose();</span>
+<span class="fc" id="L92">        }</span>
+<span class="nc" id="L93">        catch (Exception e) {</span>
+<span class="nc" id="L94">            fail(&quot;There should be no exception.&quot;);</span>
+        }
+<span class="fc" id="L96">    }</span>
+
+    /**
+     * Draws the chart with a {@code null} info object to make sure that
+     * no exceptions are thrown (a problem that was occurring at one point).
+     */
+    @Test
+    public void testDrawWithNullInfo2() {
+<span class="fc" id="L104">        JFreeChart chart = createGanttChart();</span>
+<span class="fc" id="L105">        CategoryPlot&lt;String, String&gt; plot = (CategoryPlot) chart.getPlot();</span>
+<span class="fc" id="L106">        plot.setDataset(createDataset());</span>
+<span class="fc" id="L107">        /* BufferedImage img =*/ chart.createBufferedImage(300, 200, null);</span>
+        //FIXME we should really assert a value
+<span class="fc" id="L109">    }</span>
+
+    /**
+     * Replaces the chart's dataset and then checks that the new dataset is OK.
+     */
+    @Test
+    public void testReplaceDataset() {
+<span class="fc" id="L116">        LocalListener l = new LocalListener();</span>
+<span class="fc" id="L117">        this.chart.addChangeListener(l);</span>
+<span class="fc" id="L118">        CategoryPlot&lt;String, String&gt; plot = (CategoryPlot) this.chart.getPlot();</span>
+<span class="fc" id="L119">        plot.setDataset(null);</span>
+<span class="fc" id="L120">        assertTrue(l.flag);</span>
+<span class="fc" id="L121">    }</span>
+
+    /**
+     * Check that setting a tool tip generator for a series does override the
+     * default generator.
+     */
+    @Test
+    public void testSetSeriesToolTipGenerator() {
+<span class="fc" id="L129">        CategoryPlot&lt;String, String&gt; plot = (CategoryPlot) this.chart.getPlot();</span>
+<span class="fc" id="L130">        CategoryItemRenderer renderer = plot.getRenderer();</span>
+<span class="fc" id="L131">        StandardCategoryToolTipGenerator tt</span>
+<span class="fc" id="L132">                = new StandardCategoryToolTipGenerator();</span>
+<span class="fc" id="L133">        renderer.setSeriesToolTipGenerator(0, tt);</span>
+<span class="fc" id="L134">        CategoryToolTipGenerator tt2 = renderer.getToolTipGenerator(0, 0);</span>
+<span class="fc" id="L135">        assertSame(tt2, tt);</span>
+<span class="fc" id="L136">    }</span>
+
+    /**
+     * Check that setting a URL generator for a series does override the
+     * default generator.
+     */
+    @Test
+    public void testSetSeriesURLGenerator() {
+<span class="fc" id="L144">        CategoryPlot&lt;String, String&gt; plot = (CategoryPlot) this.chart.getPlot();</span>
+<span class="fc" id="L145">        CategoryItemRenderer renderer = plot.getRenderer();</span>
+<span class="fc" id="L146">        StandardCategoryURLGenerator url1</span>
+<span class="fc" id="L147">                = new StandardCategoryURLGenerator();</span>
+<span class="fc" id="L148">        renderer.setSeriesItemURLGenerator(0, url1);</span>
+<span class="fc" id="L149">        CategoryURLGenerator url2 = renderer.getItemURLGenerator(0, 0);</span>
+<span class="fc" id="L150">        assertSame(url2, url1);</span>
+<span class="fc" id="L151">    }</span>
+
+    /**
+     * Create a Gantt chart.
+     *
+     * @return The chart.
+     */
+    private static JFreeChart createGanttChart() {
+<span class="fc" id="L159">        return ChartFactory.createGanttChart(&quot;Gantt Chart&quot;, &quot;Domain&quot;, &quot;Range&quot;,</span>
+<span class="fc" id="L160">               null, true, true, true);</span>
+    }
+
+    /**
+     * Creates a sample dataset for a Gantt chart.
+     *
+     * @return The dataset.
+     */
+    private static IntervalCategoryDataset&lt;String, String&gt; createDataset() {
+<span class="fc" id="L169">        TaskSeries&lt;String&gt; s1 = new TaskSeries&lt;&gt;(&quot;Scheduled&quot;);</span>
+<span class="fc" id="L170">        s1.add(new Task(&quot;Write Proposal&quot;,</span>
+<span class="fc" id="L171">               new SimpleTimePeriod(date(1, Calendar.APRIL, 2001),</span>
+<span class="fc" id="L172">                                    date(5, Calendar.APRIL, 2001))));</span>
+<span class="fc" id="L173">        s1.add(new Task(&quot;Obtain Approval&quot;,</span>
+<span class="fc" id="L174">               new SimpleTimePeriod(date(9, Calendar.APRIL, 2001),</span>
+<span class="fc" id="L175">                                    date(9, Calendar.APRIL, 2001))));</span>
+<span class="fc" id="L176">        s1.add(new Task(&quot;Requirements Analysis&quot;,</span>
+<span class="fc" id="L177">               new SimpleTimePeriod(date(10, Calendar.APRIL, 2001),</span>
+<span class="fc" id="L178">                                    date(5, Calendar.MAY, 2001))));</span>
+<span class="fc" id="L179">        s1.add(new Task(&quot;Design Phase&quot;,</span>
+<span class="fc" id="L180">               new SimpleTimePeriod(date(6, Calendar.MAY, 2001),</span>
+<span class="fc" id="L181">                                    date(30, Calendar.MAY, 2001))));</span>
+<span class="fc" id="L182">        s1.add(new Task(&quot;Design Signoff&quot;,</span>
+<span class="fc" id="L183">               new SimpleTimePeriod(date(2, Calendar.JUNE, 2001),</span>
+<span class="fc" id="L184">                                    date(2, Calendar.JUNE, 2001))));</span>
+<span class="fc" id="L185">        s1.add(new Task(&quot;Alpha Implementation&quot;,</span>
+<span class="fc" id="L186">               new SimpleTimePeriod(date(3, Calendar.JUNE, 2001),</span>
+<span class="fc" id="L187">                                    date(31, Calendar.JULY, 2001))));</span>
+<span class="fc" id="L188">        s1.add(new Task(&quot;Design Review&quot;,</span>
+<span class="fc" id="L189">               new SimpleTimePeriod(date(1, Calendar.AUGUST, 2001),</span>
+<span class="fc" id="L190">                                    date(8, Calendar.AUGUST, 2001))));</span>
+<span class="fc" id="L191">        s1.add(new Task(&quot;Revised Design Signoff&quot;,</span>
+<span class="fc" id="L192">               new SimpleTimePeriod(date(10, Calendar.AUGUST, 2001),</span>
+<span class="fc" id="L193">                                    date(10, Calendar.AUGUST, 2001))));</span>
+<span class="fc" id="L194">        s1.add(new Task(&quot;Beta Implementation&quot;,</span>
+<span class="fc" id="L195">               new SimpleTimePeriod(date(12, Calendar.AUGUST, 2001),</span>
+<span class="fc" id="L196">                                    date(12, Calendar.SEPTEMBER, 2001))));</span>
+<span class="fc" id="L197">        s1.add(new Task(&quot;Testing&quot;,</span>
+<span class="fc" id="L198">               new SimpleTimePeriod(date(13, Calendar.SEPTEMBER, 2001),</span>
+<span class="fc" id="L199">                                    date(31, Calendar.OCTOBER, 2001))));</span>
+<span class="fc" id="L200">        s1.add(new Task(&quot;Final Implementation&quot;,</span>
+<span class="fc" id="L201">               new SimpleTimePeriod(date(1, Calendar.NOVEMBER, 2001),</span>
+<span class="fc" id="L202">                                    date(15, Calendar.NOVEMBER, 2001))));</span>
+<span class="fc" id="L203">        s1.add(new Task(&quot;Signoff&quot;,</span>
+<span class="fc" id="L204">               new SimpleTimePeriod(date(28, Calendar.NOVEMBER, 2001),</span>
+<span class="fc" id="L205">                                    date(30, Calendar.NOVEMBER, 2001))));</span>
+
+<span class="fc" id="L207">        TaskSeries&lt;String&gt; s2 = new TaskSeries&lt;&gt;(&quot;Actual&quot;);</span>
+<span class="fc" id="L208">        s2.add(new Task(&quot;Write Proposal&quot;,</span>
+<span class="fc" id="L209">               new SimpleTimePeriod(date(1, Calendar.APRIL, 2001),</span>
+<span class="fc" id="L210">                                    date(5, Calendar.APRIL, 2001))));</span>
+<span class="fc" id="L211">        s2.add(new Task(&quot;Obtain Approval&quot;,</span>
+<span class="fc" id="L212">               new SimpleTimePeriod(date(9, Calendar.APRIL, 2001),</span>
+<span class="fc" id="L213">                                    date(9, Calendar.APRIL, 2001))));</span>
+<span class="fc" id="L214">        s2.add(new Task(&quot;Requirements Analysis&quot;,</span>
+<span class="fc" id="L215">               new SimpleTimePeriod(date(10, Calendar.APRIL, 2001),</span>
+<span class="fc" id="L216">                                    date(15, Calendar.MAY, 2001))));</span>
+<span class="fc" id="L217">        s2.add(new Task(&quot;Design Phase&quot;,</span>
+<span class="fc" id="L218">               new SimpleTimePeriod(date(15, Calendar.MAY, 2001),</span>
+<span class="fc" id="L219">                                    date(17, Calendar.JUNE, 2001))));</span>
+<span class="fc" id="L220">        s2.add(new Task(&quot;Design Signoff&quot;,</span>
+<span class="fc" id="L221">               new SimpleTimePeriod(date(30, Calendar.JUNE, 2001),</span>
+<span class="fc" id="L222">                                    date(30, Calendar.JUNE, 2001))));</span>
+<span class="fc" id="L223">        s2.add(new Task(&quot;Alpha Implementation&quot;,</span>
+<span class="fc" id="L224">               new SimpleTimePeriod(date(1, Calendar.JULY, 2001),</span>
+<span class="fc" id="L225">                                    date(12, Calendar.SEPTEMBER, 2001))));</span>
+<span class="fc" id="L226">        s2.add(new Task(&quot;Design Review&quot;,</span>
+<span class="fc" id="L227">               new SimpleTimePeriod(date(12, Calendar.SEPTEMBER, 2001),</span>
+<span class="fc" id="L228">                                    date(22, Calendar.SEPTEMBER, 2001))));</span>
+<span class="fc" id="L229">        s2.add(new Task(&quot;Revised Design Signoff&quot;,</span>
+<span class="fc" id="L230">               new SimpleTimePeriod(date(25, Calendar.SEPTEMBER, 2001),</span>
+<span class="fc" id="L231">                                    date(27, Calendar.SEPTEMBER, 2001))));</span>
+<span class="fc" id="L232">        s2.add(new Task(&quot;Beta Implementation&quot;,</span>
+<span class="fc" id="L233">               new SimpleTimePeriod(date(27, Calendar.SEPTEMBER, 2001),</span>
+<span class="fc" id="L234">                                    date(30, Calendar.OCTOBER, 2001))));</span>
+<span class="fc" id="L235">        s2.add(new Task(&quot;Testing&quot;,</span>
+<span class="fc" id="L236">               new SimpleTimePeriod(date(31, Calendar.OCTOBER, 2001),</span>
+<span class="fc" id="L237">                                    date(17, Calendar.NOVEMBER, 2001))));</span>
+<span class="fc" id="L238">        s2.add(new Task(&quot;Final Implementation&quot;,</span>
+<span class="fc" id="L239">               new SimpleTimePeriod(date(18, Calendar.NOVEMBER, 2001),</span>
+<span class="fc" id="L240">                                    date(5, Calendar.DECEMBER, 2001))));</span>
+<span class="fc" id="L241">        s2.add(new Task(&quot;Signoff&quot;,</span>
+<span class="fc" id="L242">               new SimpleTimePeriod(date(10, Calendar.DECEMBER, 2001),</span>
+<span class="fc" id="L243">                                    date(11, Calendar.DECEMBER, 2001))));</span>
+
+<span class="fc" id="L245">        TaskSeriesCollection&lt;String, String&gt; collection = new TaskSeriesCollection&lt;&gt;();</span>
+<span class="fc" id="L246">        collection.add(s1);</span>
+<span class="fc" id="L247">        collection.add(s2);</span>
+
+<span class="fc" id="L249">        return collection;</span>
+    }
+
+    /**
+     * Utility method for creating {@code Date} objects.
+     *
+     * @param day  the date.
+     * @param month  the month.
+     * @param year  the year.
+     *
+     * @return a date.
+     */
+    private static Date date(int day, int month, int year) {
+<span class="fc" id="L262">        Calendar calendar = Calendar.getInstance();</span>
+<span class="fc" id="L263">        calendar.set(year, month, day);</span>
+<span class="fc" id="L264">        Date result = calendar.getTime();</span>
+<span class="fc" id="L265">        return result;</span>
+    }    
+
+    /**
+     * A chart change listener.
+     *
+     */
+<span class="fc" id="L272">    static class LocalListener implements ChartChangeListener {</span>
+
+        /** A flag. */
+        private boolean flag;
+
+        /**
+         * Event handler.
+         *
+         * @param event  the event.
+         */
+        @Override
+        public void chartChanged(ChartChangeEvent event) {
+<span class="fc" id="L284">            this.flag = true;</span>
+<span class="fc" id="L285">        }</span>
+
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (1) (14 May 2022 17:53:42)</div></body></html>

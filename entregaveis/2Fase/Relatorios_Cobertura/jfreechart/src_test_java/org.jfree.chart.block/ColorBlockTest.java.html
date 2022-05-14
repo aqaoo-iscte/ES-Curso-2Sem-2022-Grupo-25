@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>ColorBlockTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (1) (14 May 2022 17:53:42)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart.block</a> &gt; <span class="el_source">ColorBlockTest.java</span></div><h1>ColorBlockTest.java</h1><pre class="source lang-java linenums">/* ===========================================================
+ * JFreeChart : a free chart library for the Java(tm) platform
+ * ===========================================================
+ *
+ * (C) Copyright 2000-2022, by David Gilbert and Contributors.
+ *
+ * Project Info:  http://www.jfree.org/jfreechart/index.html
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ *
+ * [Oracle and Java are registered trademarks of Oracle and/or its affiliates. 
+ * Other names may be trademarks of their respective owners.]
+ *
+ * -------------------
+ * ColorBlockTest.java
+ * -------------------
+ * (C) Copyright 2007-2022, by David Gilbert and Contributors.
+ *
+ * Original Author:  David Gilbert;
+ * Contributor(s):   -;
+ *
+ */
+
+package org.jfree.chart.block;
+
+import java.awt.Color;
+import java.awt.GradientPaint;
+import java.awt.geom.Rectangle2D;
+
+import org.jfree.chart.TestUtils;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Tests for the {@link ColorBlock} class.
+ */
+<span class="fc" id="L51">public class ColorBlockTest {</span>
+
+    /**
+     * Confirm that the equals() method can distinguish all the required fields.
+     */
+    @Test
+    public void testEquals() {
+<span class="fc" id="L58">        ColorBlock b1 = new ColorBlock(Color.RED, 1.0, 2.0);</span>
+<span class="fc" id="L59">        ColorBlock b2 = new ColorBlock(Color.RED, 1.0, 2.0);</span>
+<span class="fc" id="L60">        assertEquals(b1, b2);</span>
+<span class="fc" id="L61">        assertEquals(b2, b2);</span>
+
+<span class="fc" id="L63">        b1 = new ColorBlock(Color.BLUE, 1.0, 2.0);</span>
+<span class="fc" id="L64">        assertNotEquals(b1, b2);</span>
+<span class="fc" id="L65">        b2 = new ColorBlock(Color.BLUE, 1.0, 2.0);</span>
+<span class="fc" id="L66">        assertEquals(b1, b2);</span>
+
+<span class="fc" id="L68">        b1 = new ColorBlock(Color.BLUE, 1.1, 2.0);</span>
+<span class="fc" id="L69">        assertNotEquals(b1, b2);</span>
+<span class="fc" id="L70">        b2 = new ColorBlock(Color.BLUE, 1.1, 2.0);</span>
+<span class="fc" id="L71">        assertEquals(b1, b2);</span>
+
+<span class="fc" id="L73">        b1 = new ColorBlock(Color.BLUE, 1.1, 2.2);</span>
+<span class="fc" id="L74">        assertNotEquals(b1, b2);</span>
+<span class="fc" id="L75">        b2 = new ColorBlock(Color.BLUE, 1.1, 2.2);</span>
+<span class="fc" id="L76">        assertEquals(b1, b2);</span>
+<span class="fc" id="L77">    }</span>
+
+    /**
+     * Confirm that cloning works.
+     */
+    @Test
+    public void testCloning() {
+<span class="fc" id="L84">        GradientPaint gp = new GradientPaint(1.0f, 2.0f, Color.RED, 3.0f, 4.0f,</span>
+<span class="fc" id="L85">                Color.BLUE);</span>
+<span class="fc" id="L86">        Rectangle2D bounds1 = new Rectangle2D.Double(10.0, 20.0, 30.0, 40.0);</span>
+<span class="fc" id="L87">        ColorBlock b1 = new ColorBlock(gp, 1.0, 2.0);</span>
+<span class="fc" id="L88">        b1.setBounds(bounds1);</span>
+<span class="fc" id="L89">        ColorBlock b2 = null;</span>
+
+        try {
+<span class="fc" id="L92">            b2 = (ColorBlock) b1.clone();</span>
+<span class="fc" id="L93">        }</span>
+<span class="nc" id="L94">        catch (CloneNotSupportedException e) {</span>
+<span class="nc" id="L95">            fail(e.toString());</span>
+        }
+<span class="fc" id="L97">        assertNotSame(b1, b2);</span>
+<span class="fc" id="L98">        assertSame(b1.getClass(), b2.getClass());</span>
+<span class="fc" id="L99">        assertEquals(b1, b2);</span>
+
+        // check independence
+<span class="fc" id="L102">        bounds1.setRect(1.0, 2.0, 3.0, 4.0);</span>
+<span class="fc" id="L103">        assertNotEquals(b1, b2);</span>
+<span class="fc" id="L104">        b2.setBounds(new Rectangle2D.Double(1.0, 2.0, 3.0, 4.0));</span>
+<span class="fc" id="L105">        assertEquals(b1, b2);</span>
+<span class="fc" id="L106">    }</span>
+
+    /**
+     * Serialize an instance, restore it, and check for equality.
+     */
+    @Test
+    public void testSerialization() {
+<span class="fc" id="L113">        GradientPaint gp = new GradientPaint(1.0f, 2.0f, Color.RED, 3.0f, 4.0f,</span>
+<span class="fc" id="L114">                Color.BLUE);</span>
+<span class="fc" id="L115">        ColorBlock b1 = new ColorBlock(gp, 1.0, 2.0);</span>
+<span class="fc" id="L116">        ColorBlock b2 = TestUtils.serialised(b1);</span>
+<span class="fc" id="L117">        assertEquals(b1, b2);</span>
+<span class="fc" id="L118">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (1) (14 May 2022 17:53:42)</div></body></html>

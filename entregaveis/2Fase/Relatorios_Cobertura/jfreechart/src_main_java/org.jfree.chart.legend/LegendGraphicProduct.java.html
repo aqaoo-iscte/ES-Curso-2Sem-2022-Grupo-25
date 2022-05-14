@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>LegendGraphicProduct.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (1) (14 May 2022 17:53:42)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart.legend</a> &gt; <span class="el_source">LegendGraphicProduct.java</span></div><h1>LegendGraphicProduct.java</h1><pre class="source lang-java linenums">package org.jfree.chart.legend;
+
+
+import org.jfree.chart.api.RectangleAnchor;
+import org.jfree.chart.util.GradientPaintTransformer;
+import org.jfree.chart.internal.Args;
+import java.io.Serializable;
+import org.jfree.chart.api.PublicCloneable;
+
+<span class="fc" id="L10">public class LegendGraphicProduct implements Serializable, PublicCloneable {</span>
+	private RectangleAnchor shapeLocation;
+	private RectangleAnchor shapeAnchor;
+	private GradientPaintTransformer fillPaintTransformer;
+
+	public RectangleAnchor getShapeLocation() {
+<span class="fc" id="L16">		return shapeLocation;</span>
+	}
+
+	public void setShapeLocation2(RectangleAnchor shapeLocation) {
+<span class="fc" id="L20">		this.shapeLocation = shapeLocation;</span>
+<span class="fc" id="L21">	}</span>
+
+	public RectangleAnchor getShapeAnchor() {
+<span class="fc" id="L24">		return shapeAnchor;</span>
+	}
+
+	public void setShapeAnchor2(RectangleAnchor shapeAnchor) {
+<span class="fc" id="L28">		this.shapeAnchor = shapeAnchor;</span>
+<span class="fc" id="L29">	}</span>
+
+	public GradientPaintTransformer getFillPaintTransformer() {
+<span class="fc" id="L32">		return fillPaintTransformer;</span>
+	}
+
+	public void setFillPaintTransformer2(GradientPaintTransformer fillPaintTransformer) {
+<span class="fc" id="L36">		this.fillPaintTransformer = fillPaintTransformer;</span>
+<span class="fc" id="L37">	}</span>
+
+	/**
+	* Sets the transformer used when the fill paint is an instance of {@code  GradientPaint} .
+	* @param transformer   the transformer ( {@code  null}  not permitted).
+	* @see #getFillPaintTransformer()
+	*/
+	public void setFillPaintTransformer(GradientPaintTransformer transformer) {
+<span class="fc" id="L45">		Args.nullNotPermitted(transformer, &quot;transformer&quot;);</span>
+<span class="fc" id="L46">		this.fillPaintTransformer = transformer;</span>
+<span class="fc" id="L47">	}</span>
+
+	/**
+	* Sets the shape anchor.  This defines a point on the shapes bounding rectangle that will be used to align the shape to a location.
+	* @param anchor   the anchor ( {@code  null}  not permitted).
+	* @see #setShapeAnchor(RectangleAnchor)
+	*/
+	public void setShapeAnchor(RectangleAnchor anchor) {
+<span class="fc" id="L55">		Args.nullNotPermitted(anchor, &quot;anchor&quot;);</span>
+<span class="fc" id="L56">		this.shapeAnchor = anchor;</span>
+<span class="fc" id="L57">	}</span>
+
+	/**
+	* Sets the shape location.  This defines a point within the drawing area that will be used to align the shape to.
+	* @param location   the location ( {@code  null}  not permitted).
+	* @see #getShapeLocation()
+	*/
+	public void setShapeLocation(RectangleAnchor location) {
+<span class="fc" id="L65">		Args.nullNotPermitted(location, &quot;location&quot;);</span>
+<span class="fc" id="L66">		this.shapeLocation = location;</span>
+<span class="fc" id="L67">	}</span>
+
+	public Object clone() throws CloneNotSupportedException {
+<span class="fc" id="L70">		return (LegendGraphicProduct) super.clone();</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (1) (14 May 2022 17:53:42)</div></body></html>

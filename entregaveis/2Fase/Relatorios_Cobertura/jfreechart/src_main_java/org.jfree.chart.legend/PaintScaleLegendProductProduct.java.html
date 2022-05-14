@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>PaintScaleLegendProductProduct.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (1) (14 May 2022 17:53:42)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart.legend</a> &gt; <span class="el_source">PaintScaleLegendProductProduct.java</span></div><h1>PaintScaleLegendProductProduct.java</h1><pre class="source lang-java linenums">package org.jfree.chart.legend;
+
+
+import org.jfree.chart.renderer.PaintScale;
+import org.jfree.chart.axis.AxisLocation;
+import org.jfree.chart.internal.Args;
+import org.jfree.chart.event.TitleChangeEvent;
+import java.io.Serializable;
+import org.jfree.chart.api.PublicCloneable;
+
+<span class="fc" id="L11">public class PaintScaleLegendProductProduct implements Serializable, PublicCloneable {</span>
+	private PaintScale scale;
+	private AxisLocation axisLocation;
+
+	public PaintScale getScale() {
+<span class="fc" id="L16">		return scale;</span>
+	}
+
+	public void setScale2(PaintScale scale) {
+<span class="fc" id="L20">		this.scale = scale;</span>
+<span class="fc" id="L21">	}</span>
+
+	public AxisLocation getAxisLocation() {
+<span class="fc" id="L24">		return axisLocation;</span>
+	}
+
+	public void setAxisLocation2(AxisLocation axisLocation) {
+<span class="fc" id="L28">		this.axisLocation = axisLocation;</span>
+<span class="fc" id="L29">	}</span>
+
+	/**
+	* Sets the scale and sends a   {@link TitleChangeEvent}   to all registered listeners.
+	* @param scale    the scale (  {@code   null}   not permitted).
+	* @see #getScale()
+	*/
+	public void setScale(PaintScale scale, PaintScaleLegend paintScaleLegend) {
+<span class="fc" id="L37">		Args.nullNotPermitted(scale, &quot;scale&quot;);</span>
+<span class="fc" id="L38">		this.scale = scale;</span>
+<span class="fc" id="L39">		paintScaleLegend.notifyListeners(new TitleChangeEvent(paintScaleLegend));</span>
+<span class="fc" id="L40">	}</span>
+
+	/**
+	* Sets the axis location and sends a   {@link TitleChangeEvent}   to all registered listeners.
+	* @param location    the location (  {@code   null}   not permitted).
+	* @see #getAxisLocation()
+	*/
+	public void setAxisLocation(AxisLocation location, PaintScaleLegend paintScaleLegend) {
+<span class="fc" id="L48">		Args.nullNotPermitted(location, &quot;location&quot;);</span>
+<span class="fc" id="L49">		this.axisLocation = location;</span>
+<span class="fc" id="L50">		paintScaleLegend.notifyListeners(new TitleChangeEvent(paintScaleLegend));</span>
+<span class="fc" id="L51">	}</span>
+
+	public Object clone() throws CloneNotSupportedException {
+<span class="nc" id="L54">		return (PaintScaleLegendProductProduct) super.clone();</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (1) (14 May 2022 17:53:42)</div></body></html>

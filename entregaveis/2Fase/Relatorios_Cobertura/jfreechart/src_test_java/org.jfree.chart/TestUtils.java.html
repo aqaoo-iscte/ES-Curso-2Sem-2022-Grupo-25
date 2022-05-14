@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>TestUtils.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">java (1) (14 May 2022 17:53:42)</a> &gt; <a href="../../index.html" class="el_group">jfreechart</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.jfree.chart</a> &gt; <span class="el_source">TestUtils.java</span></div><h1>TestUtils.java</h1><pre class="source lang-java linenums">/* ===========================================================
+ * JFreeChart : a free chart library for the Java(tm) platform
+ * ===========================================================
+ *
+ * (C) Copyright 2000-2022, by David Gilbert and Contributors.
+ *
+ * Project Info:  http://www.jfree.org/jfreechart/index.html
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ *
+ * [Oracle and Java are registered trademarks of Oracle and/or its affiliates. 
+ * Other names may be trademarks of their respective owners.]
+ *
+ * --------------
+ * TestUtils.java
+ * --------------
+ * (C) Copyright 2007-2022, by David Gilbert.
+ *
+ * Original Author:  David Gilbert;
+ * Contributor(s):   -;
+ *
+ */
+
+package org.jfree.chart;
+
+import org.jfree.chart.renderer.AbstractRenderer;
+
+import java.awt.*;
+import java.io.*;
+import java.util.Collection;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Some utility methods for use by the testing code.
+ */
+<span class="nc" id="L50">public class TestUtils {</span>
+
+    /**
+     * Returns {@code true} if the collections contains any object that
+     * is an instance of the specified class, and {@code false} otherwise.
+     *
+     * @param collection  the collection.
+     * @param c  the class.
+     *
+     * @return A boolean.
+     */
+    public static boolean containsInstanceOf(Collection&lt;?&gt; collection, Class c) {
+<span class="nc bnc" id="L62" title="All 2 branches missed.">        for (Object obj : collection) {</span>
+<span class="nc bnc" id="L63" title="All 4 branches missed.">            if (obj != null &amp;&amp; obj.getClass().equals(c)) {</span>
+<span class="nc" id="L64">                return true;</span>
+            }
+        }
+<span class="nc" id="L67">        return false;</span>
+    }
+
+    /**
+     * Serialises an object, deserialises it and returns the deserialised 
+     * version.
+     * 
+     * @param original  the original object.
+     * 
+     * @return A serialised and deserialised version of the original.
+     */
+    public static &lt;K&gt; K serialised(K original) {
+<span class="fc" id="L79">        K result = null;</span>
+<span class="fc" id="L80">        ByteArrayOutputStream buffer = new ByteArrayOutputStream();</span>
+        ObjectOutput out;
+        try {
+<span class="fc" id="L83">            out = new ObjectOutputStream(buffer);</span>
+<span class="fc" id="L84">            out.writeObject(original);</span>
+<span class="fc" id="L85">            out.close();</span>
+<span class="fc" id="L86">            ObjectInput in = new ObjectInputStream(</span>
+<span class="fc" id="L87">                    new ByteArrayInputStream(buffer.toByteArray()));</span>
+<span class="fc" id="L88">            result = (K) in.readObject();</span>
+<span class="fc" id="L89">            in.close();</span>
+<span class="pc" id="L90">        } catch (IOException e) {</span>
+<span class="nc" id="L91">            throw new RuntimeException(e);</span>
+<span class="nc" id="L92">        } catch (ClassNotFoundException e) {</span>
+<span class="nc" id="L93">            throw new RuntimeException(e);</span>
+        }
+<span class="fc" id="L95">        return result;</span>
+    }
+    
+    /**
+     * Checks the two renderers for independence.  It is expected that the 
+     * two renderers have the same attributes (typically one is a clone of the
+     * other or has been deserialised from the serialised representation of
+     * the other).  This method will update each attribute in turn and check
+     * that updating one renderer does not impact the other. Note that this
+     * method is destructive in the sense that it changes all the attributes
+     * of the renderer (maybe the code can be updated later to restore each
+     * attribute setting after it has been tested).
+     * 
+     * @param r1  renderer one ({@code null} not permitted).
+     * @param r2  renderer two ({@code null} not permitted).
+     */
+    public static void checkIndependence(AbstractRenderer r1, AbstractRenderer r2) {
+<span class="nc" id="L112">        assertNotSame(r1, r2);</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">        r1.setAutoPopulateSeriesFillPaint(!r1.getAutoPopulateSeriesFillPaint());</span>
+<span class="nc" id="L114">        assertNotEquals(r1, r2);</span>
+<span class="nc" id="L115">        r2.setAutoPopulateSeriesFillPaint(r1.getAutoPopulateSeriesFillPaint());</span>
+<span class="nc" id="L116">        assertEquals(r1, r2);</span>
+        
+<span class="nc bnc" id="L118" title="All 2 branches missed.">        r1.setAutoPopulateSeriesOutlinePaint(!r1.getAutoPopulateSeriesOutlinePaint());</span>
+<span class="nc" id="L119">        assertNotEquals(r1, r2);</span>
+<span class="nc" id="L120">        r2.setAutoPopulateSeriesOutlinePaint(r1.getAutoPopulateSeriesOutlinePaint());</span>
+<span class="nc" id="L121">        assertEquals(r1, r2);</span>
+
+<span class="nc bnc" id="L123" title="All 2 branches missed.">        r1.setAutoPopulateSeriesOutlineStroke(!r1.getAutoPopulateSeriesOutlineStroke());</span>
+<span class="nc" id="L124">        assertNotEquals(r1, r2);</span>
+<span class="nc" id="L125">        r2.setAutoPopulateSeriesOutlineStroke(r1.getAutoPopulateSeriesOutlineStroke());</span>
+<span class="nc" id="L126">        assertEquals(r1, r2);</span>
+        
+<span class="nc bnc" id="L128" title="All 2 branches missed.">        r1.setAutoPopulateSeriesPaint(!r1.getAutoPopulateSeriesPaint());</span>
+<span class="nc" id="L129">        assertNotEquals(r1, r2);</span>
+<span class="nc" id="L130">        r2.setAutoPopulateSeriesPaint(r1.getAutoPopulateSeriesPaint());</span>
+<span class="nc" id="L131">        assertEquals(r1, r2);</span>
+        
+<span class="nc bnc" id="L133" title="All 2 branches missed.">        r1.setAutoPopulateSeriesShape(!r1.getAutoPopulateSeriesShape());</span>
+<span class="nc" id="L134">        assertNotEquals(r1, r2);</span>
+<span class="nc" id="L135">        r2.setAutoPopulateSeriesShape(r1.getAutoPopulateSeriesShape());</span>
+<span class="nc" id="L136">        assertEquals(r1, r2);</span>
+        
+<span class="nc bnc" id="L138" title="All 2 branches missed.">        r1.setAutoPopulateSeriesStroke(!r1.getAutoPopulateSeriesStroke());</span>
+<span class="nc" id="L139">        assertNotEquals(r1, r2);</span>
+<span class="nc" id="L140">        r2.setAutoPopulateSeriesStroke(r1.getAutoPopulateSeriesStroke());</span>
+<span class="nc" id="L141">        assertEquals(r1, r2);</span>
+   
+<span class="nc bnc" id="L143" title="All 2 branches missed.">        r1.setDataBoundsIncludesVisibleSeriesOnly(!r1.getDataBoundsIncludesVisibleSeriesOnly());</span>
+<span class="nc" id="L144">        assertNotEquals(r1, r2);</span>
+<span class="nc" id="L145">        r2.setDataBoundsIncludesVisibleSeriesOnly(r1.getDataBoundsIncludesVisibleSeriesOnly());</span>
+<span class="nc" id="L146">        assertEquals(r1, r2);</span>
+        
+<span class="nc bnc" id="L148" title="All 2 branches missed.">        r1.setDefaultCreateEntities(!r1.getDefaultCreateEntities());</span>
+<span class="nc" id="L149">        assertNotEquals(r1, r2);</span>
+<span class="nc" id="L150">        r2.setDefaultCreateEntities(r1.getDefaultCreateEntities());</span>
+<span class="nc" id="L151">        assertEquals(r1, r2);</span>
+        
+<span class="nc" id="L153">        r1.setDefaultEntityRadius(66);</span>
+<span class="nc" id="L154">        assertNotEquals(r1, r2);</span>
+<span class="nc" id="L155">        r2.setDefaultEntityRadius(66);</span>
+<span class="nc" id="L156">        assertEquals(r1, r2);</span>
+        
+<span class="nc" id="L158">        r1.setDefaultFillPaint(new GradientPaint(4.0f, 5.0f, Color.RED, 6.0f, 7.0f, Color.YELLOW));</span>
+<span class="nc" id="L159">        assertNotEquals(r1, r2);</span>
+<span class="nc" id="L160">        r2.setDefaultFillPaint(new GradientPaint(4.0f, 5.0f, Color.RED, 6.0f, 7.0f, Color.YELLOW));</span>
+<span class="nc" id="L161">        assertEquals(r1, r2);</span>
+        
+<span class="nc" id="L163">        r1.setDefaultItemLabelFont(new Font(Font.MONOSPACED, Font.BOLD, 11));</span>
+<span class="nc" id="L164">        assertNotEquals(r1, r2);</span>
+<span class="nc" id="L165">        r2.setDefaultItemLabelFont(new Font(Font.MONOSPACED, Font.BOLD, 11));</span>
+<span class="nc" id="L166">        assertEquals(r1, r2);</span>
+
+<span class="nc" id="L168">        r1.setDefaultItemLabelPaint(new GradientPaint(4.0f, 4.0f, Color.BLUE, 4.0f, 4.0f, Color.RED));</span>
+<span class="nc" id="L169">        assertNotEquals(r1, r2);</span>
+<span class="nc" id="L170">        r2.setDefaultItemLabelPaint(new GradientPaint(4.0f, 4.0f, Color.BLUE, 4.0f, 4.0f, Color.RED));</span>
+<span class="nc" id="L171">        assertEquals(r1, r2);</span>
+        
+<span class="nc bnc" id="L173" title="All 2 branches missed.">        r1.setDefaultItemLabelsVisible(!r1.getDefaultItemLabelsVisible());</span>
+<span class="nc" id="L174">        assertNotEquals(r1, r2);</span>
+<span class="nc" id="L175">        r2.setDefaultItemLabelsVisible(r1.getDefaultItemLabelsVisible());</span>
+<span class="nc" id="L176">        assertEquals(r1, r2);</span>
+                
+<span class="nc" id="L178">        r1.setDefaultLegendShape(new Rectangle(6, 5, 4, 3));</span>
+<span class="nc" id="L179">        assertNotEquals(r1, r2);</span>
+<span class="nc" id="L180">        r2.setDefaultLegendShape(new Rectangle(6, 5, 4, 3));</span>
+<span class="nc" id="L181">        assertEquals(r1, r2);</span>
+        
+<span class="nc" id="L183">        r1.setDefaultLegendTextFont(new Font(Font.MONOSPACED, Font.BOLD, 22));</span>
+<span class="nc" id="L184">        assertNotEquals(r1, r2);</span>
+<span class="nc" id="L185">        r2.setDefaultLegendTextFont(new Font(Font.MONOSPACED, Font.BOLD, 22));</span>
+<span class="nc" id="L186">        assertEquals(r1, r2);</span>
+        
+<span class="nc" id="L188">        r1.setDefaultLegendTextPaint(Color.RED);</span>
+<span class="nc" id="L189">        assertNotEquals(r1, r2);</span>
+<span class="nc" id="L190">        r2.setDefaultLegendTextPaint(Color.RED);</span>
+<span class="nc" id="L191">        assertEquals(r1, r2);</span>
+        
+        // TODO many remaining attributes
+<span class="nc" id="L194">    }</span>
+    
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>java (1) (14 May 2022 17:53:42)</div></body></html>

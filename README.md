@@ -17,4 +17,4 @@ Constituintes do Grupo:
 Identificação e descrição de erros:
 
 
-Funcionalidades não implementadas:
+Funcionalidades não implementadas: nya
